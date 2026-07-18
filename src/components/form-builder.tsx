@@ -5,12 +5,11 @@ import { BusinessForm } from "@/components/business-form";
 import { PublishCTA } from "@/components/publish-cta";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
-import { formInputToPrompt } from "@/lib/form-to-prompt";
 import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-const funnelSteps = ["Sign in", "Generate", "Preview"];
+const funnelSteps = ["Sign in", "Generate", "Preview", "Edit"];
 
 type FormBuilderProps = {
   loadExample?: boolean;
@@ -26,15 +25,14 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
   const [lastInput, setLastInput] = useState<BusinessFormInput | null>(null);
 
   useEffect(() => {
-    if (session) {
-      setActiveStep((step) => Math.max(step, 2));
-    }
+    if (session) setActiveStep((step) => Math.max(step, 2));
   }, [session]);
 
   useEffect(() => {
     if (loadExample && session) {
       runGeneration(exampleFormInput);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadExample, session]);
 
   async function runGeneration(input: BusinessFormInput) {
@@ -43,20 +41,17 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
     setLastInput(input);
     setActiveStep(2);
 
-    const prompt = formInputToPrompt(input);
-
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify(input),
       });
 
       const data = (await response.json()) as {
         site?: GeneratedSite;
         source?: GenerateSource;
         error?: string;
-        code?: string;
       };
 
       if (response.status === 401) {
@@ -115,11 +110,11 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
       {!session ? (
         <SignInGate />
       ) : (
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+        <div className="grid gap-10 xl:grid-cols-[380px_1fr] xl:items-start">
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
-                Your business details
+                Business details
               </h2>
               <AuthButton compact />
             </div>
@@ -131,16 +126,16 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
           </div>
 
           <div>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
-                Full website preview
+                Website preview
               </h2>
               {source === "ai" && (
                 <span className="rounded-full bg-brand/20 px-3 py-1 text-xs font-medium text-brand-light">
                   AI generated
                 </span>
               )}
-              {source === "mock" && lastInput && !loading && (
+              {source === "mock" && !loading && (
                 <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
                   Template fallback
                 </span>
@@ -148,13 +143,13 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
             </div>
 
             {loading ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-surface-border bg-surface/50 p-8 text-center">
+              <div className="flex min-h-[480px] flex-col items-center justify-center rounded-2xl border border-surface-border bg-surface/50 p-8 text-center">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 <p className="mt-4 font-medium text-foreground">
-                  AI is building your website…
+                  AI is writing your full website…
                 </p>
                 <p className="mt-2 text-sm text-muted">
-                  Usually ready in under 60 seconds
+                  Hero · About · Services · Reviews · FAQ — usually under 60s
                 </p>
               </div>
             ) : error ? (
@@ -166,15 +161,21 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
               </div>
             ) : site ? (
               <>
-                <SitePreview site={site} />
-                {source === "ai" && lastInput && (
+                <SitePreview
+                  site={site}
+                  onChange={(next) => {
+                    setSite(next);
+                    setActiveStep(4);
+                  }}
+                />
+                {lastInput && (
                   <button
                     type="button"
                     onClick={() => runGeneration(lastInput)}
                     disabled={loading}
                     className="mt-4 w-full rounded-xl border border-surface-border py-2.5 text-sm font-medium text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
                   >
-                    ↻ Regenerate — get a different version
+                    ↻ Regenerate with AI
                   </button>
                 )}
                 <PublishCTA businessName={site.title} />
@@ -182,12 +183,12 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
             ) : (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">
                 <div>
-                  <p className="text-4xl">✨</p>
+                  <p className="text-4xl">🏗️</p>
                   <p className="mt-4 font-medium text-foreground">
-                    Your website preview will appear here
+                    Your finished website will appear here
                   </p>
                   <p className="mt-2 text-sm">
-                    Fill in your business details and click Generate
+                    Enter details and press Generate — not JSON, a real preview
                   </p>
                 </div>
               </div>

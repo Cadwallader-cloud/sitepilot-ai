@@ -29,7 +29,8 @@ export default async function CreatePage({ searchParams }: CreatePageProps) {
             Generate your website
           </h1>
           <p className="mt-3 text-muted">
-            Describe your business — get a full free preview in under a minute
+            Enter name, location, services, phone & email — AI builds a full
+            website in under 60 seconds
           </p>
         </div>
 

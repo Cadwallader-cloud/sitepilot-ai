@@ -1,10 +1,3 @@
-export type SiteSection = {
-  id: string;
-  title: string;
-  body: string;
-  items?: string[];
-};
-
 export type SiteTheme = {
   primary: string;
   accent: string;
@@ -17,21 +10,39 @@ export type SiteTestimonial = {
   role: string;
 };
 
+export type SiteFaq = {
+  question: string;
+  answer: string;
+};
+
+export type SiteImages = {
+  hero: string;
+  gallery: string[];
+};
+
+/** Structured website JSON produced by AI + image picker */
 export type GeneratedSite = {
   title: string;
   tagline: string;
-  sections: SiteSection[];
+  trade: string;
+  location: string;
+  phone: string;
+  email: string;
+  hours: string;
   cta: string;
-  trade?: string;
-  location?: string;
-  phone?: string;
-  email?: string;
-  hours?: string;
-  about?: string;
-  services?: string[];
-  highlights?: string[];
-  testimonials?: SiteTestimonial[];
-  theme?: SiteTheme;
+  heroHeadline: string;
+  heroSubheadline: string;
+  about: string;
+  services: string[];
+  whyChooseUs: string[];
+  testimonials: SiteTestimonial[];
+  faq: SiteFaq[];
+  ctaBanner: string;
+  contactBlurb: string;
+  theme: SiteTheme;
+  images: SiteImages;
+  /** @deprecated kept for older mock generators */
+  sections?: { id: string; title: string; body: string; items?: string[] }[];
 };
 
 export type GenerateSource = "ai" | "mock";

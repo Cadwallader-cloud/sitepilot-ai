@@ -1,29 +1,65 @@
 import { auth } from "@/auth";
+import type { BusinessFormInput } from "@/lib/business-form";
+import { generateFromForm } from "@/lib/generate-from-form";
+import { formInputToPrompt } from "@/lib/form-to-prompt";
 import { generateSiteWithOpenAI } from "@/lib/generate-site-ai";
-import { generateSiteFromPrompt } from "@/lib/generate-site";
 import type { GenerateResult } from "@/lib/site-types";
 import { NextResponse } from "next/server";
+
+function isBusinessInput(body: unknown): body is BusinessFormInput {
+  if (!body || typeof body !== "object") return false;
+  const b = body as Record<string, unknown>;
+  return (
+    typeof b.businessName === "string" &&
+    typeof b.location === "string" &&
+    typeof b.services === "string" &&
+    typeof b.phone === "string" &&
+    typeof b.email === "string"
+  );
+}
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
-        { error: "Sign in with Google to generate your website", code: "UNAUTHORIZED" },
+        {
+          error: "Sign in with Google to generate your website",
+          code: "UNAUTHORIZED",
+        },
         { status: 401 },
       );
     }
 
-    const body = (await request.json()) as { prompt?: string };
-    const prompt = body.prompt?.trim();
+    const body = await request.json();
 
-    if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    if (!isBusinessInput(body)) {
+      return NextResponse.json(
+        {
+          error:
+            "businessName, location, services, phone, and email are required",
+        },
+        { status: 400 },
+      );
     }
 
-    if (prompt.length > 2000) {
+    const input: BusinessFormInput = {
+      businessName: body.businessName.trim(),
+      location: body.location.trim(),
+      services: body.services.trim(),
+      phone: body.phone.trim(),
+      email: body.email.trim(),
+    };
+
+    if (
+      !input.businessName ||
+      !input.location ||
+      !input.services ||
+      !input.phone ||
+      !input.email
+    ) {
       return NextResponse.json(
-        { error: "Prompt must be under 2000 characters" },
+        { error: "All fields are required" },
         { status: 400 },
       );
     }
@@ -32,17 +68,18 @@ export async function POST(request: Request) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error: "OpenAI API key not configured. Add OPENAI_API_KEY to .env.local",
+          error: "OpenAI API key not configured",
           code: "MISSING_API_KEY",
         },
         { status: 503 },
       );
     }
 
+    const prompt = formInputToPrompt(input);
     let result: GenerateResult;
 
     try {
-      const site = await generateSiteWithOpenAI(prompt);
+      const site = await generateSiteWithOpenAI(prompt, input);
       result = { site, source: "ai" };
     } catch (error) {
       console.error("OpenAI generation failed:", error);
@@ -52,7 +89,7 @@ export async function POST(request: Request) {
       if (message.includes("401") || message.includes("Incorrect API key")) {
         return NextResponse.json(
           {
-            error: "Invalid OpenAI API key. Check OPENAI_API_KEY in .env.local",
+            error: "Invalid OpenAI API key",
             code: "INVALID_API_KEY",
           },
           { status: 401 },
@@ -62,14 +99,15 @@ export async function POST(request: Request) {
       if (message.includes("429") || message.includes("quota")) {
         return NextResponse.json(
           {
-            error: "OpenAI quota exceeded. Add billing at platform.openai.com",
+            error: "OpenAI quota exceeded",
             code: "QUOTA_EXCEEDED",
           },
           { status: 429 },
         );
       }
 
-      result = { site: generateSiteFromPrompt(prompt), source: "mock" };
+      // Structured fallback — still a full website, not empty placeholders
+      result = { site: generateFromForm(input), source: "mock" };
     }
 
     return NextResponse.json(result);

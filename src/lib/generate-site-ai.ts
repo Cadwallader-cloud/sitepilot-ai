@@ -1,5 +1,6 @@
 import OpenAI from "openai";
-import type { GeneratedSite } from "./site-types";
+import { attachTradeAssets } from "./trade-images";
+import type { GeneratedSite, SiteFaq, SiteTestimonial } from "./site-types";
 
 let client: OpenAI | null = null;
 
@@ -14,96 +15,217 @@ export function getOpenAIClient() {
   return client;
 }
 
-const SYSTEM_PROMPT = `You are Crestis, an AI website builder for local businesses.
+const SYSTEM_PROMPT = `You are Crestis, an expert AI website copywriter for local service businesses (roofers, plumbers, electricians, landscapers, builders).
 
-Generate a COMPLETE website content pack — not a thin outline. The user will preview a full landing page from this JSON.
+Generate COMPLETE, sellable website copy as JSON. Every field must be real marketing copy — never placeholders like "Lorem ipsum", "Service 1", or "Coming soon".
 
-RULES:
-- Use the EXACT business name, city, trade, phone, and services from the user
-- Write specific, local, trustworthy copy (no filler like "quality service and attention to detail")
-- Services must match what the user listed (expand slightly with benefit-focused wording)
-- Testimonials must feel realistic for that trade and city
-- Colors must fit the trade (roofing = warm/orange, plumbing = blue, landscaping = green, electrician = dark/sky, construction = yellow/charcoal)
-- All content in English
+Use the EXACT business name, location, phone, email, and services from the user.
 
-Return JSON only with this shape:
+Return ONLY valid JSON with this exact shape:
 {
-  "title": "Business Name",
-  "tagline": "Compelling subtitle under 120 chars mentioning location or specialty",
-  "trade": "Trade type",
-  "location": "City / area",
-  "phone": "Phone if provided, else plausible local number",
-  "email": "realistic contact email e.g. hello@business.com",
+  "title": "Exact business name",
+  "tagline": "Short brand line under 90 chars",
+  "trade": "e.g. Roofing Company",
+  "location": "City from user",
+  "phone": "Exact phone from user",
+  "email": "Exact email from user",
   "hours": "e.g. Mon–Sat 7am–7pm · Emergency 24/7",
-  "cta": "2-4 word CTA button",
-  "about": "2-3 sentences about the company — local, specific, credible",
-  "services": ["4-6 short service names"],
-  "highlights": ["3 short trust bullets e.g. Licensed & insured"],
+  "cta": "Button label 2-4 words",
+  "heroHeadline": "Powerful headline under 70 chars — mention location or specialty",
+  "heroSubheadline": "1-2 sentences that sell the offer",
+  "about": "2-3 specific paragraphs worth of sentences about the company (local, credible, concrete)",
+  "services": ["4-6 service names based on user services, benefit-focused"],
+  "whyChooseUs": ["4 short trust reasons — specific, not generic fluff"],
   "testimonials": [
-    { "quote": "1-2 sentences", "name": "First Last.", "role": "Homeowner, City" },
-    { "quote": "1-2 sentences", "name": "First Last.", "role": "Business owner" }
+    { "quote": "2 sentences sounding like a real customer", "name": "First L.", "role": "Homeowner, City" },
+    { "quote": "…", "name": "First L.", "role": "…" },
+    { "quote": "…", "name": "First L.", "role": "…" }
   ],
-  "theme": {
-    "primary": "#hex",
-    "accent": "#hex",
-    "style": "bold" | "clean" | "professional"
+  "faq": [
+    { "question": "Real FAQ customers ask", "answer": "Helpful 1-2 sentence answer" },
+    { "question": "…", "answer": "…" },
+    { "question": "…", "answer": "…" },
+    { "question": "…", "answer": "…" }
+  ],
+  "ctaBanner": "Strong closing CTA sentence",
+  "contactBlurb": "1 sentence inviting them to call/email"
+}
+
+Rules:
+- English only
+- Mention the city naturally in hero, about, reviews, FAQ
+- Services must reflect the user's list (you may polish wording)
+- Phone and email must match the user input exactly
+- No markdown, no commentary — JSON only`;
+
+type RawSite = Partial<GeneratedSite> & {
+  title?: string;
+  tagline?: string;
+  cta?: string;
+};
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function asStringArray(value: unknown, min = 1): string[] {
+  if (!Array.isArray(value)) return [];
+  const items = value
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .map((v) => v.trim());
+  return items.length >= min ? items : items;
+}
+
+function asTestimonials(value: unknown): SiteTestimonial[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const t = item as Record<string, unknown>;
+      const quote = asString(t.quote);
+      const name = asString(t.name);
+      const role = asString(t.role);
+      if (!quote || !name) return null;
+      return { quote, name, role: role || "Customer" };
+    })
+    .filter((t): t is SiteTestimonial => Boolean(t));
+}
+
+function asFaq(value: unknown): SiteFaq[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const f = item as Record<string, unknown>;
+      const question = asString(f.question);
+      const answer = asString(f.answer);
+      if (!question || !answer) return null;
+      return { question, answer };
+    })
+    .filter((f): f is SiteFaq => Boolean(f));
+}
+
+export function normalizeGeneratedSite(
+  raw: RawSite,
+  fallback: {
+    businessName: string;
+    location: string;
+    services: string;
+    phone: string;
+    email: string;
   },
-  "sections": [
-    { "id": "services", "title": "Our services", "body": "Short intro", "items": ["service 1", "service 2"] },
-    { "id": "why-us", "title": "Why choose us", "body": "2 sentences" },
-    { "id": "service-area", "title": "Service area", "body": "Cities/areas served" }
-  ]
-}
+): GeneratedSite {
+  const title = asString(raw.title, fallback.businessName);
+  const location = asString(raw.location, fallback.location);
+  const phone = asString(raw.phone, fallback.phone);
+  const email = asString(raw.email, fallback.email);
+  const servicesFromInput = fallback.services
+    .split(/[,;\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-Include exactly 3 sections. Always include services, highlights, testimonials, about, hours, email.`;
+  const services = asStringArray(raw.services, 1);
+  const whyChooseUs = asStringArray(raw.whyChooseUs, 1);
+  const testimonials = asTestimonials(raw.testimonials);
+  const faq = asFaq(raw.faq);
 
-function isValidSite(data: unknown): data is GeneratedSite {
-  if (!data || typeof data !== "object") return false;
-
-  const site = data as GeneratedSite;
-
-  return (
-    typeof site.title === "string" &&
-    typeof site.tagline === "string" &&
-    typeof site.cta === "string" &&
-    Array.isArray(site.sections) &&
-    site.sections.length >= 2 &&
-    site.sections.every(
-      (section) =>
-        typeof section.id === "string" &&
-        typeof section.title === "string" &&
-        typeof section.body === "string",
-    )
-  );
-}
-
-function normalizeSite(site: GeneratedSite): GeneratedSite {
-  const servicesFromSections = site.sections.find((s) => s.items?.length)?.items;
+  const tradeHint = `${title} ${asString(raw.trade)} ${fallback.services} ${location}`;
+  const assets = attachTradeAssets(tradeHint);
 
   return {
-    ...site,
-    services:
-      site.services?.length
-        ? site.services
-        : servicesFromSections?.length
-          ? servicesFromSections
-          : undefined,
-    testimonials: Array.isArray(site.testimonials)
-      ? site.testimonials.filter(
-          (t) =>
-            typeof t?.quote === "string" &&
-            typeof t?.name === "string" &&
-            typeof t?.role === "string",
-        )
-      : undefined,
-    highlights: Array.isArray(site.highlights)
-      ? site.highlights.filter((h) => typeof h === "string")
-      : undefined,
+    title,
+    tagline: asString(
+      raw.tagline,
+      `Professional ${asString(raw.trade, "services")} in ${location}`,
+    ),
+    trade: asString(raw.trade, "Local business"),
+    location,
+    phone,
+    email,
+    hours: asString(raw.hours, "Mon–Sat 7am–7pm · Emergency call-outs available"),
+    cta: asString(raw.cta, "Get a free quote"),
+    heroHeadline: asString(
+      raw.heroHeadline,
+      `${title} — trusted ${location} specialists`,
+    ),
+    heroSubheadline: asString(
+      raw.heroSubheadline,
+      `Quality workmanship for homeowners and businesses across ${location}.`,
+    ),
+    about: asString(
+      raw.about,
+      `${title} is a trusted local team serving ${location}. We deliver clear pricing, reliable scheduling, and workmanship built to last.`,
+    ),
+    services: services.length ? services : servicesFromInput,
+    whyChooseUs: whyChooseUs.length
+      ? whyChooseUs
+      : [
+          "Licensed & insured",
+          "Clear upfront pricing",
+          "Local team you can trust",
+          "Workmanship guaranteed",
+        ],
+    testimonials: testimonials.length
+      ? testimonials
+      : [
+          {
+            quote: `Called ${title} for a job in ${location}. Professional, on time, and the finish was excellent.`,
+            name: "Alex M.",
+            role: `Homeowner, ${location}`,
+          },
+          {
+            quote: "Fair quote and they cleaned up perfectly. Would hire again without hesitation.",
+            name: "Jordan P.",
+            role: "Property manager",
+          },
+          {
+            quote: "Clear communication from start to finish. Highly recommend.",
+            name: "Sam R.",
+            role: `Customer, ${location}`,
+          },
+        ],
+    faq: faq.length
+      ? faq
+      : [
+          {
+            question: "Do you offer free estimates?",
+            answer: "Yes — we provide clear written estimates before any work begins.",
+          },
+          {
+            question: "Are you licensed and insured?",
+            answer: "Yes. We are fully licensed and insured for your peace of mind.",
+          },
+          {
+            question: `Which areas do you cover?`,
+            answer: `We proudly serve ${location} and surrounding neighborhoods.`,
+          },
+          {
+            question: "How quickly can you start?",
+            answer: "Many jobs can be scheduled within days — ask about emergency availability.",
+          },
+        ],
+    ctaBanner: asString(
+      raw.ctaBanner,
+      `Ready for a free quote from ${title}? Call or email today.`,
+    ),
+    contactBlurb: asString(
+      raw.contactBlurb,
+      `Contact ${title} — we're happy to help.`,
+    ),
+    theme: assets.theme,
+    images: assets.images,
   };
 }
 
 export async function generateSiteWithOpenAI(
   prompt: string,
+  fallback: {
+    businessName: string;
+    location: string;
+    services: string;
+    phone: string;
+    email: string;
+  },
 ): Promise<GeneratedSite> {
   const openai = getOpenAIClient();
   if (!openai) {
@@ -119,10 +241,10 @@ export async function generateSiteWithOpenAI(
       { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Build a complete local business website for:\n${prompt}\n\nMake every line specific to this business. No generic template filler.`,
+        content: `Create a complete sellable website for this business:\n\n${prompt}`,
       },
     ],
-    temperature: 0.9,
+    temperature: 0.85,
   });
 
   const content = response.choices[0]?.message?.content;
@@ -130,10 +252,10 @@ export async function generateSiteWithOpenAI(
     throw new Error("OpenAI returned an empty response");
   }
 
-  const parsed: unknown = JSON.parse(content);
-  if (!isValidSite(parsed)) {
-    throw new Error("OpenAI returned an invalid site structure");
+  const parsed = JSON.parse(content) as RawSite;
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("OpenAI returned invalid JSON");
   }
 
-  return normalizeSite(parsed);
+  return normalizeGeneratedSite(parsed, fallback);
 }

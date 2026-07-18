@@ -12,11 +12,10 @@ type BusinessFormProps = {
 export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) {
   const [form, setForm] = useState<BusinessFormInput>({
     businessName: initial?.businessName ?? "",
-    type: initial?.type ?? "",
     location: initial?.location ?? "",
     services: initial?.services ?? "",
     phone: initial?.phone ?? "",
-    description: initial?.description ?? "",
+    email: initial?.email ?? "",
   });
 
   function handleChange(key: keyof BusinessFormInput, value: string) {
@@ -35,91 +34,66 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
 
   const isValid =
     form.businessName.trim() &&
-    form.type.trim() &&
     form.location.trim() &&
-    form.services.trim();
+    form.services.trim() &&
+    form.phone.trim() &&
+    form.email.trim();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Business name
-        </label>
-        <input
-          type="text"
-          value={form.businessName}
-          onChange={(e) => handleChange("businessName", e.target.value)}
-          placeholder="ABC Roofing"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
+      {(
+        [
+          {
+            key: "businessName" as const,
+            label: "Business name",
+            placeholder: "London Roofing",
+          },
+          {
+            key: "location" as const,
+            label: "Location",
+            placeholder: "London",
+          },
+          {
+            key: "services" as const,
+            label: "Services",
+            placeholder: "Roof repair, gutter replacement, chimney repair",
+            multiline: true,
+          },
+          {
+            key: "phone" as const,
+            label: "Phone",
+            placeholder: "+44 20 7946 0958",
+          },
+          {
+            key: "email" as const,
+            label: "Email",
+            placeholder: "hello@londonroofing.co.uk",
+          },
+        ] as const
+      ).map((field) => (
+        <div key={field.key}>
           <label className="mb-1.5 block text-sm font-medium text-foreground">
-            Business type
+            {field.label}
           </label>
-          <input
-            type="text"
-            value={form.type}
-            onChange={(e) => handleChange("type", e.target.value)}
-            placeholder="Roof repair company"
-            className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-          />
+          {"multiline" in field && field.multiline ? (
+            <textarea
+              value={form[field.key]}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              rows={3}
+              placeholder={field.placeholder}
+              className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
+            />
+          ) : (
+            <input
+              type={field.key === "email" ? "email" : "text"}
+              value={form[field.key]}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
+            />
+          )}
         </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">
-            Location
-          </label>
-          <input
-            type="text"
-            value={form.location}
-            onChange={(e) => handleChange("location", e.target.value)}
-            placeholder="London"
-            className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Services
-        </label>
-        <textarea
-          value={form.services}
-          onChange={(e) => handleChange("services", e.target.value)}
-          rows={2}
-          placeholder="Roof replacement, gutters, emergency repairs"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Describe your business{" "}
-          <span className="font-normal text-muted">(optional but better)</span>
-        </label>
-        <textarea
-          value={form.description}
-          onChange={(e) => handleChange("description", e.target.value)}
-          rows={3}
-          placeholder="Who you serve, what makes you different, years in business…"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Phone <span className="font-normal text-muted">(optional)</span>
-        </label>
-        <input
-          type="text"
-          value={form.phone}
-          onChange={(e) => handleChange("phone", e.target.value)}
-          placeholder="+44 20 7946 0958"
-          className="w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted focus:border-brand/50 focus:outline-none"
-        />
-      </div>
+      ))}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row">
         <button
@@ -127,7 +101,7 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           disabled={!isValid || loading}
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {loading ? "Generating…" : "Generate free preview →"}
+          {loading ? "Generating…" : "Generate"}
         </button>
         <button
           type="button"
@@ -135,7 +109,7 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           disabled={loading}
           className="rounded-xl border border-surface-border px-4 py-3 text-sm text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
         >
-          Try example
+          Try London Roofing
         </button>
       </div>
     </form>

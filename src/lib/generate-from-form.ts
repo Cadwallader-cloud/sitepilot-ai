@@ -1,10 +1,10 @@
 import type { BusinessFormInput } from "./business-form";
-import {
-  buildContentFromInput,
-  normalizeGeneratedSite,
-} from "./generate-site-ai";
+import { generateSiteWithOpenAI } from "./generate-site-ai";
 import type { GeneratedSite } from "./site-types";
 
-export function generateFromForm(input: BusinessFormInput): GeneratedSite {
-  return normalizeGeneratedSite(buildContentFromInput(input), input);
+/** Prefer OpenAI — kept for scripts that expect a form → site helper */
+export async function generateFromForm(
+  input: BusinessFormInput,
+): Promise<GeneratedSite> {
+  return generateSiteWithOpenAI(input);
 }

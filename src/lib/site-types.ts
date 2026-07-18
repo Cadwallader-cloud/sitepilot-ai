@@ -9,7 +9,7 @@ export type SiteImages = {
   gallery: string[];
 };
 
-/** Pure content from AI — design-agnostic (no colors, no image URLs) */
+/** STRICT content schema from OpenAI — design-agnostic */
 export type WebsiteContent = {
   hero: {
     title: string;
@@ -24,32 +24,18 @@ export type WebsiteContent = {
     title: string;
     description: string;
   }[];
-  whyChooseUs: {
-    title: string;
-    items: string[];
-  };
   testimonials: {
-    quote: string;
     name: string;
-    role: string;
+    text: string;
   }[];
   faq: {
     question: string;
     answer: string;
   }[];
-  cta: {
-    title: string;
-    text: string;
-    button: string;
-  };
   contact: {
-    businessName: string;
-    trade: string;
     phone: string;
     email: string;
-    location: string;
-    hours: string;
-    blurb: string;
+    address: string;
   };
   seo: {
     title: string;
@@ -57,16 +43,14 @@ export type WebsiteContent = {
   };
 };
 
-/**
- * Final site object for the renderer:
- * AI content + design assets (theme/images) attached by our code
- */
+/** Renderer model = AI content + businessName + design assets */
 export type GeneratedSite = WebsiteContent & {
+  businessName: string;
   theme: SiteTheme;
   images: SiteImages;
 };
 
-export type GenerateSource = "ai" | "mock";
+export type GenerateSource = "ai";
 
 export type GenerateResult = {
   site: GeneratedSite;
@@ -74,5 +58,5 @@ export type GenerateResult = {
 };
 
 export function getBusinessName(site: GeneratedSite): string {
-  return site.contact.businessName || site.hero.title || "Your Business";
+  return site.businessName || site.seo.title || site.hero.title || "Your Business";
 }

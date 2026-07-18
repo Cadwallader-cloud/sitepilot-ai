@@ -1,51 +1,36 @@
 import type { BusinessFormInput } from "./business-form";
 
-export const WEBSITE_SYSTEM_PROMPT = `You are Crestis, an AI website copywriter for local service businesses.
+export const WEBSITE_SYSTEM_PROMPT = `You generate website CONTENT as STRICT JSON for Crestis.
 
-Return ONLY structured website CONTENT as JSON — never design, colors, fonts, or image URLs.
-
-JSON shape (required):
+Return ONLY this shape (no extra keys, no markdown):
 {
-  "hero": { "title": "...", "subtitle": "...", "cta": "..." },
-  "about": { "title": "...", "text": "..." },
-  "services": [{ "title": "...", "description": "..." }],
-  "whyChooseUs": { "title": "...", "items": ["...", "..."] },
-  "testimonials": [{ "quote": "...", "name": "...", "role": "..." }],
-  "faq": [{ "question": "...", "answer": "..." }],
-  "cta": { "title": "...", "text": "...", "button": "..." },
-  "contact": {
-    "businessName": "...",
-    "trade": "...",
-    "phone": "...",
-    "email": "...",
-    "location": "...",
-    "hours": "...",
-    "blurb": "..."
-  },
-  "seo": { "title": "...", "description": "..." }
+  "hero": { "title": "", "subtitle": "", "cta": "" },
+  "about": { "title": "", "text": "" },
+  "services": [{ "title": "", "description": "" }],
+  "testimonials": [{ "name": "", "text": "" }],
+  "faq": [{ "question": "", "answer": "" }],
+  "contact": { "phone": "", "email": "", "address": "" },
+  "seo": { "title": "", "description": "" }
 }
 
 RULES:
-1. Use EXACT business name, location, phone, email from the user
-2. Real marketing copy only — no placeholders ("Lorem", "Service 1", "TODO")
-3. English only
-4. services: 4–6 items based on the user's service list (title + short description)
-5. testimonials: exactly 3 realistic reviews mentioning the city when natural
-6. faq: exactly 4 useful Q&As
-7. whyChooseUs.items: 3–5 short trust points
-8. seo.title under 60 chars, seo.description under 160 chars
-9. No markdown, no commentary — JSON only`;
+- Use the EXACT business name, location, phone, and email from the user
+- contact.phone and contact.email must match user input exactly
+- contact.address should be the location / service area from the user
+- Real marketing copy only — never placeholders
+- services: 4–6 items based on the user's services list
+- testimonials: exactly 3 realistic reviews (name + text)
+- faq: 3–5 useful Q&As
+- seo.title under 60 characters, seo.description under 160
+- English only`;
 
 export function buildWebsiteUserPrompt(input: BusinessFormInput): string {
   return [
-    "Generate website content JSON for this business:",
-    "",
-    `Business name: ${input.businessName}`,
-    `Location: ${input.location}`,
-    `Services: ${input.services}`,
-    `Phone: ${input.phone}`,
-    `Email: ${input.email}`,
-    "",
-    "Return the nested content schema only (hero, about, services, whyChooseUs, testimonials, faq, cta, contact, seo).",
+    "Generate STRICT website JSON for:",
+    `businessName: ${input.businessName}`,
+    `location: ${input.location}`,
+    `services: ${input.services}`,
+    `phone: ${input.phone}`,
+    `email: ${input.email}`,
   ].join("\n");
 }

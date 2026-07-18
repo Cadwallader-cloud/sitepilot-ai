@@ -1,11 +1,8 @@
 import type { WebsiteContent } from "./site-types";
 
-/**
- * OpenAI Structured Outputs schema — content only, no design.
- * Change the React template freely without changing this contract.
- */
+/** OpenAI Structured Outputs — exact Crestis content contract */
 export const WEBSITE_JSON_SCHEMA = {
-  name: "crestis_website_content",
+  name: "crestis_website",
   strict: true,
   schema: {
     type: "object",
@@ -14,10 +11,8 @@ export const WEBSITE_JSON_SCHEMA = {
       "hero",
       "about",
       "services",
-      "whyChooseUs",
       "testimonials",
       "faq",
-      "cta",
       "contact",
       "seo",
     ],
@@ -55,20 +50,6 @@ export const WEBSITE_JSON_SCHEMA = {
           },
         },
       },
-      whyChooseUs: {
-        type: "object",
-        additionalProperties: false,
-        required: ["title", "items"],
-        properties: {
-          title: { type: "string" },
-          items: {
-            type: "array",
-            minItems: 3,
-            maxItems: 6,
-            items: { type: "string" },
-          },
-        },
-      },
       testimonials: {
         type: "array",
         minItems: 3,
@@ -76,18 +57,17 @@ export const WEBSITE_JSON_SCHEMA = {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["quote", "name", "role"],
+          required: ["name", "text"],
           properties: {
-            quote: { type: "string" },
             name: { type: "string" },
-            role: { type: "string" },
+            text: { type: "string" },
           },
         },
       },
       faq: {
         type: "array",
-        minItems: 4,
-        maxItems: 4,
+        minItems: 3,
+        maxItems: 6,
         items: {
           type: "object",
           additionalProperties: false,
@@ -98,36 +78,14 @@ export const WEBSITE_JSON_SCHEMA = {
           },
         },
       },
-      cta: {
-        type: "object",
-        additionalProperties: false,
-        required: ["title", "text", "button"],
-        properties: {
-          title: { type: "string" },
-          text: { type: "string" },
-          button: { type: "string" },
-        },
-      },
       contact: {
         type: "object",
         additionalProperties: false,
-        required: [
-          "businessName",
-          "trade",
-          "phone",
-          "email",
-          "location",
-          "hours",
-          "blurb",
-        ],
+        required: ["phone", "email", "address"],
         properties: {
-          businessName: { type: "string" },
-          trade: { type: "string" },
           phone: { type: "string" },
           email: { type: "string" },
-          location: { type: "string" },
-          hours: { type: "string" },
-          blurb: { type: "string" },
+          address: { type: "string" },
         },
       },
       seo: {
@@ -157,7 +115,6 @@ function obj(value: unknown, field: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-/** Validate AI JSON into design-agnostic WebsiteContent */
 export function parseWebsiteContent(raw: unknown): WebsiteContent {
   if (!raw || typeof raw !== "object") {
     throw new Error("INVALID_JSON_SHAPE");
@@ -166,8 +123,6 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
   const data = raw as Record<string, unknown>;
   const hero = obj(data.hero, "hero");
   const about = obj(data.about, "about");
-  const why = obj(data.whyChooseUs, "whyChooseUs");
-  const cta = obj(data.cta, "cta");
   const contact = obj(data.contact, "contact");
   const seo = obj(data.seo, "seo");
 
@@ -180,34 +135,6 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
   if (!Array.isArray(data.faq) || data.faq.length < 2) {
     throw new Error("INVALID_FIELD:faq");
   }
-  if (!Array.isArray(why.items) || why.items.length < 3) {
-    throw new Error("INVALID_FIELD:whyChooseUs.items");
-  }
-
-  const services = data.services.map((item, index) => {
-    const s = obj(item, `services[${index}]`);
-    return {
-      title: str(s.title, `services[${index}].title`),
-      description: str(s.description, `services[${index}].description`),
-    };
-  });
-
-  const testimonials = data.testimonials.map((item, index) => {
-    const t = obj(item, `testimonials[${index}]`);
-    return {
-      quote: str(t.quote, `testimonials[${index}].quote`),
-      name: str(t.name, `testimonials[${index}].name`),
-      role: str(t.role, `testimonials[${index}].role`),
-    };
-  });
-
-  const faq = data.faq.map((item, index) => {
-    const f = obj(item, `faq[${index}]`);
-    return {
-      question: str(f.question, `faq[${index}].question`),
-      answer: str(f.answer, `faq[${index}].answer`),
-    };
-  });
 
   return {
     hero: {
@@ -219,28 +146,31 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
       title: str(about.title, "about.title"),
       text: str(about.text, "about.text"),
     },
-    services,
-    whyChooseUs: {
-      title: str(why.title, "whyChooseUs.title"),
-      items: why.items.map((item, i) =>
-        str(item, `whyChooseUs.items[${i}]`),
-      ),
-    },
-    testimonials,
-    faq,
-    cta: {
-      title: str(cta.title, "cta.title"),
-      text: str(cta.text, "cta.text"),
-      button: str(cta.button, "cta.button"),
-    },
+    services: data.services.map((item, i) => {
+      const s = obj(item, `services[${i}]`);
+      return {
+        title: str(s.title, `services[${i}].title`),
+        description: str(s.description, `services[${i}].description`),
+      };
+    }),
+    testimonials: data.testimonials.map((item, i) => {
+      const t = obj(item, `testimonials[${i}]`);
+      return {
+        name: str(t.name, `testimonials[${i}].name`),
+        text: str(t.text, `testimonials[${i}].text`),
+      };
+    }),
+    faq: data.faq.map((item, i) => {
+      const f = obj(item, `faq[${i}]`);
+      return {
+        question: str(f.question, `faq[${i}].question`),
+        answer: str(f.answer, `faq[${i}].answer`),
+      };
+    }),
     contact: {
-      businessName: str(contact.businessName, "contact.businessName"),
-      trade: str(contact.trade, "contact.trade"),
       phone: str(contact.phone, "contact.phone"),
       email: str(contact.email, "contact.email"),
-      location: str(contact.location, "contact.location"),
-      hours: str(contact.hours, "contact.hours"),
-      blurb: str(contact.blurb, "contact.blurb"),
+      address: str(contact.address, "contact.address"),
     },
     seo: {
       title: str(seo.title, "seo.title"),

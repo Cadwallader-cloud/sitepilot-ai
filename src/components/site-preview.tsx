@@ -28,28 +28,19 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
     ? site.images.gallery
     : [site.images.hero];
 
+  /** Trust row uses AI service titles — no hardcoded placeholders */
+  const trustItems = site.services.slice(0, 4).map((s) => s.title);
+
   function patchHero(field: "title" | "subtitle" | "cta", value: string) {
-    onChange?.({
-      ...site,
-      hero: { ...site.hero, [field]: value },
-    });
+    onChange?.({ ...site, hero: { ...site.hero, [field]: value } });
   }
 
-  function patchContact(
-    field: "phone" | "email" | "blurb",
-    value: string,
-  ) {
-    onChange?.({
-      ...site,
-      contact: { ...site.contact, [field]: value },
-    });
+  function patchContact(field: "phone" | "email" | "address", value: string) {
+    onChange?.({ ...site, contact: { ...site.contact, [field]: value } });
   }
 
   function patchAboutText(value: string) {
-    onChange?.({
-      ...site,
-      about: { ...site.about, text: value },
-    });
+    onChange?.({ ...site, about: { ...site.about, text: value } });
   }
 
   return (
@@ -102,7 +93,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
       {editing && onChange && (
         <div className="mb-4 space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-amber-200">
-            Edit content (AI JSON fields)
+            Edit content
           </p>
           {(
             [
@@ -122,6 +113,11 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
                 "contact.email",
                 site.contact.email,
                 (v: string) => patchContact("email", v),
+              ],
+              [
+                "contact.address",
+                site.contact.address,
+                (v: string) => patchContact("address", v),
               ],
             ] as const
           ).map(([label, value, setter]) => (
@@ -146,7 +142,6 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
         </div>
       )}
 
-      {/* Website Renderer — reads structured content JSON */}
       <div
         className={`mx-auto overflow-hidden rounded-2xl border border-surface-border bg-white text-zinc-900 shadow-2xl ${
           viewport === "mobile" ? "max-w-[390px]" : "w-full"
@@ -165,10 +160,10 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
           <header className="flex items-center justify-between px-5 py-4 sm:px-8">
             <div>
               <p className="font-bold" style={{ color: theme.primary }}>
-                {site.contact.businessName}
+                {businessName}
               </p>
               <p className="text-[11px] uppercase tracking-wide text-zinc-500">
-                {site.contact.trade} · {site.contact.location}
+                {site.contact.address}
               </p>
             </div>
             <a
@@ -192,7 +187,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
             <div className="relative z-10 flex min-h-[320px] flex-col justify-end px-5 py-10 text-white sm:min-h-[380px] sm:px-10">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                {site.contact.location}
+                {site.contact.address}
               </p>
               <h2 className="mt-2 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
                 {site.hero.title}
@@ -213,16 +208,18 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          <section className="grid gap-3 border-b border-zinc-100 bg-zinc-50 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
-            {site.whyChooseUs.items.slice(0, 4).map((item) => (
-              <div
-                key={item}
-                className="rounded-xl bg-white px-4 py-3 text-center text-sm font-medium text-zinc-700 shadow-sm"
-              >
-                {item}
-              </div>
-            ))}
-          </section>
+          {trustItems.length > 0 && (
+            <section className="grid gap-3 border-b border-zinc-100 bg-zinc-50 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+              {trustItems.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-xl bg-white px-4 py-3 text-center text-sm font-medium text-zinc-700 shadow-sm"
+                >
+                  {item}
+                </div>
+              ))}
+            </section>
+          )}
 
           <section className="grid gap-8 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:items-center">
             <div>
@@ -232,7 +229,6 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
               <p className="mt-4 text-sm leading-relaxed text-zinc-600">
                 {site.about.text}
               </p>
-              <p className="mt-4 text-sm text-zinc-500">{site.contact.hours}</p>
             </div>
             <div className="relative h-56 overflow-hidden rounded-2xl sm:h-64">
               <Image
@@ -248,7 +244,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
           <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
             <h3 className="text-2xl font-bold text-zinc-900">Services</h3>
             <p className="mt-2 text-sm text-zinc-600">
-              Professional services across {site.contact.location}
+              Professional services across {site.contact.address}
             </p>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {site.services.map((service) => (
@@ -290,46 +286,47 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
-            <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              {site.testimonials.slice(0, 3).map((t) => (
-                <blockquote
-                  key={`${t.name}-${t.quote.slice(0, 16)}`}
-                  className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm"
-                >
-                  <p className="text-sm leading-relaxed text-zinc-700">
-                    “{t.quote}”
-                  </p>
-                  <footer className="mt-4 text-xs font-semibold text-zinc-900">
-                    {t.name}
-                    <span className="block font-normal text-zinc-500">
-                      {t.role}
-                    </span>
-                  </footer>
-                </blockquote>
-              ))}
-            </div>
-          </section>
+          {site.testimonials.length > 0 && (
+            <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
+              <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                {site.testimonials.map((t) => (
+                  <blockquote
+                    key={`${t.name}-${t.text.slice(0, 16)}`}
+                    className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm"
+                  >
+                    <p className="text-sm leading-relaxed text-zinc-700">
+                      “{t.text}”
+                    </p>
+                    <footer className="mt-4 text-xs font-semibold text-zinc-900">
+                      {t.name}
+                    </footer>
+                  </blockquote>
+                ))}
+              </div>
+            </section>
+          )}
 
-          <section className="px-5 py-12 sm:px-8">
-            <h3 className="text-2xl font-bold text-zinc-900">FAQ</h3>
-            <div className="mt-6 space-y-3">
-              {site.faq.map((item) => (
-                <details
-                  key={item.question}
-                  className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
-                >
-                  <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900">
-                    {item.question}
-                  </summary>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-                    {item.answer}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
+          {site.faq.length > 0 && (
+            <section className="px-5 py-12 sm:px-8">
+              <h3 className="text-2xl font-bold text-zinc-900">FAQ</h3>
+              <div className="mt-6 space-y-3">
+                {site.faq.map((item) => (
+                  <details
+                    key={item.question}
+                    className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
+                  >
+                    <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900">
+                      {item.question}
+                    </summary>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                      {item.answer}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section
             className="px-5 py-14 text-center text-white sm:px-8"
@@ -337,30 +334,26 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
             }}
           >
-            <h3 className="text-2xl font-bold sm:text-3xl">{site.cta.title}</h3>
+            <h3 className="text-2xl font-bold sm:text-3xl">{site.hero.cta}</h3>
             <p className="mx-auto mt-3 max-w-md text-sm opacity-90">
-              {site.cta.text}
+              {site.seo.description}
             </p>
             <div className="mt-6 space-y-1">
               <p className="text-2xl font-bold">{site.contact.phone}</p>
               <p className="text-sm opacity-90">{site.contact.email}</p>
-              <p className="text-sm opacity-80">
-                Serving {site.contact.location}
-              </p>
-              <p className="text-sm opacity-80">{site.contact.blurb}</p>
+              <p className="text-sm opacity-80">{site.contact.address}</p>
             </div>
             <button
               type="button"
               className="mt-6 rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
               style={{ color: theme.primary }}
             >
-              {site.cta.button}
+              {site.hero.cta}
             </button>
           </section>
 
           <footer className="px-5 py-4 text-center text-[11px] text-zinc-400">
-            © {new Date().getFullYear()} {site.contact.businessName}. Preview by{" "}
-            {brand.name}.
+            © {new Date().getFullYear()} {businessName}. Preview by {brand.name}.
           </footer>
         </div>
       </div>

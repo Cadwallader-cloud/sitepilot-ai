@@ -66,7 +66,7 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
       }
 
       setSite(data.site);
-      setSource(data.source ?? "mock");
+      setSource("ai");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSite(null);
@@ -142,11 +142,6 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
               {source === "ai" && (
                 <span className="rounded-full bg-brand/20 px-3 py-1 text-xs font-medium text-brand-light">
                   AI generated
-                </span>
-              )}
-              {source === "mock" && !loading && (
-                <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
-                  Template fallback
                 </span>
               )}
             </div>

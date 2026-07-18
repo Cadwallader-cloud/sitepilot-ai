@@ -2,20 +2,61 @@ import { auth } from "@/auth";
 import type { BusinessFormInput } from "@/lib/business-form";
 import { generateFromForm } from "@/lib/generate-from-form";
 import { formInputToPrompt } from "@/lib/form-to-prompt";
+import { generateSiteFromPrompt } from "@/lib/generate-site";
 import { generateSiteWithOpenAI } from "@/lib/generate-site-ai";
 import type { GenerateResult } from "@/lib/site-types";
 import { NextResponse } from "next/server";
 
-function isBusinessInput(body: unknown): body is BusinessFormInput {
-  if (!body || typeof body !== "object") return false;
-  const b = body as Record<string, unknown>;
-  return (
-    typeof b.businessName === "string" &&
-    typeof b.location === "string" &&
-    typeof b.services === "string" &&
-    typeof b.phone === "string" &&
-    typeof b.email === "string"
-  );
+function slugEmail(name: string) {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "") || "business";
+  return `hello@${slug}.com`;
+}
+
+/** Accept new form, old form (type/description), or legacy { prompt } */
+function parseInput(body: Record<string, unknown>): BusinessFormInput | null {
+  // Legacy: { prompt: "..." }
+  if (typeof body.prompt === "string" && body.prompt.trim()) {
+    const prompt = body.prompt.trim();
+    const nameMatch = prompt.match(/^([^—–\n]+)/);
+    const name = nameMatch?.[1]?.replace(/Business name:\s*/i, "").trim() || "Your Business";
+    const locationMatch =
+      prompt.match(/Location:\s*(.+)/i) ||
+      prompt.match(/\bin ([A-Z][A-Za-z\s]+)/);
+    const servicesMatch = prompt.match(/Services:\s*(.+)/i);
+    const phoneMatch = prompt.match(/Phone:\s*(.+)/i);
+    const emailMatch = prompt.match(/Email:\s*(.+)/i);
+
+    return {
+      businessName: name.split("—")[0].trim() || name,
+      location: locationMatch?.[1]?.trim().split(/[.\n]/)[0] || "Local area",
+      services:
+        servicesMatch?.[1]?.trim().split(/[.\n]/)[0] ||
+        "General services, free estimates",
+      phone: phoneMatch?.[1]?.trim().split(/[.\n]/)[0] || "(555) 000-0000",
+      email: emailMatch?.[1]?.trim().split(/[.\n]/)[0] || slugEmail(name),
+    };
+  }
+
+  const businessName =
+    typeof body.businessName === "string" ? body.businessName.trim() : "";
+  const location =
+    typeof body.location === "string" ? body.location.trim() : "";
+  const services =
+    typeof body.services === "string" ? body.services.trim() : "";
+
+  if (!businessName || !location || !services) return null;
+
+  const phone =
+    typeof body.phone === "string" && body.phone.trim()
+      ? body.phone.trim()
+      : "(555) 000-0000";
+
+  const email =
+    typeof body.email === "string" && body.email.trim()
+      ? body.email.trim()
+      : slugEmail(businessName);
+
+  return { businessName, location, services, phone, email };
 }
 
 export async function POST(request: Request) {
@@ -31,35 +72,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
+    const input = parseInput(body);
 
-    if (!isBusinessInput(body)) {
+    if (!input) {
       return NextResponse.json(
         {
-          error:
-            "businessName, location, services, phone, and email are required",
+          error: "Business name, location, and services are required",
         },
-        { status: 400 },
-      );
-    }
-
-    const input: BusinessFormInput = {
-      businessName: body.businessName.trim(),
-      location: body.location.trim(),
-      services: body.services.trim(),
-      phone: body.phone.trim(),
-      email: body.email.trim(),
-    };
-
-    if (
-      !input.businessName ||
-      !input.location ||
-      !input.services ||
-      !input.phone ||
-      !input.email
-    ) {
-      return NextResponse.json(
-        { error: "All fields are required" },
         { status: 400 },
       );
     }
@@ -106,8 +126,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // Structured fallback — still a full website, not empty placeholders
-      result = { site: generateFromForm(input), source: "mock" };
+      result = {
+        site:
+          typeof body.prompt === "string"
+            ? generateSiteFromPrompt(String(body.prompt))
+            : generateFromForm(input),
+        source: "mock",
+      };
     }
 
     return NextResponse.json(result);

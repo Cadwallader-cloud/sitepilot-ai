@@ -114,13 +114,24 @@ export function getTradeTheme(tradeKey: TradeKey) {
   return TRADE_THEMES[tradeKey];
 }
 
-export function attachTradeAssets(
+export async function attachTradeAssets(
   tradeHint: string,
   existing?: { hero?: string; gallery?: string[] },
 ) {
   const key = detectTrade(tradeHint);
-  const images = getTradeImages(key);
   const theme = getTradeTheme(key);
+  const local = getTradeImages(key);
+
+  // Prefer stock API photos (Unsplash / Pexels); keep local demos as last resort
+  let stock: { hero: string; gallery: string[] } | null = null;
+  try {
+    const { fetchTradeStockPhotos } = await import("./stock-photos");
+    stock = await fetchTradeStockPhotos(key);
+  } catch (error) {
+    console.warn("Stock photo lookup failed, using local demos:", error);
+  }
+
+  const images = stock ?? local;
 
   return {
     tradeKey: key,

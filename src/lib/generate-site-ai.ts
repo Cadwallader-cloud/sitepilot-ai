@@ -17,10 +17,10 @@ export function getOpenAIClient() {
   return client;
 }
 
-function toGeneratedSite(
+async function toGeneratedSite(
   content: WebsiteContent,
   input: BusinessFormInput,
-): GeneratedSite {
+): Promise<GeneratedSite> {
   const hint = [
     input.businessName,
     input.location,
@@ -28,7 +28,7 @@ function toGeneratedSite(
     ...content.services.map((s) => s.title),
   ].join(" ");
 
-  const assets = attachTradeAssets(hint);
+  const assets = await attachTradeAssets(hint);
 
   return {
     ...content,
@@ -98,5 +98,5 @@ export async function generateSiteWithOpenAI(
     ...t,
     demo: true,
   }));
-  return toGeneratedSite(content, input);
+  return await toGeneratedSite(content, input);
 }

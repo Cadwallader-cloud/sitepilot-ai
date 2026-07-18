@@ -23,7 +23,11 @@ Return ONLY valid JSON in this exact shape (no markdown, no commentary):
   "testimonials": [{ "name": "", "text": "" }],
   "faq": [{ "question": "", "answer": "" }],
   "contact": { "phone": "", "email": "", "address": "" },
-  "seo": { "title": "", "description": "" }
+  "seo": {
+    "title": "",
+    "description": "",
+    "keywords": ["...", "..."]
+  }
 }
 
 JSON field rules:
@@ -33,7 +37,8 @@ JSON field rules:
 - services: 4–6 items based on the user's services (title + short description)
 - testimonials: exactly 3 realistic local reviews (name + text)
 - faq: 3–5 useful customer questions and clear answers
-- seo.title under 60 characters, seo.description under 160 characters`;
+- seo.title under 60 characters, seo.description under 160 characters
+- seo.keywords: 5–10 local search phrases (include city + services)`;
 
 export function buildWebsiteUserPrompt(input: BusinessFormInput): string {
   return [

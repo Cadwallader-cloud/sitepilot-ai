@@ -40,6 +40,7 @@ export type WebsiteContent = {
   seo: {
     title: string;
     description: string;
+    keywords: string[];
   };
 };
 

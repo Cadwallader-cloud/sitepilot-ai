@@ -91,10 +91,16 @@ export const WEBSITE_JSON_SCHEMA = {
       seo: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "description"],
+        required: ["title", "description", "keywords"],
         properties: {
           title: { type: "string" },
           description: { type: "string" },
+          keywords: {
+            type: "array",
+            minItems: 3,
+            maxItems: 12,
+            items: { type: "string" },
+          },
         },
       },
     },
@@ -134,6 +140,9 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
   }
   if (!Array.isArray(data.faq) || data.faq.length < 2) {
     throw new Error("INVALID_FIELD:faq");
+  }
+  if (!Array.isArray(seo.keywords) || seo.keywords.length < 3) {
+    throw new Error("INVALID_FIELD:seo.keywords");
   }
 
   return {
@@ -175,6 +184,9 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
     seo: {
       title: str(seo.title, "seo.title"),
       description: str(seo.description, "seo.description"),
+      keywords: seo.keywords.map((item, i) =>
+        str(item, `seo.keywords[${i}]`),
+      ),
     },
   };
 }

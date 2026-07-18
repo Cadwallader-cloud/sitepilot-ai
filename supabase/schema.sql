@@ -7,6 +7,8 @@ create table if not exists public.projects (
   business_name text not null,
   input jsonb not null,
   site jsonb not null,
+  slug text,
+  published_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -16,6 +18,10 @@ create index if not exists projects_user_email_idx
 
 create index if not exists projects_updated_at_idx
   on public.projects (updated_at desc);
+
+create unique index if not exists projects_slug_unique
+  on public.projects (slug)
+  where slug is not null;
 
 alter table public.projects enable row level security;
 

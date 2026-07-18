@@ -5,11 +5,7 @@ import { BusinessForm } from "@/components/business-form";
 import { PublishCTA } from "@/components/publish-cta";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
-import {
-  getBusinessName,
-  type GeneratedSite,
-  type GenerateSource,
-} from "@/lib/site-types";
+import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -294,7 +290,14 @@ export function FormBuilder({
                     ↻ Regenerate with AI
                   </button>
                 )}
-                <PublishCTA businessName={getBusinessName(site)} />
+                <PublishCTA
+                  site={site}
+                  projectId={projectId}
+                  input={lastInput}
+                  onPublished={({ projectId: id }) => {
+                    setProjectId(id);
+                  }}
+                />
               </>
             ) : (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">

@@ -2,6 +2,7 @@ export type TradeKey =
   | "roofing"
   | "plumbing"
   | "electrician"
+  | "lawyer"
   | "landscaping"
   | "construction"
   | "general";
@@ -35,6 +36,14 @@ const TRADE_IMAGES: Record<
       "/demos/construction.jpg",
     ],
   },
+  lawyer: {
+    hero: "/demos/construction.jpg",
+    gallery: [
+      "/demos/construction.jpg",
+      "/demos/roofing.jpg",
+      "/demos/electrician.jpg",
+    ],
+  },
   landscaping: {
     hero: "/demos/landscaping.jpg",
     gallery: [
@@ -61,13 +70,19 @@ const TRADE_IMAGES: Record<
   },
 };
 
+/** Niche → brand colors (applied at generate time, not from AI) */
 const TRADE_THEMES: Record<
   TradeKey,
   { primary: string; accent: string; style: "bold" | "clean" | "professional" }
 > = {
-  roofing: { primary: "#c2410c", accent: "#ea580c", style: "bold" },
-  plumbing: { primary: "#0369a1", accent: "#0ea5e9", style: "professional" },
-  electrician: { primary: "#0f172a", accent: "#0ea5e9", style: "bold" },
+  // Roofing → Dark Blue
+  roofing: { primary: "#1e3a5f", accent: "#2563eb", style: "bold" },
+  // Plumber → Teal
+  plumbing: { primary: "#0f766e", accent: "#14b8a6", style: "professional" },
+  // Electrician → Orange
+  electrician: { primary: "#c2410c", accent: "#f97316", style: "bold" },
+  // Lawyer → Dark Gray
+  lawyer: { primary: "#1f2937", accent: "#6b7280", style: "professional" },
   landscaping: { primary: "#15803d", accent: "#22c55e", style: "clean" },
   construction: { primary: "#a16207", accent: "#eab308", style: "bold" },
   general: { primary: "#1e40af", accent: "#3b82f6", style: "professional" },
@@ -81,6 +96,8 @@ export function detectTrade(text: string): TradeKey {
     return "plumbing";
   if (/electric|wiring|panel|ev charger|socket|lighting|volt/.test(t))
     return "electrician";
+  if (/lawyer|attorney|legal|law firm|solicitor|barrister|litigation/.test(t))
+    return "lawyer";
   if (/landscape|garden|lawn|tree|hedge|patio|outdoor/.test(t))
     return "landscaping";
   if (/build|construct|renovat|remodel|carpenter|builder|extension/.test(t))

@@ -37,8 +37,8 @@ export const showcaseImages = {
     hero: "/demos/plumbing.jpg",
     gallery: [
       "/demos/plumbing.jpg",
-      "https://images.unsplash.com/photo-1585704032915-338380ab187a?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1504328345606-25bbc9c84509?auto=format&fit=crop&w=800&q=80",
+      "/demos/plumbing-bathroom.jpg",
+      "/demos/plumbing-heater.jpg",
     ],
     team: "/demos/plumbing.jpg",
   },

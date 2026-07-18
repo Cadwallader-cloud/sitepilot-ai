@@ -96,12 +96,12 @@ export function PlumbingShowcase() {
             caption: "Emergency pipe repair — Miami Beach",
           },
           {
-            src: "https://images.unsplash.com/photo-1585704032915-338380ab187a?w=800&q=80",
+            src: showcaseImages.plumbing.gallery[1],
             alt: "Bathroom plumbing",
             caption: "Bathroom remodel — Coral Gables",
           },
           {
-            src: "https://images.unsplash.com/photo-1504328345606-25bbc9c84509?w=800&q=80",
+            src: showcaseImages.plumbing.gallery[2],
             alt: "Water heater install",
             caption: "Tankless water heater — Brickell",
           },

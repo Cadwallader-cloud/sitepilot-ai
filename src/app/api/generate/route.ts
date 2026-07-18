@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import type { BusinessFormInput } from "@/lib/business-form";
+import { GenerateError, mapOpenAiError } from "@/lib/generate-errors";
 import { generateFromForm } from "@/lib/generate-from-form";
-import { formInputToPrompt } from "@/lib/form-to-prompt";
-import { generateSiteFromPrompt } from "@/lib/generate-site";
 import { generateSiteWithOpenAI } from "@/lib/generate-site-ai";
 import type { GenerateResult } from "@/lib/site-types";
 import { NextResponse } from "next/server";
@@ -12,29 +11,36 @@ function slugEmail(name: string) {
   return `hello@${slug}.com`;
 }
 
-/** Accept new form, old form (type/description), or legacy { prompt } */
-function parseInput(body: Record<string, unknown>): BusinessFormInput | null {
-  // Legacy: { prompt: "..." }
+/**
+ * Parse business info from request body.
+ * Supports structured form fields and legacy { prompt }.
+ */
+function parseBusinessInput(
+  body: Record<string, unknown>,
+): BusinessFormInput | null {
   if (typeof body.prompt === "string" && body.prompt.trim()) {
     const prompt = body.prompt.trim();
-    const nameMatch = prompt.match(/^([^—–\n]+)/);
-    const name = nameMatch?.[1]?.replace(/Business name:\s*/i, "").trim() || "Your Business";
-    const locationMatch =
-      prompt.match(/Location:\s*(.+)/i) ||
-      prompt.match(/\bin ([A-Z][A-Za-z\s]+)/);
+    const nameMatch = prompt.match(/Business name:\s*(.+)/i);
+    const locationMatch = prompt.match(/Location:\s*(.+)/i);
     const servicesMatch = prompt.match(/Services:\s*(.+)/i);
     const phoneMatch = prompt.match(/Phone:\s*(.+)/i);
     const emailMatch = prompt.match(/Email:\s*(.+)/i);
 
-    return {
-      businessName: name.split("—")[0].trim() || name,
-      location: locationMatch?.[1]?.trim().split(/[.\n]/)[0] || "Local area",
-      services:
-        servicesMatch?.[1]?.trim().split(/[.\n]/)[0] ||
-        "General services, free estimates",
-      phone: phoneMatch?.[1]?.trim().split(/[.\n]/)[0] || "(555) 000-0000",
-      email: emailMatch?.[1]?.trim().split(/[.\n]/)[0] || slugEmail(name),
-    };
+    const businessName =
+      nameMatch?.[1]?.trim().split("\n")[0] ||
+      prompt.split(/[—–\n]/)[0]?.trim() ||
+      "Your Business";
+    const location =
+      locationMatch?.[1]?.trim().split("\n")[0] || "Local area";
+    const services =
+      servicesMatch?.[1]?.trim().split("\n")[0] ||
+      "General services, free estimates";
+    const phone =
+      phoneMatch?.[1]?.trim().split("\n")[0] || "(555) 000-0000";
+    const email =
+      emailMatch?.[1]?.trim().split("\n")[0] || slugEmail(businessName);
+
+    return { businessName, location, services, phone, email };
   }
 
   const businessName =
@@ -46,100 +52,101 @@ function parseInput(body: Record<string, unknown>): BusinessFormInput | null {
 
   if (!businessName || !location || !services) return null;
 
-  const phone =
-    typeof body.phone === "string" && body.phone.trim()
-      ? body.phone.trim()
-      : "(555) 000-0000";
-
-  const email =
-    typeof body.email === "string" && body.email.trim()
-      ? body.email.trim()
-      : slugEmail(businessName);
-
-  return { businessName, location, services, phone, email };
+  return {
+    businessName,
+    location,
+    services,
+    phone:
+      typeof body.phone === "string" && body.phone.trim()
+        ? body.phone.trim()
+        : "(555) 000-0000",
+    email:
+      typeof body.email === "string" && body.email.trim()
+        ? body.email.trim()
+        : slugEmail(businessName),
+  };
 }
 
+/**
+ * POST /api/generate
+ *
+ * Business info → OpenAI API → Structured JSON → Website
+ */
 export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        {
-          error: "Sign in with Google to generate your website",
-          code: "UNAUTHORIZED",
-        },
-        { status: 401 },
+      throw new GenerateError(
+        "UNAUTHORIZED",
+        "Sign in with Google to generate your website",
+        401,
       );
     }
 
-    const body = (await request.json()) as Record<string, unknown>;
-    const input = parseInput(body);
-
-    if (!input) {
-      return NextResponse.json(
-        {
-          error: "Business name, location, and services are required",
-        },
-        { status: 400 },
-      );
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error: "OpenAI API key not configured",
-          code: "MISSING_API_KEY",
-        },
-        { status: 503 },
-      );
-    }
-
-    const prompt = formInputToPrompt(input);
-    let result: GenerateResult;
-
+    let body: Record<string, unknown>;
     try {
-      const site = await generateSiteWithOpenAI(prompt, input);
-      result = { site, source: "ai" };
-    } catch (error) {
-      console.error("OpenAI generation failed:", error);
-      const message =
-        error instanceof Error ? error.message : "OpenAI request failed";
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      throw new GenerateError(
+        "VALIDATION_ERROR",
+        "Invalid JSON body",
+        400,
+      );
+    }
 
-      if (message.includes("401") || message.includes("Incorrect API key")) {
-        return NextResponse.json(
-          {
-            error: "Invalid OpenAI API key",
-            code: "INVALID_API_KEY",
-          },
-          { status: 401 },
-        );
+    const input = parseBusinessInput(body);
+    if (!input) {
+      throw new GenerateError(
+        "VALIDATION_ERROR",
+        "Business name, location, and services are required",
+        400,
+      );
+    }
+
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      throw new GenerateError(
+        "MISSING_API_KEY",
+        "OpenAI API key not configured",
+        503,
+      );
+    }
+
+    // Primary path: OpenAI structured JSON → website
+    try {
+      const site = await generateSiteWithOpenAI(input);
+      const result: GenerateResult = { site, source: "ai" };
+      return NextResponse.json(result);
+    } catch (openaiError) {
+      console.error("OpenAI generation failed:", openaiError);
+      const mapped = mapOpenAiError(openaiError);
+
+      // Hard failures (auth / quota) — don't silently fall back
+      if (
+        mapped.code === "INVALID_API_KEY" ||
+        mapped.code === "QUOTA_EXCEEDED"
+      ) {
+        throw mapped;
       }
 
-      if (message.includes("429") || message.includes("quota")) {
-        return NextResponse.json(
-          {
-            error: "OpenAI quota exceeded",
-            code: "QUOTA_EXCEEDED",
-          },
-          { status: 429 },
-        );
-      }
-
-      result = {
-        site:
-          typeof body.prompt === "string"
-            ? generateSiteFromPrompt(String(body.prompt))
-            : generateFromForm(input),
+      // Soft failure — still return a full website from structured template
+      console.warn("Falling back to template generator");
+      const result: GenerateResult = {
+        site: generateFromForm(input),
         source: "mock",
       };
+      return NextResponse.json(result);
+    }
+  } catch (error) {
+    if (error instanceof GenerateError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status },
+      );
     }
 
-    return NextResponse.json(result);
-  } catch (error) {
     console.error("Generate API error:", error);
     return NextResponse.json(
-      { error: "Failed to generate site" },
+      { error: "Failed to generate site", code: "SERVER_ERROR" },
       { status: 500 },
     );
   }

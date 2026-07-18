@@ -14,8 +14,13 @@ export function Hero() {
       />
 
       <div className="mx-auto max-w-4xl text-center">
-        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-sm text-brand-light">
-          {brand.name} · {brand.tagline}
+        <p className="mb-4 inline-flex flex-col items-center gap-1">
+          <span className="text-sm font-bold uppercase tracking-[0.28em] text-brand-light">
+            {brand.name}
+          </span>
+          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted">
+            {brand.tagline}
+          </span>
         </p>
 
         <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">

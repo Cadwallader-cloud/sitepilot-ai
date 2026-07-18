@@ -1,5 +1,5 @@
 export const brand = {
-  name: "Crestis",
+  name: "CRESTIS",
   tagline: "AI Website Builder",
   domain: "crestis.app",
   cta: "Start Free",

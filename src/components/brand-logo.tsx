@@ -13,20 +13,18 @@ export function BrandLogo({
   className = "",
 }: BrandLogoProps) {
   return (
-    <Link href={href} className={`flex items-center gap-2.5 ${className}`}>
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-lg shadow-brand/30">
-        C
+    <Link
+      href={href}
+      className={`group inline-flex flex-col justify-center leading-none ${className}`}
+    >
+      <span className="text-xl font-bold uppercase tracking-[0.22em] text-foreground transition group-hover:text-brand-light">
+        {brand.name}
       </span>
-      <span className="leading-tight">
-        <span className="block text-lg font-semibold tracking-tight">
-          {brand.name}
+      {showTagline && (
+        <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
+          {brand.tagline}
         </span>
-        {showTagline && (
-          <span className="block text-xs font-normal text-muted">
-            {brand.tagline}
-          </span>
-        )}
-      </span>
+      )}
     </Link>
   );
 }

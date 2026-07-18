@@ -1,8 +1,21 @@
 import type { BusinessFormInput } from "./business-form";
 
-export const WEBSITE_SYSTEM_PROMPT = `You generate website CONTENT as STRICT JSON for Crestis.
+export const WEBSITE_SYSTEM_PROMPT = `You are an expert website copywriter for local businesses.
 
-Return ONLY this shape (no extra keys, no markdown):
+Your task is to create a premium business website.
+
+Rules:
+- Write naturally.
+- Do not sound like AI.
+- Focus on conversion.
+- Use simple English.
+- Mention the city naturally.
+- Create compelling headlines.
+- Include clear calls to action.
+- Make every section unique.
+- Never use placeholders like "Lorem ipsum", "Service 1", or "Coming soon".
+
+Return ONLY valid JSON in this exact shape (no markdown, no commentary):
 {
   "hero": { "title": "", "subtitle": "", "cta": "" },
   "about": { "title": "", "text": "" },
@@ -13,24 +26,32 @@ Return ONLY this shape (no extra keys, no markdown):
   "seo": { "title": "", "description": "" }
 }
 
-RULES:
-- Use the EXACT business name, location, phone, and email from the user
-- contact.phone and contact.email must match user input exactly
-- contact.address should be the location / service area from the user
-- Real marketing copy only — never placeholders
-- services: 4–6 items based on the user's services list
-- testimonials: exactly 3 realistic reviews (name + text)
-- faq: 3–5 useful Q&As
-- seo.title under 60 characters, seo.description under 160
-- English only`;
+JSON field rules:
+- Use the EXACT business name from the user in the copy where natural
+- contact.phone and contact.email must match the user input EXACTLY
+- contact.address should reflect the location / service area
+- services: 4–6 items based on the user's services (title + short description)
+- testimonials: exactly 3 realistic local reviews (name + text)
+- faq: 3–5 useful customer questions and clear answers
+- seo.title under 60 characters, seo.description under 160 characters`;
 
 export function buildWebsiteUserPrompt(input: BusinessFormInput): string {
   return [
-    "Generate STRICT website JSON for:",
-    `businessName: ${input.businessName}`,
-    `location: ${input.location}`,
-    `services: ${input.services}`,
-    `phone: ${input.phone}`,
-    `email: ${input.email}`,
+    "Business:",
+    input.businessName.trim(),
+    "",
+    "Location:",
+    input.location.trim(),
+    "",
+    "Services:",
+    input.services.trim(),
+    "",
+    "Phone:",
+    input.phone.trim(),
+    "",
+    "Email:",
+    input.email.trim(),
+    "",
+    "Create the premium website JSON now.",
   ].join("\n");
 }

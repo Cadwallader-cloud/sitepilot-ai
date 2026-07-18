@@ -14,34 +14,48 @@ export function getOpenAIClient() {
   return client;
 }
 
-const SYSTEM_PROMPT = `You are Crestis, an AI website builder. Generate UNIQUE website content for a local business.
+const SYSTEM_PROMPT = `You are Crestis, an AI website builder for local businesses.
 
-CRITICAL — every response must be different:
-- Use the EXACT business name, city, and trade from the user's prompt
-- Write specific services (not generic lists) — mention numbers, years, certifications when plausible
-- Section titles must fit the trade (e.g. "Emergency Services" for plumbers, "Our Projects" for builders)
-- Never reuse generic phrases like "quality service and attention to detail"
-- Phone number should match the city area code if location is given
+Generate a COMPLETE website content pack — not a thin outline. The user will preview a full landing page from this JSON.
 
-Return JSON only:
+RULES:
+- Use the EXACT business name, city, trade, phone, and services from the user
+- Write specific, local, trustworthy copy (no filler like "quality service and attention to detail")
+- Services must match what the user listed (expand slightly with benefit-focused wording)
+- Testimonials must feel realistic for that trade and city
+- Colors must fit the trade (roofing = warm/orange, plumbing = blue, landscaping = green, electrician = dark/sky, construction = yellow/charcoal)
+- All content in English
+
+Return JSON only with this shape:
 {
-  "title": "business name",
-  "tagline": "unique subtitle under 120 chars — mention location or specialty",
-  "trade": "e.g. Plumber, Electrician, Roofer",
-  "location": "city/area from prompt",
-  "phone": "realistic phone e.g. (312) 555-0142",
-  "cta": "2-4 word button label",
+  "title": "Business Name",
+  "tagline": "Compelling subtitle under 120 chars mentioning location or specialty",
+  "trade": "Trade type",
+  "location": "City / area",
+  "phone": "Phone if provided, else plausible local number",
+  "email": "realistic contact email e.g. hello@business.com",
+  "hours": "e.g. Mon–Sat 7am–7pm · Emergency 24/7",
+  "cta": "2-4 word CTA button",
+  "about": "2-3 sentences about the company — local, specific, credible",
+  "services": ["4-6 short service names"],
+  "highlights": ["3 short trust bullets e.g. Licensed & insured"],
+  "testimonials": [
+    { "quote": "1-2 sentences", "name": "First Last.", "role": "Homeowner, City" },
+    { "quote": "1-2 sentences", "name": "First Last.", "role": "Business owner" }
+  ],
   "theme": {
-    "primary": "#hex — main brand color fitting the trade",
-    "accent": "#hex — secondary color",
+    "primary": "#hex",
+    "accent": "#hex",
     "style": "bold" | "clean" | "professional"
   },
   "sections": [
-    { "id": "kebab-case", "title": "unique section name", "body": "2-3 specific sentences with details" }
+    { "id": "services", "title": "Our services", "body": "Short intro", "items": ["service 1", "service 2"] },
+    { "id": "why-us", "title": "Why choose us", "body": "2 sentences" },
+    { "id": "service-area", "title": "Service area", "body": "Cities/areas served" }
   ]
 }
 
-Include exactly 3 sections. All content in English.`;
+Include exactly 3 sections. Always include services, highlights, testimonials, about, hours, email.`;
 
 function isValidSite(data: unknown): data is GeneratedSite {
   if (!data || typeof data !== "object") return false;
@@ -63,6 +77,31 @@ function isValidSite(data: unknown): data is GeneratedSite {
   );
 }
 
+function normalizeSite(site: GeneratedSite): GeneratedSite {
+  const servicesFromSections = site.sections.find((s) => s.items?.length)?.items;
+
+  return {
+    ...site,
+    services:
+      site.services?.length
+        ? site.services
+        : servicesFromSections?.length
+          ? servicesFromSections
+          : undefined,
+    testimonials: Array.isArray(site.testimonials)
+      ? site.testimonials.filter(
+          (t) =>
+            typeof t?.quote === "string" &&
+            typeof t?.name === "string" &&
+            typeof t?.role === "string",
+        )
+      : undefined,
+    highlights: Array.isArray(site.highlights)
+      ? site.highlights.filter((h) => typeof h === "string")
+      : undefined,
+  };
+}
+
 export async function generateSiteWithOpenAI(
   prompt: string,
 ): Promise<GeneratedSite> {
@@ -80,10 +119,10 @@ export async function generateSiteWithOpenAI(
       { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Create a unique contractor website for:\n${prompt}\n\nMake it specific to this business only. Do not use generic template text.`,
+        content: `Build a complete local business website for:\n${prompt}\n\nMake every line specific to this business. No generic template filler.`,
       },
     ],
-    temperature: 0.95,
+    temperature: 0.9,
   });
 
   const content = response.choices[0]?.message?.content;
@@ -96,5 +135,5 @@ export async function generateSiteWithOpenAI(
     throw new Error("OpenAI returned an invalid site structure");
   }
 
-  return parsed;
+  return normalizeSite(parsed);
 }

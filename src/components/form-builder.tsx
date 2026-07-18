@@ -10,7 +10,7 @@ import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-const funnelSteps = ["Sign in", "Generate", "Preview", "Publish"];
+const funnelSteps = ["Sign in", "Generate", "Preview"];
 
 type FormBuilderProps = {
   loadExample?: boolean;
@@ -126,13 +126,14 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
             <BusinessForm
               onSubmit={runGeneration}
               initial={loadExample ? exampleFormInput : undefined}
+              loading={loading}
             />
           </div>
 
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
-                Website preview
+                Full website preview
               </h2>
               {source === "ai" && (
                 <span className="rounded-full bg-brand/20 px-3 py-1 text-xs font-medium text-brand-light">

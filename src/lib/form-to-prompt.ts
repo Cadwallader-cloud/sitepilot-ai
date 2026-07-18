@@ -6,11 +6,18 @@ export function formInputToPrompt(input: BusinessFormInput): string {
   const location = input.location.trim();
   const services = input.services.trim();
   const phone = input.phone.trim();
+  const description = input.description.trim();
 
-  return [
+  const parts = [
     `${name} — a ${type} in ${location}.`,
     `Services: ${services}.`,
-    `Phone: ${phone}.`,
-    "Create a professional local business website.",
-  ].join(" ");
+  ];
+
+  if (phone) parts.push(`Phone: ${phone}.`);
+  if (description) parts.push(`About the business: ${description}`);
+  parts.push(
+    "Create a complete professional local business website ready for customers.",
+  );
+
+  return parts.join(" ");
 }

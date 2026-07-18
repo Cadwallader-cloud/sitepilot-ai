@@ -4,6 +4,7 @@ export type BusinessFormInput = {
   location: string;
   services: string;
   phone: string;
+  description: string;
 };
 
 export const exampleFormInput: BusinessFormInput = {
@@ -12,4 +13,6 @@ export const exampleFormInput: BusinessFormInput = {
   location: "London",
   services: "Roof replacement, gutters, emergency repairs",
   phone: "+44 20 7946 0958",
+  description:
+    "Family-run roofing company specializing in storm damage, slate and tile roofs, and same-week emergency call-outs across Greater London.",
 };

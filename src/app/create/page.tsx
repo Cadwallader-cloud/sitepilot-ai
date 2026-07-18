@@ -25,9 +25,11 @@ export default async function CreatePage({ searchParams }: CreatePageProps) {
 
       <main className="mx-auto max-w-6xl px-6 py-12">
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold md:text-4xl">Build your website</h1>
+          <h1 className="text-3xl font-bold md:text-4xl">
+            Generate your website
+          </h1>
           <p className="mt-3 text-muted">
-            Sign in with Google, fill in your details — AI generates your site
+            Describe your business — get a full free preview in under a minute
           </p>
         </div>
 

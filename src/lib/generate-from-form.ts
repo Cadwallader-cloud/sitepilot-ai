@@ -5,7 +5,7 @@ const themes: SiteTheme[] = [
   { primary: "#1e40af", accent: "#3b82f6", style: "professional" },
   { primary: "#ea580c", accent: "#f59e0b", style: "bold" },
   { primary: "#059669", accent: "#10b981", style: "clean" },
-  { primary: "#7c3aed", accent: "#8b5cf6", style: "bold" },
+  { primary: "#0f172a", accent: "#0ea5e9", style: "bold" },
 ];
 
 function pickTheme(name: string): SiteTheme {
@@ -24,35 +24,59 @@ export function generateFromForm(input: BusinessFormInput): GeneratedSite {
   const name = input.businessName.trim();
   const type = input.type.trim();
   const location = input.location.trim();
-  const phone = input.phone.trim();
+  const phone = input.phone.trim() || "(555) 000-0000";
   const serviceList = parseServices(input.services);
-
   const typeLower = type.toLowerCase();
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
   return {
     title: name,
-    tagline: `Professional ${typeLower} in ${location}`,
+    tagline: `Professional ${typeLower} serving ${location}`,
     trade: type,
     location,
     phone,
+    email: `hello@${slug || "business"}.com`,
+    hours: "Mon–Sat 7am–7pm · Emergency call-outs available",
     cta: "Get a free quote",
+    about: `${name} is a trusted ${typeLower} based in ${location}. We help homeowners and businesses get reliable work done on time — with clear pricing and craftsmanship you can see.`,
+    services:
+      serviceList.length > 0
+        ? serviceList
+        : ["General services", "Free estimates", "Emergency call-outs"],
+    highlights: [
+      "Licensed & insured",
+      "Free estimates",
+      "Local team you can trust",
+    ],
+    testimonials: [
+      {
+        quote: `Hired ${name} for a job in ${location}. Showed up on time, explained everything, and finished clean.`,
+        name: "Alex M.",
+        role: `Homeowner, ${location}`,
+      },
+      {
+        quote: "Fair quote, professional crew, and they cleaned up after themselves. Will call again.",
+        name: "Jordan P.",
+        role: "Property manager",
+      },
+    ],
     theme: pickTheme(name),
     sections: [
       {
         id: "services",
-        title: "Services",
-        body: "",
+        title: "Our services",
+        body: `From everyday jobs to urgent repairs, ${name} covers what ${location} needs.`,
         items: serviceList.length > 0 ? serviceList : ["General services"],
       },
       {
-        id: "about",
-        title: "About us",
-        body: `${name} is a trusted ${typeLower} serving ${location} and surrounding areas. With over 10 years of experience, we deliver quality workmanship, fair pricing, and reliable service on every project.`,
+        id: "why-us",
+        title: "Why choose us",
+        body: `We are a local ${typeLower} focused on clear communication, solid workmanship, and jobs done right the first time.`,
       },
       {
-        id: "contact",
-        title: "Contact",
-        body: `Ready to get started? Call ${phone}. We proudly serve ${location} and nearby communities. Free estimates — no obligation.`,
+        id: "service-area",
+        title: "Service area",
+        body: `Proudly serving ${location} and surrounding neighborhoods. Call ${phone} to book.`,
       },
     ],
   };
@@ -66,12 +90,12 @@ export function formInputToJson(input: BusinessFormInput) {
       title: site.title,
       subtitle: site.tagline,
     },
-    services: site.sections.find((s) => s.id === "services")?.items ?? [],
-    about: site.sections.find((s) => s.id === "about")?.body ?? "",
+    services: site.services ?? [],
+    about: site.about ?? "",
     contact: {
       phone: site.phone,
       location: site.location,
-      text: site.sections.find((s) => s.id === "contact")?.body ?? "",
+      email: site.email,
     },
   };
 }

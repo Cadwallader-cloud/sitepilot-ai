@@ -2,10 +2,19 @@ import Link from "next/link";
 import { brand } from "@/lib/brand";
 
 const steps = [
-  { label: "Sign in", description: "Continue with Google — free" },
-  { label: "Generate", description: "AI builds your site in seconds" },
-  { label: "Preview", description: "Review on mobile & desktop" },
-  { label: "Publish", description: "Go live within 24 hours", highlight: true },
+  {
+    label: "Generate",
+    description: "Describe your business — free",
+  },
+  {
+    label: "Preview",
+    description: "See your full website — free",
+  },
+  {
+    label: "Publish",
+    description: "Get a live URL — next",
+    highlight: true,
+  },
 ];
 
 export function PricingFlow() {
@@ -13,10 +22,10 @@ export function PricingFlow() {
     <section id="how-it-works" className="border-t border-surface-border px-6 py-20">
       <div className="mx-auto max-w-4xl">
         <h2 className="text-center text-3xl font-bold md:text-4xl">
-          From zero to live website
+          See the result before you pay
         </h2>
         <p className="mt-3 text-center text-muted">
-          Sign in, generate, preview — then publish when you&apos;re ready.
+          Generate and preview free. Publish when you&apos;re ready.
         </p>
 
         <div className="mt-12 flex flex-col items-center gap-4 md:flex-row md:justify-center md:gap-0">

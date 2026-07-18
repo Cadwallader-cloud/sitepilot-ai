@@ -11,6 +11,12 @@ export type SiteTheme = {
   style: "bold" | "clean" | "professional";
 };
 
+export type SiteTestimonial = {
+  quote: string;
+  name: string;
+  role: string;
+};
+
 export type GeneratedSite = {
   title: string;
   tagline: string;
@@ -19,6 +25,12 @@ export type GeneratedSite = {
   trade?: string;
   location?: string;
   phone?: string;
+  email?: string;
+  hours?: string;
+  about?: string;
+  services?: string[];
+  highlights?: string[];
+  testimonials?: SiteTestimonial[];
   theme?: SiteTheme;
 };
 

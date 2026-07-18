@@ -66,7 +66,7 @@ export const WEBSITE_JSON_SCHEMA = {
       },
       faq: {
         type: "array",
-        minItems: 3,
+        minItems: 4,
         maxItems: 6,
         items: {
           type: "object",
@@ -138,7 +138,7 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
   if (!Array.isArray(data.testimonials) || data.testimonials.length < 2) {
     throw new Error("INVALID_FIELD:testimonials");
   }
-  if (!Array.isArray(data.faq) || data.faq.length < 2) {
+  if (!Array.isArray(data.faq) || data.faq.length < 4) {
     throw new Error("INVALID_FIELD:faq");
   }
   if (!Array.isArray(seo.keywords) || seo.keywords.length < 3) {

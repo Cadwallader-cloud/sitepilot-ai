@@ -46,7 +46,8 @@ export const demoSites: DemoSite[] = [
     name: "Elite Cleaning",
     location: "New York",
     trade: "Commercial cleaning",
-    prompt: "Elite Cleaning — commercial and office cleaning services in New York",
+    prompt:
+      "Elite Cleaning — commercial and office cleaning services in New York",
     site: generateFromForm({
       businessName: "Elite Cleaning",
       location: "New York",

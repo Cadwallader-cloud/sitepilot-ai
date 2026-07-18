@@ -2,6 +2,7 @@
 
 import { brand } from "@/lib/brand";
 import type { GeneratedSite } from "@/lib/site-types";
+import { getBusinessName } from "@/lib/site-types";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -21,13 +22,34 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [editing, setEditing] = useState(false);
   const theme = site.theme;
-  const slug = toSlug(site.title) || "your-site";
-  const gallery = site.images?.gallery?.length
+  const businessName = getBusinessName(site);
+  const slug = toSlug(businessName) || "your-site";
+  const gallery = site.images.gallery.length
     ? site.images.gallery
-    : [site.images?.hero || "/demos/construction.jpg"];
+    : [site.images.hero];
 
-  function update<K extends keyof GeneratedSite>(key: K, value: GeneratedSite[K]) {
-    onChange?.({ ...site, [key]: value });
+  function patchHero(field: "title" | "subtitle" | "cta", value: string) {
+    onChange?.({
+      ...site,
+      hero: { ...site.hero, [field]: value },
+    });
+  }
+
+  function patchContact(
+    field: "phone" | "email" | "blurb",
+    value: string,
+  ) {
+    onChange?.({
+      ...site,
+      contact: { ...site.contact, [field]: value },
+    });
+  }
+
+  function patchAboutText(value: string) {
+    onChange?.({
+      ...site,
+      about: { ...site.about, text: value },
+    });
   }
 
   return (
@@ -80,39 +102,51 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
       {editing && onChange && (
         <div className="mb-4 space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-amber-200">
-            Edit key fields
+            Edit content (AI JSON fields)
           </p>
           {(
             [
-              ["heroHeadline", "Headline"],
-              ["heroSubheadline", "Subheadline"],
-              ["cta", "Button"],
-              ["phone", "Phone"],
-              ["email", "Email"],
-              ["about", "About"],
+              ["hero.title", site.hero.title, (v: string) => patchHero("title", v)],
+              [
+                "hero.subtitle",
+                site.hero.subtitle,
+                (v: string) => patchHero("subtitle", v),
+              ],
+              ["hero.cta", site.hero.cta, (v: string) => patchHero("cta", v)],
+              [
+                "contact.phone",
+                site.contact.phone,
+                (v: string) => patchContact("phone", v),
+              ],
+              [
+                "contact.email",
+                site.contact.email,
+                (v: string) => patchContact("email", v),
+              ],
             ] as const
-          ).map(([key, label]) => (
-            <div key={key}>
+          ).map(([label, value, setter]) => (
+            <div key={label}>
               <label className="mb-1 block text-xs text-muted">{label}</label>
-              {key === "about" || key === "heroSubheadline" ? (
-                <textarea
-                  value={String(site[key] ?? "")}
-                  onChange={(e) => update(key, e.target.value)}
-                  rows={key === "about" ? 4 : 2}
-                  className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm"
-                />
-              ) : (
-                <input
-                  value={String(site[key] ?? "")}
-                  onChange={(e) => update(key, e.target.value)}
-                  className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm"
-                />
-              )}
+              <input
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm"
+              />
             </div>
           ))}
+          <div>
+            <label className="mb-1 block text-xs text-muted">about.text</label>
+            <textarea
+              value={site.about.text}
+              onChange={(e) => patchAboutText(e.target.value)}
+              rows={4}
+              className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
         </div>
       )}
 
+      {/* Website Renderer — reads structured content JSON */}
       <div
         className={`mx-auto overflow-hidden rounded-2xl border border-surface-border bg-white text-zinc-900 shadow-2xl ${
           viewport === "mobile" ? "max-w-[390px]" : "w-full"
@@ -128,18 +162,17 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
         </div>
 
         <div className="max-h-[75vh] overflow-y-auto">
-          {/* Nav */}
           <header className="flex items-center justify-between px-5 py-4 sm:px-8">
             <div>
               <p className="font-bold" style={{ color: theme.primary }}>
-                {site.title}
+                {site.contact.businessName}
               </p>
               <p className="text-[11px] uppercase tracking-wide text-zinc-500">
-                {site.trade} · {site.location}
+                {site.contact.trade} · {site.contact.location}
               </p>
             </div>
             <a
-              href={`tel:${site.phone.replace(/\s/g, "")}`}
+              href={`tel:${site.contact.phone.replace(/\s/g, "")}`}
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-white"
               style={{ backgroundColor: theme.primary }}
             >
@@ -147,11 +180,10 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </a>
           </header>
 
-          {/* Hero */}
           <section className="relative min-h-[320px] overflow-hidden sm:min-h-[380px]">
             <Image
               src={site.images.hero}
-              alt={site.title}
+              alt={site.hero.title}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 800px"
@@ -160,13 +192,13 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
             <div className="relative z-10 flex min-h-[320px] flex-col justify-end px-5 py-10 text-white sm:min-h-[380px] sm:px-10">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                {site.location}
+                {site.contact.location}
               </p>
               <h2 className="mt-2 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
-                {site.heroHeadline}
+                {site.hero.title}
               </h2>
               <p className="mt-3 max-w-lg text-sm text-white/90 sm:text-base">
-                {site.heroSubheadline}
+                {site.hero.subtitle}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button
@@ -174,16 +206,15 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
                   className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
                   style={{ color: theme.primary }}
                 >
-                  {site.cta}
+                  {site.hero.cta}
                 </button>
-                <span className="text-sm font-medium">{site.phone}</span>
+                <span className="text-sm font-medium">{site.contact.phone}</span>
               </div>
             </div>
           </section>
 
-          {/* Why choose us */}
           <section className="grid gap-3 border-b border-zinc-100 bg-zinc-50 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
-            {site.whyChooseUs.slice(0, 4).map((item) => (
+            {site.whyChooseUs.items.slice(0, 4).map((item) => (
               <div
                 key={item}
                 className="rounded-xl bg-white px-4 py-3 text-center text-sm font-medium text-zinc-700 shadow-sm"
@@ -193,19 +224,20 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             ))}
           </section>
 
-          {/* About */}
           <section className="grid gap-8 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:items-center">
             <div>
-              <h3 className="text-2xl font-bold text-zinc-900">About us</h3>
+              <h3 className="text-2xl font-bold text-zinc-900">
+                {site.about.title}
+              </h3>
               <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                {site.about}
+                {site.about.text}
               </p>
-              <p className="mt-4 text-sm text-zinc-500">{site.hours}</p>
+              <p className="mt-4 text-sm text-zinc-500">{site.contact.hours}</p>
             </div>
             <div className="relative h-56 overflow-hidden rounded-2xl sm:h-64">
               <Image
                 src={gallery[0]}
-                alt="Our work"
+                alt={site.about.title}
                 fill
                 className="object-cover"
                 sizes="400px"
@@ -213,28 +245,31 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          {/* Services */}
           <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
             <h3 className="text-2xl font-bold text-zinc-900">Services</h3>
             <p className="mt-2 text-sm text-zinc-600">
-              Professional services across {site.location}
+              Professional services across {site.contact.location}
             </p>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {site.services.map((service) => (
                 <li
-                  key={service}
-                  className="flex items-start gap-3 rounded-xl border border-zinc-100 bg-white px-4 py-3 text-sm text-zinc-700"
+                  key={service.title}
+                  className="rounded-xl border border-zinc-100 bg-white px-4 py-3"
                 >
-                  <span style={{ color: theme.primary }} className="font-bold">
-                    ✓
-                  </span>
-                  {service}
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: theme.primary }}
+                  >
+                    {service.title}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    {service.description}
+                  </p>
                 </li>
               ))}
             </ul>
           </section>
 
-          {/* Gallery */}
           <section className="px-5 py-12 sm:px-8">
             <h3 className="text-2xl font-bold text-zinc-900">Our work</h3>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -255,7 +290,6 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          {/* Reviews */}
           <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
             <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -278,16 +312,15 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          {/* FAQ */}
           <section className="px-5 py-12 sm:px-8">
             <h3 className="text-2xl font-bold text-zinc-900">FAQ</h3>
             <div className="mt-6 space-y-3">
-              {site.faq.slice(0, 4).map((item) => (
+              {site.faq.map((item) => (
                 <details
                   key={item.question}
-                  className="group rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
+                  className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
                 >
-                  <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900 marker:content-none">
+                  <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900">
                     {item.question}
                   </summary>
                   <p className="mt-2 text-sm leading-relaxed text-zinc-600">
@@ -298,33 +331,36 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </div>
           </section>
 
-          {/* CTA + Contact */}
           <section
             className="px-5 py-14 text-center text-white sm:px-8"
             style={{
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
             }}
           >
-            <h3 className="text-2xl font-bold sm:text-3xl">{site.ctaBanner}</h3>
+            <h3 className="text-2xl font-bold sm:text-3xl">{site.cta.title}</h3>
             <p className="mx-auto mt-3 max-w-md text-sm opacity-90">
-              {site.contactBlurb}
+              {site.cta.text}
             </p>
             <div className="mt-6 space-y-1">
-              <p className="text-2xl font-bold">{site.phone}</p>
-              <p className="text-sm opacity-90">{site.email}</p>
-              <p className="text-sm opacity-80">Serving {site.location}</p>
+              <p className="text-2xl font-bold">{site.contact.phone}</p>
+              <p className="text-sm opacity-90">{site.contact.email}</p>
+              <p className="text-sm opacity-80">
+                Serving {site.contact.location}
+              </p>
+              <p className="text-sm opacity-80">{site.contact.blurb}</p>
             </div>
             <button
               type="button"
               className="mt-6 rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
               style={{ color: theme.primary }}
             >
-              {site.cta}
+              {site.cta.button}
             </button>
           </section>
 
           <footer className="px-5 py-4 text-center text-[11px] text-zinc-400">
-            © {new Date().getFullYear()} {site.title}. Preview by {brand.name}.
+            © {new Date().getFullYear()} {site.contact.businessName}. Preview by{" "}
+            {brand.name}.
           </footer>
         </div>
       </div>

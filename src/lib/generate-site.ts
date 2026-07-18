@@ -13,16 +13,18 @@ function extractBusinessName(prompt: string) {
   return capitalize(name || "Your Business");
 }
 
-/** Legacy prompt → full website (used only as emergency fallback) */
+/** Legacy prompt → nested content site */
 export function generateSiteFromPrompt(prompt: string): GeneratedSite {
   const name = extractBusinessName(prompt);
   const lower = prompt.toLowerCase();
 
   let services = "General services, free estimates, emergency call-outs";
   if (/plumb|drain|pipe|boiler/.test(lower)) {
-    services = "Emergency repairs, boiler installs, bathroom fitting, leak detection";
+    services =
+      "Emergency repairs, boiler installs, bathroom fitting, leak detection";
   } else if (/electric|wiring/.test(lower)) {
-    services = "Panel upgrades, rewiring, lighting installs, EV charger setup";
+    services =
+      "Panel upgrades, rewiring, lighting installs, EV charger setup";
   } else if (/roof|gutter|chimney/.test(lower)) {
     services = "Roof repair, gutter replacement, chimney repair";
   } else if (/landscape|garden|lawn/.test(lower)) {

@@ -5,7 +5,11 @@ import { BusinessForm } from "@/components/business-form";
 import { PublishCTA } from "@/components/publish-cta";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
-import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
+import {
+  getBusinessName,
+  type GeneratedSite,
+  type GenerateSource,
+} from "@/lib/site-types";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -183,7 +187,7 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
                     ↻ Regenerate with AI
                   </button>
                 )}
-                <PublishCTA businessName={site.title} />
+                <PublishCTA businessName={getBusinessName(site)} />
               </>
             ) : (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">

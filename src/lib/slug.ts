@@ -14,6 +14,8 @@ const RESERVED = new Set([
   "login",
   "signup",
   "analytics",
+  "signin",
+  "register",
   "cdn",
   "static",
   "assets",

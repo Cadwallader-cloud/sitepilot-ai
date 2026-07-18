@@ -12,7 +12,7 @@ type PageProps = {
 export default async function AnalyticsPage({ searchParams }: PageProps) {
   const session = await auth();
   const email = session?.user?.email?.trim();
-  if (!email) redirect("/create");
+  if (!email) redirect("/login?callbackUrl=/dashboard");
 
   const { project: projectId } = await searchParams;
   if (!projectId) redirect("/dashboard");

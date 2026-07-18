@@ -27,6 +27,8 @@ export type WebsiteContent = {
   testimonials: {
     name: string;
     text: string;
+    /** true = AI demo example; false = real customer review only */
+    demo: boolean;
   }[];
   faq: {
     question: string;

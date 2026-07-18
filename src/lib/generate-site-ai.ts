@@ -93,5 +93,10 @@ export async function generateSiteWithOpenAI(
   }
 
   const content = parseWebsiteContent(parsed);
+  // Safety: AI-generated testimonials are always marked as demo examples
+  content.testimonials = content.testimonials.map((t) => ({
+    ...t,
+    demo: true,
+  }));
   return toGeneratedSite(content, input);
 }

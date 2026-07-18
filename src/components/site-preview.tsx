@@ -288,13 +288,25 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
 
           {site.testimonials.length > 0 && (
             <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
-              <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
+                {site.testimonials.some((t) => t.demo) && (
+                  <p className="text-xs text-zinc-500">
+                    Demo examples — replace with real customer reviews when live
+                  </p>
+                )}
+              </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 {site.testimonials.map((t) => (
                   <blockquote
                     key={`${t.name}-${t.text.slice(0, 16)}`}
                     className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm"
                   >
+                    {t.demo && (
+                      <span className="mb-3 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                        Demo review
+                      </span>
+                    )}
                     <p className="text-sm leading-relaxed text-zinc-700">
                       “{t.text}”
                     </p>

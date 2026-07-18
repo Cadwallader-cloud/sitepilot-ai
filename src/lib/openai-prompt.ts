@@ -20,7 +20,7 @@ Return ONLY valid JSON in this exact shape (no markdown, no commentary):
   "hero": { "title": "", "subtitle": "", "cta": "" },
   "about": { "title": "", "text": "" },
   "services": [{ "title": "", "description": "" }],
-  "testimonials": [{ "name": "", "text": "" }],
+  "testimonials": [{ "name": "", "text": "", "demo": true }],
   "faq": [{ "question": "", "answer": "" }],
   "contact": { "phone": "", "email": "", "address": "" },
   "seo": {
@@ -35,7 +35,11 @@ JSON field rules:
 - contact.phone and contact.email must match the user input EXACTLY
 - contact.address should reflect the location / service area
 - services: 4–6 items based on the user's services (title + short description)
-- testimonials: exactly 3 realistic local reviews (name + text)
+- testimonials: exactly 3 plausible local demo reviews (name + text + demo:true)
+- testimonials must NEVER be Lorem Ipsum or filler text
+- set every AI-created testimonial to "demo": true (demonstration examples only)
+- never invent fake reviews as if they were verified real customers
+- only "demo": false is allowed for genuine customer reviews (do not invent those)
 - seo.title under 60 characters, seo.description under 160 characters
 - seo.keywords: 5–10 local search phrases (include city + services)
 

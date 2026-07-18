@@ -57,10 +57,11 @@ export const WEBSITE_JSON_SCHEMA = {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["name", "text"],
+          required: ["name", "text", "demo"],
           properties: {
             name: { type: "string" },
             text: { type: "string" },
+            demo: { type: "boolean" },
           },
         },
       },
@@ -164,9 +165,14 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
     }),
     testimonials: data.testimonials.map((item, i) => {
       const t = obj(item, `testimonials[${i}]`);
+      if (typeof t.demo !== "boolean") {
+        throw new Error(`INVALID_FIELD:testimonials[${i}].demo`);
+      }
       return {
         name: str(t.name, `testimonials[${i}].name`),
         text: str(t.text, `testimonials[${i}].text`),
+        // AI-generated reviews are always demo until real reviews are added
+        demo: t.demo === false ? false : true,
       };
     }),
     faq: data.faq.map((item, i) => {

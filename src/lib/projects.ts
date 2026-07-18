@@ -1,4 +1,5 @@
 import type { BusinessFormInput } from "./business-form";
+import { publicSiteUrl } from "./slug";
 import type { GeneratedSite } from "./site-types";
 import { getSupabaseAdmin } from "./supabase";
 
@@ -8,13 +9,21 @@ export type ProjectRow = {
   business_name: string;
   input: BusinessFormInput;
   site: GeneratedSite;
+  slug: string | null;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
 
+export type ProjectStatus = "published" | "draft";
+
 export type ProjectSummary = {
   id: string;
   businessName: string;
+  status: ProjectStatus;
+  slug: string | null;
+  url: string | null;
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -82,7 +91,7 @@ export async function listProjects(
 
   const { data, error } = await supabase
     .from("projects")
-    .select("id, business_name, created_at, updated_at")
+    .select("id, business_name, slug, published_at, created_at, updated_at")
     .eq("user_email", userEmail.toLowerCase())
     .order("updated_at", { ascending: false });
 
@@ -91,12 +100,21 @@ export async function listProjects(
     throw new Error("PROJECT_LIST_FAILED");
   }
 
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    businessName: row.business_name as string,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  return (data ?? []).map((row) => {
+    const slug = (row.slug as string | null) ?? null;
+    const publishedAt = (row.published_at as string | null) ?? null;
+    const status: ProjectStatus = publishedAt ? "published" : "draft";
+    return {
+      id: row.id as string,
+      businessName: row.business_name as string,
+      status,
+      slug,
+      url: status === "published" && slug ? publicSiteUrl(slug) : null,
+      publishedAt,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
+  });
 }
 
 export async function getProject(
@@ -119,4 +137,25 @@ export async function getProject(
   }
 
   return (data as ProjectRow) ?? null;
+}
+
+export async function deleteProject(
+  id: string,
+  userEmail: string,
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return false;
+
+  const { error, count } = await supabase
+    .from("projects")
+    .delete({ count: "exact" })
+    .eq("id", id)
+    .eq("user_email", userEmail.toLowerCase());
+
+  if (error) {
+    console.error("Failed to delete project:", error.message);
+    throw new Error("PROJECT_DELETE_FAILED");
+  }
+
+  return (count ?? 0) > 0;
 }

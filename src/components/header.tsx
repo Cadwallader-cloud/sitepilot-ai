@@ -14,10 +14,10 @@ export function Header() {
             Demos
           </Link>
           <Link
-            href="/projects"
+            href="/dashboard"
             className="transition-colors hover:text-foreground"
           >
-            Projects
+            My Websites
           </Link>
           <a href="#how-it-works" className="transition-colors hover:text-foreground">
             How it works

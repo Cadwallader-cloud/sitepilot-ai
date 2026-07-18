@@ -16,10 +16,10 @@ export default async function CreatePage({ searchParams }: CreatePageProps) {
           <BrandLogo />
           <div className="flex items-center gap-4 text-sm">
             <Link
-              href="/projects"
+              href="/dashboard"
               className="text-muted transition hover:text-foreground"
             >
-              Projects
+              My Websites
             </Link>
             <Link
               href="/"

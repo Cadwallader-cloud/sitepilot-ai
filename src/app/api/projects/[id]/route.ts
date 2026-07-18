@@ -1,5 +1,10 @@
 import { auth } from "@/auth";
-import { getProject, updateProjectSite } from "@/lib/projects";
+import {
+  deleteProject,
+  getProject,
+  updateProjectSite,
+} from "@/lib/projects";
+import { publicSiteUrl } from "@/lib/slug";
 import type { GeneratedSite } from "@/lib/site-types";
 import { NextResponse } from "next/server";
 
@@ -20,12 +25,18 @@ export async function GET(_request: Request, context: RouteContext) {
     if (!project) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const published = Boolean(project.published_at);
     return NextResponse.json({
       project: {
         id: project.id,
         businessName: project.business_name,
         input: project.input,
         site: project.site,
+        slug: project.slug,
+        status: published ? "published" : "draft",
+        url:
+          published && project.slug ? publicSiteUrl(project.slug) : null,
+        publishedAt: project.published_at,
         createdAt: project.created_at,
         updatedAt: project.updated_at,
       },
@@ -33,6 +44,30 @@ export async function GET(_request: Request, context: RouteContext) {
   } catch {
     return NextResponse.json(
       { error: "Failed to load project" },
+      { status: 500 },
+    );
+  }
+}
+
+/** DELETE /api/projects/[id] — remove a project owned by the signed-in user */
+export async function DELETE(_request: Request, context: RouteContext) {
+  const session = await auth();
+  const email = session?.user?.email?.trim();
+  if (!email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+
+  try {
+    const deleted = await deleteProject(id, email);
+    if (!deleted) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to delete project" },
       { status: 500 },
     );
   }

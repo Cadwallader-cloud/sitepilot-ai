@@ -222,10 +222,10 @@ export function FormBuilder({
               loading={loading}
             />
             <Link
-              href="/projects"
+              href="/dashboard"
               className="mt-4 block text-center text-sm text-muted transition hover:text-foreground"
             >
-              View saved projects →
+              My Websites →
             </Link>
           </div>
 

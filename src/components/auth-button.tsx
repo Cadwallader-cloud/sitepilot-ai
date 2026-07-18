@@ -2,7 +2,13 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 
-export function AuthButton({ compact = false }: { compact?: boolean }) {
+export function AuthButton({
+  compact = false,
+  callbackUrl = "/dashboard",
+}: {
+  compact?: boolean;
+  callbackUrl?: string;
+}) {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
@@ -21,7 +27,7 @@ export function AuthButton({ compact = false }: { compact?: boolean }) {
         )}
         <button
           type="button"
-          onClick={() => signOut()}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="rounded-full border border-surface-border px-4 py-2 text-sm text-muted transition hover:border-brand/40 hover:text-foreground"
         >
           Sign out
@@ -33,7 +39,7 @@ export function AuthButton({ compact = false }: { compact?: boolean }) {
   return (
     <button
       type="button"
-      onClick={() => signIn("google", { callbackUrl: "/create" })}
+      onClick={() => signIn("google", { callbackUrl })}
       className="inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-medium transition hover:border-brand/40 hover:text-foreground"
     >
       <GoogleIcon />
@@ -51,7 +57,7 @@ export function SignInGate() {
         Free preview with AI generation. No credit card required.
       </p>
       <div className="mt-8 flex justify-center">
-        <AuthButton />
+        <AuthButton callbackUrl="/create" />
       </div>
     </div>
   );

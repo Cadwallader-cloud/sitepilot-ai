@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import type { BusinessFormInput } from "@/lib/business-form";
+import { getProject } from "@/lib/projects";
 import { publishProject } from "@/lib/publish";
 import type { GeneratedSite } from "@/lib/site-types";
 import { NextResponse } from "next/server";
@@ -22,6 +23,7 @@ function isGeneratedSite(value: unknown): value is GeneratedSite {
  * POST /api/publish
  * Saves site JSON to Supabase, assigns unique slug, sets published_at.
  * Supports republish (same project keeps slug, refreshes published_at).
+ * Body may be { projectId } only — site is loaded from Supabase.
  */
 export async function POST(request: Request) {
   const session = await auth();
@@ -41,24 +43,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!isGeneratedSite(body.site)) {
-    return NextResponse.json({ error: "site is required" }, { status: 400 });
-  }
-
   const projectId =
     typeof body.projectId === "string" && body.projectId.trim()
       ? body.projectId.trim()
       : null;
 
-  const input =
+  let site: GeneratedSite | null = isGeneratedSite(body.site)
+    ? body.site
+    : null;
+  let input =
     body.input && typeof body.input === "object"
       ? (body.input as BusinessFormInput)
       : null;
 
+  if (!site && projectId) {
+    const existing = await getProject(projectId, email);
+    if (!existing) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    site = existing.site;
+    input = input ?? existing.input;
+  }
+
+  if (!site) {
+    return NextResponse.json(
+      { error: "site or projectId is required" },
+      { status: 400 },
+    );
+  }
+
   try {
     const published = await publishProject({
       userEmail: email,
-      site: body.site,
+      site,
       input,
       projectId,
     });

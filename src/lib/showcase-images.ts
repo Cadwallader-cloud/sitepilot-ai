@@ -30,7 +30,7 @@ export const showcaseImages = {
     gallery: [
       "/demos/electrician.jpg",
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1473341303094-9b870a845551?auto=format&fit=crop&w=800&q=80",
+      "/demos/electrician-ev.jpg",
     ],
   },
   plumbing: {

@@ -94,12 +94,12 @@ export function ElectricianShowcase() {
             caption: "Commercial panel upgrade — Downtown Austin",
           },
           {
-            src: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+            src: showcaseImages.electrician.gallery[1],
             alt: "Electrical wiring",
             caption: "Whole-home rewiring — Round Rock",
           },
           {
-            src: "https://images.unsplash.com/photo-1473341303094-9b870a845551?w=800&q=80",
+            src: showcaseImages.electrician.gallery[2],
             alt: "EV charger install",
             caption: "Tesla charger install — Cedar Park",
           },

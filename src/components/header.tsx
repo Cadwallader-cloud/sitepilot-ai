@@ -13,6 +13,12 @@ export function Header() {
           <Link href="/demos" className="transition-colors hover:text-foreground">
             Demos
           </Link>
+          <Link
+            href="/projects"
+            className="transition-colors hover:text-foreground"
+          >
+            Projects
+          </Link>
           <a href="#how-it-works" className="transition-colors hover:text-foreground">
             How it works
           </a>

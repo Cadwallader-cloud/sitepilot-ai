@@ -58,6 +58,8 @@ export type GenerateSource = "ai";
 export type GenerateResult = {
   site: GeneratedSite;
   source: GenerateSource;
+  /** Supabase project id when save succeeds */
+  projectId?: string;
 };
 
 export function getBusinessName(site: GeneratedSite): string {

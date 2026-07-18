@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import type { BusinessFormInput } from "@/lib/business-form";
 import { GenerateError, mapOpenAiError } from "@/lib/generate-errors";
 import { generateSiteWithOpenAI } from "@/lib/generate-site-ai";
+import { saveProject } from "@/lib/projects";
 import type { GenerateResult } from "@/lib/site-types";
 import { NextResponse } from "next/server";
 
@@ -68,6 +69,23 @@ export async function POST(request: Request) {
     try {
       const site = await generateSiteWithOpenAI(input);
       const result: GenerateResult = { site, source: "ai" };
+
+      // Generate → Save JSON → Supabase → Project (so user can return tomorrow)
+      const email = session.user.email?.trim();
+      if (email) {
+        try {
+          const project = await saveProject({
+            userEmail: email,
+            input,
+            site,
+          });
+          if (project) result.projectId = project.id;
+        } catch (saveError) {
+          console.error("Project save failed after generate:", saveError);
+          // Generation succeeded — still return site; save is best-effort
+        }
+      }
+
       return NextResponse.json(result);
     } catch (openaiError) {
       console.error("OpenAI generation failed:", openaiError);

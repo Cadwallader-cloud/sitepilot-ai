@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SitePilot AI for Contractors
 
-## Getting Started
+AI-powered website builder for trade businesses — roofers, builders, plumbers, electricians, landscapers.
 
-First, run the development server:
+**Preview free · Publish for $199**
+
+## Features
+
+- Landing page with demo showcase (5 unique contractor sites)
+- Form-based website builder at `/create`
+- Stripe checkout at `/publish`
+- OpenAI generation API (optional)
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | Optional | Enables AI generation |
+| `STRIPE_SECRET_KEY` | For checkout | Stripe test/live secret key |
+| `NEXT_PUBLIC_APP_URL` | Production | Your Vercel URL for Stripe redirects |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Optional | Google Analytics for ads |
+| `NEXT_PUBLIC_META_PIXEL_ID` | Optional | Meta Pixel for Facebook ads |
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import **Cadwallader-cloud/sitepilot-ai** from GitHub
+3. Add environment variables (at minimum `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_APP_URL`)
+4. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Or via CLI:
+
+```bash
+npx vercel
+```
+
+Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://sitepilot-ai.vercel.app`).
+
+## Stripe test checkout
+
+1. Add `STRIPE_SECRET_KEY` from [Stripe Dashboard → Test mode](https://dashboard.stripe.com/test/apikeys)
+2. Go to `/publish` and click **Pay $199**
+3. Use test card: `4242 4242 4242 4242`, any future expiry, any CVC
+
+## Ads setup
+
+After deploy, add tracking IDs to Vercel env vars:
+
+- **Google Ads / Analytics:** `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+- **Facebook Ads:** `NEXT_PUBLIC_META_PIXEL_ID`
+
+Then create campaigns targeting contractors in your region.

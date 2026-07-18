@@ -20,7 +20,7 @@ export function ShowcaseChrome({
           href={ctaHref}
           className="rounded-full bg-white px-4 py-2 text-xs font-bold text-zinc-900 transition hover:bg-zinc-100 md:text-sm"
         >
-          Build yours — $199
+          Build yours — free
         </Link>
       </div>
       <div className="h-14" />

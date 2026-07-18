@@ -89,7 +89,7 @@ export function BusinessForm({ onSubmit, initial }: BusinessFormProps) {
           disabled={!isValid}
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Generate website →
+          Generate with AI →
         </button>
         <button
           type="button"

@@ -1,4 +1,5 @@
 import type { GeneratedSite } from "@/lib/site-types";
+import { brand } from "@/lib/brand";
 
 const defaultThemes = [
   { primary: "#ea580c", accent: "#f59e0b", style: "bold" as const },
@@ -22,7 +23,7 @@ export function SitePreview({ site }: { site: GeneratedSite }) {
         <span className="h-3 w-3 rounded-full bg-red-400" />
         <span className="h-3 w-3 rounded-full bg-yellow-400" />
         <span className="h-3 w-3 rounded-full bg-green-400" />
-        <span className="ml-3 truncate text-xs text-zinc-500">{slug}.sitepilot.app</span>
+        <span className="ml-3 truncate text-xs text-zinc-500">{slug}.{brand.domain}</span>
       </div>
 
       {(site.trade || site.location) && (

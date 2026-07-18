@@ -14,7 +14,7 @@ export function getOpenAIClient() {
   return client;
 }
 
-const SYSTEM_PROMPT = `You are SitePilot AI. Generate UNIQUE website content for a contractor/trade business.
+const SYSTEM_PROMPT = `You are Crestis, an AI website builder. Generate UNIQUE website content for a local business.
 
 CRITICAL — every response must be different:
 - Use the EXACT business name, city, and trade from the user's prompt

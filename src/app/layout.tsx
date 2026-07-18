@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@/components/analytics";
+import { Providers } from "@/components/providers";
+import { brand } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SitePilot AI for Contractors — Website in 60 seconds",
+  title: `${brand.name} — ${brand.tagline}`,
   description:
-    "AI builds a professional contractor website for your business. No coding. No designers. Preview free, publish for $199.",
+    "Launch a professional website in 60 seconds. AI website builder for local businesses. Free preview, no credit card.",
 };
 
 export default function RootLayout({
@@ -29,7 +32,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {children}
+        <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

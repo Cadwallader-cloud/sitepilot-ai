@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 const steps = [
-  { label: "Create site", description: "Describe your business in one sentence" },
-  { label: "Preview", description: "See your website instantly" },
-  { label: "Looks good?", description: "Review on mobile & desktop" },
-  { label: "Publish", description: "$199 — live in 24 hours", highlight: true },
+  { label: "Sign in", description: "Continue with Google — free" },
+  { label: "Generate", description: "AI builds your site in seconds" },
+  { label: "Preview", description: "Review on mobile & desktop" },
+  { label: "Publish", description: "Go live within 24 hours", highlight: true },
 ];
 
 export function PricingFlow() {
@@ -14,7 +15,9 @@ export function PricingFlow() {
         <h2 className="text-center text-3xl font-bold md:text-4xl">
           From zero to live website
         </h2>
-        <p className="mt-3 text-center text-muted">Simple path. Clear price. No surprises.</p>
+        <p className="mt-3 text-center text-muted">
+          Sign in, generate, preview — then publish when you&apos;re ready.
+        </p>
 
         <div className="mt-12 flex flex-col items-center gap-4 md:flex-row md:justify-center md:gap-0">
           {steps.map((step, index) => (
@@ -33,7 +36,9 @@ export function PricingFlow() {
                 >
                   {step.label}
                 </p>
-                <p className="mt-1 max-w-[140px] text-xs text-muted">{step.description}</p>
+                <p className="mt-1 max-w-[140px] text-xs text-muted">
+                  {step.description}
+                </p>
               </div>
               {index < steps.length - 1 && (
                 <span className="mx-2 hidden text-2xl text-muted md:block">↓</span>
@@ -47,7 +52,7 @@ export function PricingFlow() {
             href="/create"
             className="inline-flex h-12 items-center justify-center rounded-full bg-brand px-8 font-semibold text-white transition hover:bg-brand-light"
           >
-            Start free preview
+            {brand.cta}
           </Link>
         </div>
       </div>

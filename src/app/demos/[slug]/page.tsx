@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!demo) return { title: "Demo not found" };
 
   return {
-    title: `${demo.name} — SitePilot Demo`,
+    title: `${demo.name} — Crestis Demo`,
     description: demo.tagline,
   };
 }

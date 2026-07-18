@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import { generateSiteWithOpenAI } from "@/lib/generate-site-ai";
 import { generateSiteFromPrompt } from "@/lib/generate-site";
 import type { GenerateResult } from "@/lib/site-types";
@@ -5,6 +6,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Sign in with Google to generate your website", code: "UNAUTHORIZED" },
+        { status: 401 },
+      );
+    }
+
     const body = (await request.json()) as { prompt?: string };
     const prompt = body.prompt?.trim();
 

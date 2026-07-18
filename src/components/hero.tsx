@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 export function Hero() {
   return (
@@ -14,20 +15,19 @@ export function Hero() {
 
       <div className="mx-auto max-w-4xl text-center">
         <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-sm text-brand-light">
-          SitePilot AI for Contractors
+          {brand.name} · {brand.tagline}
         </p>
 
         <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-          Create your business website in{" "}
+          Launch a professional website in{" "}
           <span className="bg-gradient-to-r from-brand-light to-indigo-300 bg-clip-text text-transparent">
             60 seconds
           </span>
+          .
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-foreground md:text-2xl">
-          AI builds a professional website
-          <br />
-          for your company.
+        <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-muted md:text-2xl">
+          {brand.heroSubtitle}
         </p>
 
         <p className="mt-4 text-lg text-muted">No coding. No designers.</p>
@@ -37,7 +37,7 @@ export function Hero() {
             href="/create"
             className="inline-flex h-14 items-center justify-center rounded-full bg-brand px-10 text-lg font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-light"
           >
-            Generate my website
+            {brand.cta}
           </Link>
         </div>
 

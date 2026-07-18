@@ -1,39 +1,95 @@
 "use client";
 
+import { AuthButton, SignInGate } from "@/components/auth-button";
 import { BusinessForm } from "@/components/business-form";
 import { PublishCTA } from "@/components/publish-cta";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
-import { formInputToJson, generateFromForm } from "@/lib/generate-from-form";
-import type { GeneratedSite } from "@/lib/site-types";
+import { formInputToPrompt } from "@/lib/form-to-prompt";
+import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-const funnelSteps = ["Fill form", "Preview", "Looks good?", "Publish $199"];
+const funnelSteps = ["Sign in", "Generate", "Preview", "Publish"];
 
 type FormBuilderProps = {
   loadExample?: boolean;
 };
 
 export function FormBuilder({ loadExample = false }: FormBuilderProps) {
+  const { data: session, status } = useSession();
   const [site, setSite] = useState<GeneratedSite | null>(null);
-  const [jsonOutput, setJsonOutput] = useState<object | null>(null);
+  const [source, setSource] = useState<GenerateSource | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(1);
-
-  function handleSubmit(input: BusinessFormInput) {
-    const generated = generateFromForm(input);
-    setSite(generated);
-    setJsonOutput(formInputToJson(input));
-    setActiveStep(2);
-  }
+  const [lastInput, setLastInput] = useState<BusinessFormInput | null>(null);
 
   useEffect(() => {
-    if (loadExample) {
-      const generated = generateFromForm(exampleFormInput);
-      setSite(generated);
-      setJsonOutput(formInputToJson(exampleFormInput));
-      setActiveStep(2);
+    if (session) {
+      setActiveStep((step) => Math.max(step, 2));
     }
-  }, [loadExample]);
+  }, [session]);
+
+  useEffect(() => {
+    if (loadExample && session) {
+      runGeneration(exampleFormInput);
+    }
+  }, [loadExample, session]);
+
+  async function runGeneration(input: BusinessFormInput) {
+    setLoading(true);
+    setError(null);
+    setLastInput(input);
+    setActiveStep(2);
+
+    const prompt = formInputToPrompt(input);
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = (await response.json()) as {
+        site?: GeneratedSite;
+        source?: GenerateSource;
+        error?: string;
+        code?: string;
+      };
+
+      if (response.status === 401) {
+        throw new Error("Please sign in with Google to generate your website.");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Generation failed");
+      }
+
+      if (!data.site) {
+        throw new Error("Invalid response from server");
+      }
+
+      setSite(data.site);
+      setSource(data.source ?? "mock");
+      setActiveStep(3);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setSite(null);
+      setSource(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -56,53 +112,88 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
         ))}
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
-        <div>
-          <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted">
-            Step 1 — Your business details
-          </h2>
-          <BusinessForm
-            onSubmit={handleSubmit}
-            initial={loadExample ? exampleFormInput : undefined}
-          />
-        </div>
+      {!session ? (
+        <SignInGate />
+      ) : (
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
+                Your business details
+              </h2>
+              <AuthButton compact />
+            </div>
+            <BusinessForm
+              onSubmit={runGeneration}
+              initial={loadExample ? exampleFormInput : undefined}
+            />
+          </div>
 
-        <div>
-          <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted">
-            Step 2 — Website preview
-          </h2>
-
-          {site ? (
-            <>
-              <SitePreview site={site} />
-              <PublishCTA businessName={site.title} />
-
-              {jsonOutput && (
-                <details className="mt-6 rounded-xl border border-surface-border bg-surface">
-                  <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-muted">
-                    View site structure (JSON)
-                  </summary>
-                  <pre className="overflow-x-auto border-t border-surface-border p-4 text-xs text-muted">
-                    {JSON.stringify(jsonOutput, null, 2)}
-                  </pre>
-                </details>
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
+                Website preview
+              </h2>
+              {source === "ai" && (
+                <span className="rounded-full bg-brand/20 px-3 py-1 text-xs font-medium text-brand-light">
+                  AI generated
+                </span>
               )}
-            </>
-          ) : (
-            <div className="flex min-h-[480px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">
-              <div>
-                <p className="text-4xl">📋</p>
+              {source === "mock" && lastInput && !loading && (
+                <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
+                  Template fallback
+                </span>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-surface-border bg-surface/50 p-8 text-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 <p className="mt-4 font-medium text-foreground">
-                  Fill the form to see your website
+                  AI is building your website…
                 </p>
-                <p className="mt-2 text-sm">
-                  Or click &quot;Try example&quot; for ABC Roofing
+                <p className="mt-2 text-sm text-muted">
+                  Usually ready in under 60 seconds
                 </p>
               </div>
-            </div>
-          )}
+            ) : error ? (
+              <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+                <div>
+                  <p className="font-medium text-red-300">Generation failed</p>
+                  <p className="mt-2 text-sm text-muted">{error}</p>
+                </div>
+              </div>
+            ) : site ? (
+              <>
+                <SitePreview site={site} />
+                {source === "ai" && lastInput && (
+                  <button
+                    type="button"
+                    onClick={() => runGeneration(lastInput)}
+                    disabled={loading}
+                    className="mt-4 w-full rounded-xl border border-surface-border py-2.5 text-sm font-medium text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
+                  >
+                    ↻ Regenerate — get a different version
+                  </button>
+                )}
+                <PublishCTA businessName={site.title} />
+              </>
+            ) : (
+              <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">
+                <div>
+                  <p className="text-4xl">✨</p>
+                  <p className="mt-4 font-medium text-foreground">
+                    Your website preview will appear here
+                  </p>
+                  <p className="mt-2 text-sm">
+                    Fill in your business details and click Generate
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

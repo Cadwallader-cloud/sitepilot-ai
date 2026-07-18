@@ -40,7 +40,7 @@ export default function DemosPage() {
         </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {showcaseDemos.map((demo, index) => (
+          {showcaseDemos.map((demo) => (
             <Link
               key={demo.slug}
               href={`/demos/${demo.slug}`}

@@ -7,7 +7,7 @@ import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
 import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const funnelSteps = ["Sign in", "Generate", "Preview", "Edit"];
 
@@ -21,25 +21,20 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
   const [source, setSource] = useState<GenerateSource | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState(1);
+  const [hasEdited, setHasEdited] = useState(false);
   const [lastInput, setLastInput] = useState<BusinessFormInput | null>(null);
+  const generatingRef = useRef(false);
+  const exampleStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (session) setActiveStep((step) => Math.max(step, 2));
-  }, [session]);
-
-  useEffect(() => {
-    if (loadExample && session) {
-      runGeneration(exampleFormInput);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadExample, session]);
+  const activeStep = !session ? 1 : site ? (hasEdited ? 4 : 3) : 2;
 
   async function runGeneration(input: BusinessFormInput) {
+    if (generatingRef.current) return;
+    generatingRef.current = true;
     setLoading(true);
     setError(null);
     setLastInput(input);
-    setActiveStep(2);
+    setHasEdited(false);
 
     try {
       const response = await fetch("/api/generate", {
@@ -68,15 +63,25 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
 
       setSite(data.site);
       setSource(data.source ?? "mock");
-      setActiveStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSite(null);
       setSource(null);
     } finally {
       setLoading(false);
+      generatingRef.current = false;
     }
   }
+
+  // Auto-run example once after sign-in (from /create?example=true)
+  useEffect(() => {
+    if (!loadExample || !session || exampleStartedRef.current) return;
+    exampleStartedRef.current = true;
+    const timer = window.setTimeout(() => {
+      void runGeneration(exampleFormInput);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadExample, session]);
 
   if (status === "loading") {
     return (
@@ -165,7 +170,7 @@ export function FormBuilder({ loadExample = false }: FormBuilderProps) {
                   site={site}
                   onChange={(next) => {
                     setSite(next);
-                    setActiveStep(4);
+                    setHasEdited(true);
                   }}
                 />
                 {lastInput && (

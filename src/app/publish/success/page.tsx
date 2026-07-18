@@ -27,7 +27,7 @@ export default async function PublishSuccessPage({
           {business
             ? `We're preparing ${business} for launch.`
             : "We're preparing your website for launch."}{" "}
-          You'll hear from us within 24 hours with your live site link.
+          You&apos;ll hear from us within 24 hours with your live site link.
         </p>
 
         <Link

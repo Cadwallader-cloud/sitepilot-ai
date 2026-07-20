@@ -8,6 +8,7 @@ const RESERVED = new Set([
   "projects",
   "dashboard",
   "publish",
+  "upgrade",
   "site",
   "sites",
   "auth",
@@ -45,13 +46,32 @@ export function withSlugSuffix(base: string, suffix: string): string {
   return `${base.slice(0, maxBase)}-${clean}`;
 }
 
-export function publicSiteUrl(slug: string): string {
+/** Apex / root host used for tenant subdomains (no protocol, no www). */
+export function publicSiteRootDomain(): string {
   const root =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").replace(
       /\/$/,
       "",
     ) || "crestis.app";
-  // Prefer apex domain even if APP_URL includes www
-  const domain = root.replace(/^www\./, "").split("/")[0] || "crestis.app";
-  return `https://${slug}.${domain}`;
+  return root.replace(/^www\./, "").split("/")[0] || "crestis.app";
+}
+
+/**
+ * Public URL for a published site: https://[slug].crestis.app
+ * (internal rendering still uses /site/[slug] via middleware rewrite)
+ */
+export function publicSiteUrl(slug: string): string {
+  const clean = slug.toLowerCase().trim();
+  const domain = publicSiteRootDomain();
+
+  if (domain === "localhost" || domain.startsWith("localhost:")) {
+    const port = domain.includes(":") ? domain.split(":")[1] : "3000";
+    return `http://${clean}.localhost:${port}`;
+  }
+
+  if (domain.endsWith(".localhost")) {
+    return `http://${clean}.${domain}`;
+  }
+
+  return `https://${clean}.${domain}`;
 }

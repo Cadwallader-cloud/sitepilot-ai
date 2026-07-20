@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: `${brand.name} — ${brand.tagline}`,
   description:
-    "Launch a professional website in 60 seconds. AI website builder for local businesses. Free preview, no credit card.",
+    "Crestis — AI Website Builder for Local Businesses. Launch a professional website in 60 seconds. Free preview, no credit card.",
 };
 
 export default function RootLayout({

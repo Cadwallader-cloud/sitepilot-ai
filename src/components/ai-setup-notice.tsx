@@ -49,7 +49,7 @@ export function AISetupNotice() {
           <span>
             Open <code className="text-amber-100">.env.local</code> in the project root and paste:
             <pre className="mt-2 overflow-x-auto rounded-lg bg-black/30 p-3 text-xs text-amber-100">
-              OPENAI_API_KEY=sk-your-key-here{"\n"}OPENAI_MODEL=gpt-4o-mini
+              OPENAI_API_KEY=sk-your-key-here{"\n"}OPENAI_MODEL=gpt-5-mini
             </pre>
           </span>
         </li>

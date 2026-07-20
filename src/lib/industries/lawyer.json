@@ -1,0 +1,53 @@
+{
+  "id": "lawyer",
+  "label": "Law Firm",
+  "aliases": ["lawyer", "attorney", "legal", "law firm", "solicitor", "barrister", "litigation", "law office"],
+  "preferredTemplate": "law-corporate",
+  "imageTrade": "lawyer",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Request Consultation", "Speak With a Lawyer", "Schedule Case Review"],
+    "secondary": ["Call the Firm", "Email Intake", "Practice Areas"]
+  },
+  "faqThemes": [
+    "Do you offer free consultations",
+    "What practice areas you cover",
+    "How fees and retainers work",
+    "How quickly can we start",
+    "Confidentiality and next steps",
+    "Do you take my type of case"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["lawyer", "attorney", "law firm", "legal consultation", "litigation", "legal advice"],
+    "localModifiers": ["near me", "free consultation", "experienced", "local firm"],
+    "avoid": ["guaranteed win", "best lawyer in the world", "we never lose"]
+  },
+  "textStyle": {
+    "voice": "Professional",
+    "writingStyle": "Concise",
+    "do": ["Sound calm and competent", "Clarify practice areas", "Invite a confidential consult"],
+    "dont": ["Promise case outcomes", "Invent bar admissions", "Use aggressive scare tactics"]
+  },
+  "heroRules": {
+    "shellHint": "B",
+    "headlinePattern": "Clear legal help + practice cue — not 'Law Firm Services'",
+    "mustInclude": ["clarity or advocacy", "practice hint when known"],
+    "avoid": ["Legal Services", "Justice for All", "Your Trusted Attorneys"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["quiet law office consult", "courthouse exterior tasteful", "desk with case files (tasteful)"],
+    "gallerySubjects": ["meeting room", "team portrait", "client consult"],
+    "avoid": ["gavel slam stock clichés only", "scales of justice overload"]
+  },
+  "preferredWords": ["counsel", "protect", "clarify", "case", "rights", "consult", "prepare", "advocate", "confidential", "next step"],
+  "sectionHints": {
+    "about": "Steady counsel — why clients feel guided, not sold.",
+    "services": "Label as Practice Areas when possible — three clear areas.",
+    "faq": "Fees, consults, and case fit first."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "gym",
+  "label": "Gym & Fitness",
+  "aliases": ["gym", "fitness", "personal trainer", "crossfit", "workout", "fitness studio", "training gym", "health club"],
+  "preferredTemplate": "local-service-bold",
+  "imageTrade": "general",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Start Free Trial", "Book a Tour", "Join Membership"],
+    "secondary": ["Talk to a Coach", "View Classes", "Call the Gym"]
+  },
+  "faqThemes": [
+    "Membership options and pricing",
+    "Free trial or first session",
+    "Classes vs open gym",
+    "Personal training availability",
+    "Hours and peak times",
+    "Beginner-friendly onboarding"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["gym", "fitness center", "personal training", "group classes", "membership", "workout"],
+    "localModifiers": ["near me", "free trial", "24 hour", "beginner friendly"],
+    "avoid": ["guaranteed abs", "transform in 7 days", "best gym in the world"]
+  },
+  "textStyle": {
+    "voice": "Energetic",
+    "writingStyle": "Persuasive",
+    "do": ["Motivate without body-shaming", "Clarify membership paths", "Welcome beginners explicitly"],
+    "dont": ["Promise medical results", "Invent trainer credentials", "Use aggressive shame marketing"]
+  },
+  "heroRules": {
+    "shellHint": "C",
+    "headlinePattern": "Training outcome + energy — not 'Fitness Gym Services'",
+    "mustInclude": ["training cue", "invite to start"],
+    "avoid": ["Get Fit Today", "No Pain No Gain", "Ultimate Fitness Experience"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["members training", "coach with client", "bright gym floor"],
+    "gallerySubjects": ["class in session", "strength area", "studio stretch"],
+    "avoid": ["extreme bodybuilding only if not the brand", "empty dark dungeon gyms for family brands"]
+  },
+  "preferredWords": ["train", "strength", "energy", "coach", "progress", "class", "start", "community", "form", "goal"],
+  "sectionHints": {
+    "about": "Community and coaching — why people stick with this gym.",
+    "services": "Membership, classes, and personal training as three cards.",
+    "faq": "Trial, pricing, and beginner path first."
+  }
+}

@@ -33,6 +33,14 @@ export function AuthButton({
         >
           My Websites
         </Link>
+        {session.user.isAdmin && (
+          <Link
+            href="/admin"
+            className="text-sm font-medium text-brand-light transition hover:text-foreground"
+          >
+            Admin
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}

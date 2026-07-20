@@ -1,7 +1,11 @@
 "use client";
 
+import { CustomDomainPanel } from "@/components/custom-domain-panel";
+import { UpgradeModal } from "@/components/upgrade-modal";
 import type { ProjectSummary } from "@/lib/projects";
+import type { FeatureKey } from "@/lib/billing/types";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -68,9 +72,22 @@ function ActionButton({
 
 export function WebsitesDashboard() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [upgradeFeature, setUpgradeFeature] = useState<FeatureKey | null>(
+    null,
+  );
+
+  const entitlements = session?.user?.entitlements;
+  const isAdmin = Boolean(session?.user?.isAdmin);
+  const allowPublish =
+    isAdmin || Boolean(entitlements?.canPublish);
+  const allowAnalytics =
+    isAdmin || Boolean(entitlements?.canUseAnalytics);
+  const allowDomain =
+    isAdmin || Boolean(entitlements?.canUseCustomDomain);
 
   const load = useCallback(async () => {
     try {
@@ -92,23 +109,37 @@ export function WebsitesDashboard() {
     void load();
   }, [load]);
 
-  async function handlePublish(id: string) {
-    setBusyId(id);
-    try {
-      const res = await fetch("/api/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: id }),
-      });
-      const data = (await res.json()) as { error?: string; url?: string };
-      if (!res.ok) throw new Error(data.error ?? "Publish failed");
-      await load();
-      if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Publish failed");
-    } finally {
-      setBusyId(null);
+  function handlePublish(id: string) {
+    if (!allowPublish) {
+      setUpgradeFeature("publish");
+      return;
     }
+    setBusyId(id);
+    void (async () => {
+      try {
+        const res = await fetch("/api/publish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: id }),
+        });
+        const data = (await res.json()) as {
+          error?: string;
+          url?: string;
+          upgradeRequired?: boolean;
+        };
+        if (res.status === 402 || data.upgradeRequired) {
+          setUpgradeFeature("publish");
+          return;
+        }
+        if (!res.ok) throw new Error(data.error ?? "Publish failed");
+        if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
+        await load();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Publish failed");
+      } finally {
+        setBusyId(null);
+      }
+    })();
   }
 
   async function handleDelete(project: ProjectSummary) {
@@ -160,6 +191,12 @@ export function WebsitesDashboard() {
 
   return (
     <div>
+      <UpgradeModal
+        open={upgradeFeature !== null}
+        onClose={() => setUpgradeFeature(null)}
+        feature={upgradeFeature}
+      />
+
       {error && (
         <p className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {error}
@@ -178,6 +215,11 @@ export function WebsitesDashboard() {
                       {project.businessName}
                     </h2>
                     <StatusBadge status={project.status} />
+                    {project.plan && (
+                      <span className="rounded-full bg-brand/20 px-2.5 py-0.5 text-xs font-semibold capitalize text-brand-light">
+                        {project.plan}
+                      </span>
+                    )}
                   </div>
                   {project.url ? (
                     <a
@@ -198,13 +240,31 @@ export function WebsitesDashboard() {
                     Edit
                   </ActionButton>
 
+                  <ActionButton
+                    href={
+                      allowAnalytics
+                        ? `/dashboard/analytics?project=${project.id}`
+                        : undefined
+                    }
+                    onClick={
+                      allowAnalytics
+                        ? undefined
+                        : () => setUpgradeFeature("analytics")
+                    }
+                  >
+                    Analytics
+                  </ActionButton>
+
                   {project.status === "published" ? (
                     <>
-                      <ActionButton
-                        href={`/dashboard/analytics?project=${project.id}`}
-                      >
-                        Analytics
-                      </ActionButton>
+                      {!project.plan && (
+                        <ActionButton
+                          variant="primary"
+                          href={`/upgrade?project=${project.id}`}
+                        >
+                          Upgrade
+                        </ActionButton>
+                      )}
                       <ActionButton
                         variant="danger"
                         disabled={busy}
@@ -216,14 +276,38 @@ export function WebsitesDashboard() {
                   ) : (
                     <ActionButton
                       variant="primary"
-                      disabled={busy}
-                      onClick={() => void handlePublish(project.id)}
+                      onClick={() => handlePublish(project.id)}
                     >
-                      {busy ? "Publishing..." : "Publish"}
+                      Publish
                     </ActionButton>
                   )}
                 </div>
               </div>
+
+              {project.status === "published" && allowDomain && (
+                <CustomDomainPanel
+                  projectId={project.id}
+                  initialDomain={project.customDomain}
+                  onUpdated={(domain) => {
+                    setProjects((prev) =>
+                      (prev ?? []).map((p) =>
+                        p.id === project.id
+                          ? { ...p, customDomain: domain }
+                          : p,
+                      ),
+                    );
+                  }}
+                />
+              )}
+              {project.status === "published" && !allowDomain && (
+                <button
+                  type="button"
+                  onClick={() => setUpgradeFeature("custom_domain")}
+                  className="mt-4 text-left text-sm text-brand-light hover:underline"
+                >
+                  Custom domain — Upgrade to Pro
+                </button>
+              )}
             </li>
           );
         })}

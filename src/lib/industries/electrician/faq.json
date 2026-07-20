@@ -1,0 +1,20 @@
+{
+  "common_questions": [
+    "Can you respond the same day?",
+    "What should I do before you arrive?",
+    "Do you install EV chargers?",
+    "Can you upgrade a consumer unit / panel?",
+    "How do electrical quotes work?",
+    "Which areas do you serve?",
+    "What happens after I request help?",
+    "Will you explain safety steps in plain language?"
+  ],
+  "common_objections": [
+    "Price",
+    "Trust",
+    "Safety",
+    "Response time",
+    "Compliance paperwork",
+    "Disruption at home"
+  ]
+}

@@ -1,10 +1,21 @@
 "use client";
 
+import { SiteJsonLd } from "@/components/site-json-ld";
+import { resolveHeroShell, SiteHeroShell } from "@/components/site-hero-shell";
+import { ServiceIcon } from "@/components/service-icon";
 import { brand } from "@/lib/brand";
+import {
+  designSystemToCssVars,
+  googleFontsHrefFor,
+  normalizeDesignSystem,
+  sectionSurfaceClass,
+} from "@/lib/design-system";
+import { partitionServices } from "@/lib/service-layout";
+import { getSiteSections } from "@/lib/site-layout";
 import type { GeneratedSite } from "@/lib/site-types";
-import { getBusinessName } from "@/lib/site-types";
+import { getBusinessName, getHero } from "@/lib/site-types";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 type SitePreviewProps = {
   site: GeneratedSite;
@@ -27,12 +38,36 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
   const gallery = site.images.gallery.length
     ? site.images.gallery
     : [site.images.hero];
+  const sections = getSiteSections(site);
+  const hero = getHero(site);
+  const design = normalizeDesignSystem(site.design);
+  const designVars = designSystemToCssVars(design, theme);
+  const fontsHref = googleFontsHrefFor(design.font);
+  let surfaceIndex = 0;
+  const nextSurface = () =>
+    sectionSurfaceClass(design.sectionStyle, surfaceIndex++);
 
-  /** Trust row uses AI service titles — no hardcoded placeholders */
-  const trustItems = site.services.slice(0, 4).map((s) => s.title);
+  /** Trust row — Hero Generator trustBar preferred over service titles */
+  const trustItems =
+    hero.trustBar.length > 0
+      ? hero.trustBar
+      : site.services.slice(0, 4).map((s) => s.title);
+  const heroShell = resolveHeroShell(site);
 
-  function patchHero(field: "title" | "subtitle" | "cta", value: string) {
-    onChange?.({ ...site, hero: { ...site.hero, [field]: value } });
+  function patchHero(
+    field: "headline" | "subheadline" | "primaryCTA" | "secondaryCTA",
+    value: string,
+  ) {
+    onChange?.({
+      ...site,
+      hero: {
+        headline: hero.headline,
+        subheadline: hero.subheadline,
+        primaryCTA: hero.primaryCTA,
+        secondaryCTA: hero.secondaryCTA,
+        [field]: value,
+      },
+    });
   }
 
   function patchContact(field: "phone" | "email" | "address", value: string) {
@@ -97,13 +132,26 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
           </p>
           {(
             [
-              ["hero.title", site.hero.title, (v: string) => patchHero("title", v)],
               [
-                "hero.subtitle",
-                site.hero.subtitle,
-                (v: string) => patchHero("subtitle", v),
+                "hero.headline",
+                hero.headline,
+                (v: string) => patchHero("headline", v),
               ],
-              ["hero.cta", site.hero.cta, (v: string) => patchHero("cta", v)],
+              [
+                "hero.subheadline",
+                hero.subheadline,
+                (v: string) => patchHero("subheadline", v),
+              ],
+              [
+                "hero.primaryCTA",
+                hero.primaryCTA,
+                (v: string) => patchHero("primaryCTA", v),
+              ],
+              [
+                "hero.secondaryCTA",
+                hero.secondaryCTA,
+                (v: string) => patchHero("secondaryCTA", v),
+              ],
               [
                 "contact.phone",
                 site.contact.phone,
@@ -154,9 +202,32 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
           <span className="ml-3 truncate text-xs text-zinc-500">
             {slug}.{brand.domain}
           </span>
+          {site.layout?.sections && (
+            <span className="ml-auto hidden max-w-[45%] truncate text-[10px] text-zinc-400 sm:inline">
+              {site.layout.sections.map((s) => s.label).join(" → ")}
+            </span>
+          )}
         </div>
 
-        <div className="max-h-[75vh] overflow-y-auto">
+        <div
+          className="max-h-[75vh] overflow-y-auto"
+          style={
+            {
+              ...designVars,
+              fontFamily: "var(--site-font)",
+            } as CSSProperties
+          }
+          data-design-theme={design.theme}
+          data-design-palette={design.palette}
+          data-design-font={design.font}
+          data-design-spacing={design.spacing}
+          data-design-radius={design.borderRadius}
+          data-design-animation={design.animation}
+          data-design-image={design.imageStyle}
+          data-section-style={design.sectionStyle}
+        >
+          {fontsHref ? <link rel="stylesheet" href={fontsHref} /> : null}
+          <SiteJsonLd site={site} />
           <header className="flex items-center justify-between px-5 py-4 sm:px-8">
             <div>
               <p className="font-bold" style={{ color: theme.primary }}>
@@ -175,194 +246,410 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
             </a>
           </header>
 
-          <section className="relative min-h-[320px] overflow-hidden sm:min-h-[380px]">
-            <Image
-              src={site.images.hero}
-              alt={site.hero.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 800px"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
-            <div className="relative z-10 flex min-h-[320px] flex-col justify-end px-5 py-10 text-white sm:min-h-[380px] sm:px-10">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                {site.contact.address}
-              </p>
-              <h2 className="mt-2 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
-                {site.hero.title}
-              </h2>
-              <p className="mt-3 max-w-lg text-sm text-white/90 sm:text-base">
-                {site.hero.subtitle}
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
-                  style={{ color: theme.primary }}
-                >
-                  {site.hero.cta}
-                </button>
-                <span className="text-sm font-medium">{site.contact.phone}</span>
-              </div>
-            </div>
-          </section>
-
-          {trustItems.length > 0 && (
-            <section className="grid gap-3 border-b border-zinc-100 bg-zinc-50 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
-              {trustItems.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-xl bg-white px-4 py-3 text-center text-sm font-medium text-zinc-700 shadow-sm"
-                >
-                  {item}
-                </div>
-              ))}
-            </section>
-          )}
-
-          <section className="grid gap-8 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h3 className="text-2xl font-bold text-zinc-900">
-                {site.about.title}
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-                {site.about.text}
-              </p>
-            </div>
-            <div className="relative h-56 overflow-hidden rounded-2xl sm:h-64">
-              <Image
-                src={gallery[0]}
-                alt={site.about.title}
-                fill
-                className="object-cover"
-                sizes="400px"
-              />
-            </div>
-          </section>
-
-          <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
-            <h3 className="text-2xl font-bold text-zinc-900">Services</h3>
-            <p className="mt-2 text-sm text-zinc-600">
-              Professional services across {site.contact.address}
-            </p>
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-              {site.services.map((service) => (
-                <li
-                  key={service.title}
-                  className="rounded-xl border border-zinc-100 bg-white px-4 py-3"
-                >
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: theme.primary }}
-                  >
-                    {service.title}
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-600">
-                    {service.description}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="px-5 py-12 sm:px-8">
-            <h3 className="text-2xl font-bold text-zinc-900">Our work</h3>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {gallery.slice(0, 3).map((src, i) => (
-                <div
-                  key={`${src}-${i}`}
-                  className="relative h-40 overflow-hidden rounded-xl"
-                >
-                  <Image
-                    src={src}
-                    alt={`Project ${i + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="300px"
+          {sections.map((section) => {
+            if (section.id === "hero") {
+              return (
+                <div key="hero" id="hero">
+                  <SiteHeroShell
+                    shell={heroShell}
+                    compact
+                    headline={hero.headline}
+                    subheadline={hero.subheadline}
+                    primaryCTA={hero.primaryCTA}
+                    secondaryCTA={hero.secondaryCTA || site.contact.phone}
+                    address={site.contact.address}
+                    heroImage={site.images.hero}
+                    primaryColor={theme.primary}
+                    renderAddress={(className) =>
+                      editing ? (
+                        <input
+                          className={`${className} w-full bg-transparent outline-none`}
+                          value={site.contact.address}
+                          onChange={(e) =>
+                            patchContact("address", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <p className={className}>{site.contact.address}</p>
+                      )
+                    }
+                    renderPrimaryCta={(className, style) =>
+                      editing ? (
+                        <input
+                          className={`${className} outline-none`}
+                          style={style}
+                          value={hero.primaryCTA}
+                          onChange={(e) =>
+                            patchHero("primaryCTA", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <button type="button" className={className} style={style}>
+                          {hero.primaryCTA}
+                        </button>
+                      )
+                    }
+                    renderSecondaryCta={(className) =>
+                      editing ? (
+                        <input
+                          className={`${className} bg-transparent outline-none`}
+                          value={hero.secondaryCTA || site.contact.phone}
+                          onChange={(e) =>
+                            patchHero("secondaryCTA", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <span className={className}>
+                          {hero.secondaryCTA || site.contact.phone}
+                        </span>
+                      )
+                    }
                   />
+                  {trustItems.length > 0 && (
+                    <section className="grid gap-3 border-b border-zinc-100 bg-zinc-50 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+                      {trustItems.map((item) => (
+                        <div
+                          key={item}
+                          className="rounded-xl bg-white px-4 py-3 text-center text-sm font-medium text-zinc-700 shadow-sm"
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </section>
+                  )}
                 </div>
-              ))}
-            </div>
-          </section>
+              );
+            }
 
-          {site.testimonials.length > 0 && (
-            <section className="border-t border-zinc-100 bg-zinc-50 px-5 py-12 sm:px-8">
-              <div className="flex flex-wrap items-end justify-between gap-2">
-                <h3 className="text-2xl font-bold text-zinc-900">Reviews</h3>
-                {site.testimonials.some((t) => t.demo) && (
-                  <p className="text-xs text-zinc-500">
-                    Demo examples — replace with real customer reviews when live
+            if (
+              section.id === "about" ||
+              section.id === "why_us" ||
+              section.id === "trust"
+            ) {
+              return (
+                <section
+                  key={section.id}
+                  id={section.id}
+                  className={`grid gap-8 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:items-center ${nextSurface()}`}
+                >
+                  <div>
+                    <h3 className="text-2xl font-bold text-zinc-900">
+                      {site.about.title || section.label}
+                    </h3>
+                    {(site.about.paragraphs?.length
+                      ? site.about.paragraphs
+                      : site.about.text.split(/\n\n+/).filter(Boolean)
+                    ).map((para) => (
+                      <p
+                        key={para.slice(0, 24)}
+                        className="mt-4 text-sm leading-relaxed text-zinc-600"
+                      >
+                        {para}
+                      </p>
+                    ))}
+                    {site.about.highlights && site.about.highlights.length > 0 ? (
+                      <ul className="mt-5 grid gap-2 sm:grid-cols-3">
+                        {site.about.highlights.map((item) => (
+                          <li
+                            key={item}
+                            className="rounded-xl bg-zinc-50 px-3 py-2 text-center text-xs font-medium text-zinc-700"
+                          >
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                  <div className="relative h-56 overflow-hidden rounded-2xl sm:h-64">
+                    <Image
+                      src={gallery[0]}
+                      alt={site.about.title}
+                      fill
+                      className="object-cover"
+                      sizes="400px"
+                    />
+                  </div>
+                </section>
+              );
+            }
+
+            if (section.id === "services" || section.id === "menu") {
+              const { featured, secondary, optional } = partitionServices(
+                site.services,
+              );
+              return (
+                <section
+                  key={section.id}
+                  id={section.id}
+                  className={`border-t border-zinc-100 px-5 py-12 sm:px-8 ${nextSurface()}`}
+                >
+                  <h3 className="text-2xl font-bold text-zinc-900">
+                    {section.label}
+                  </h3>
+                  <p className="mt-2 text-sm text-zinc-600">
+                    {section.id === "menu"
+                      ? `Highlights from ${site.contact.address}`
+                      : `Across ${site.contact.address}`}
                   </p>
-                )}
-              </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                {site.testimonials.map((t) => (
-                  <blockquote
-                    key={`${t.name}-${t.text.slice(0, 16)}`}
-                    className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm"
-                  >
-                    {t.demo && (
-                      <span className="mb-3 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                        Demo review
+
+                  {featured ? (
+                    <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-5">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+                        Primary service
+                      </p>
+                      <div className="mt-2 flex items-start gap-3">
+                        <span
+                          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                          style={{
+                            backgroundColor: `${theme.primary}14`,
+                            color: theme.primary,
+                          }}
+                        >
+                          <ServiceIcon name={featured.icon} />
+                        </span>
+                        <div>
+                          <p
+                            className="text-lg font-bold"
+                            style={{ color: theme.primary }}
+                          >
+                            {featured.title}
+                          </p>
+                          <p className="mt-1 text-sm text-zinc-600">
+                            {featured.description}
+                          </p>
+                          {featured.benefits && featured.benefits.length > 0 && (
+                            <ul className="mt-3 flex flex-wrap gap-2">
+                              {featured.benefits.map((benefit) => (
+                                <li
+                                  key={benefit}
+                                  className="rounded-md bg-zinc-50 px-2 py-1 text-xs text-zinc-600"
+                                >
+                                  {benefit}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {secondary.length > 0 ? (
+                    <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {secondary.map((service) => (
+                        <li
+                          key={service.title}
+                          className="rounded-xl border border-zinc-100 bg-white px-4 py-3"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <span
+                              className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
+                              style={{
+                                backgroundColor: `${theme.primary}14`,
+                                color: theme.primary,
+                              }}
+                            >
+                              <ServiceIcon
+                                name={service.icon}
+                                className="h-4 w-4"
+                              />
+                            </span>
+                            <div className="min-w-0">
+                              <p
+                                className="text-sm font-semibold"
+                                style={{ color: theme.primary }}
+                              >
+                                {service.title}
+                              </p>
+                              <p className="mt-1 text-sm text-zinc-600">
+                                {service.description}
+                              </p>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {optional.length > 0 ? (
+                    <div className="mt-5 border-t border-zinc-100 pt-4">
+                      <p className="text-xs font-medium text-zinc-500">
+                        Also available
+                      </p>
+                      <ul className="mt-2 flex flex-wrap gap-1.5">
+                        {optional.map((service) => (
+                          <li
+                            key={service.title}
+                            className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700"
+                          >
+                            {service.title}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </section>
+              );
+            }
+
+            if (section.id === "projects" || section.id === "gallery") {
+              return (
+                <section
+                  key={section.id}
+                  id={section.id}
+                  className={`px-5 py-12 sm:px-8 ${nextSurface()}`}
+                >
+                  <h3 className="text-2xl font-bold text-zinc-900">
+                    {section.label}
+                  </h3>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    {gallery.slice(0, 3).map((src, i) => (
+                      <div
+                        key={`${src}-${i}`}
+                        className="relative h-40 overflow-hidden rounded-xl"
+                      >
+                        <Image
+                          src={src}
+                          alt={`${section.label} ${i + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="300px"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            }
+
+            if (section.id === "testimonials" && site.testimonials.length > 0) {
+              return (
+                <section
+                  key="testimonials"
+                  id="testimonials"
+                  className={`border-t border-zinc-100 px-5 py-12 sm:px-8 ${nextSurface()}`}
+                >
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <h3 className="text-2xl font-bold text-zinc-900">
+                      {section.label}
+                    </h3>
+                    {site.testimonials.some((t) => t.demo) && (
+                      <p className="text-xs text-zinc-500">
+                        Example reviews for preview — not shown as real on the
+                        live site
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                    {site.testimonials.map((t) => (
+                      <blockquote
+                        key={`${t.name}-${t.text.slice(0, 16)}`}
+                        className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm"
+                      >
+                        {t.demo ? (
+                          <span className="mb-3 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                            Example
+                          </span>
+                        ) : (
+                          <span className="mb-3 inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+                            Customer review
+                          </span>
+                        )}
+                        <p className="text-sm leading-relaxed text-zinc-700">
+                          “{t.text}”
+                        </p>
+                        <footer className="mt-4 text-xs font-semibold text-zinc-900">
+                          {t.name}
+                        </footer>
+                      </blockquote>
+                    ))}
+                  </div>
+                </section>
+              );
+            }
+
+            if (section.id === "faq" && site.faq.length > 0) {
+              return (
+                <section
+                  key="faq"
+                  id="faq"
+                  className={`px-5 py-12 sm:px-8 ${nextSurface()}`}
+                >
+                  <h3 className="text-2xl font-bold text-zinc-900">
+                    {section.label}
+                  </h3>
+                  <div className="mt-6 space-y-3">
+                    {site.faq.map((item) => (
+                      <details
+                        key={item.question}
+                        className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
+                      >
+                        <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900">
+                          <span className="flex flex-wrap items-center gap-2">
+                            {item.category ? (
+                              <span className="rounded bg-white px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-zinc-500">
+                                {item.category}
+                              </span>
+                            ) : null}
+                            <span>{item.question}</span>
+                          </span>
+                        </summary>
+                        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                          {item.answer}
+                        </p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              );
+            }
+
+            if (section.id === "contact") {
+              const band = site.cta ?? {
+                headline: hero.primaryCTA,
+                primaryCTA: hero.primaryCTA,
+                secondaryCTA: hero.secondaryCTA,
+              };
+              return (
+                <section
+                  key="contact"
+                  id="contact"
+                  className="px-5 py-14 text-center text-white sm:px-8"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+                  }}
+                >
+                  <h3 className="text-2xl font-bold sm:text-3xl">
+                    {band.headline}
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm opacity-90">
+                    {site.seo.description}
+                  </p>
+                  <div className="mt-6 space-y-1">
+                    <p className="text-2xl font-bold">{site.contact.phone}</p>
+                    <p className="text-sm opacity-90">{site.contact.email}</p>
+                    <p className="text-sm opacity-80">{site.contact.address}</p>
+                  </div>
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
+                      style={{ color: theme.primary }}
+                    >
+                      {band.primaryCTA}
+                    </button>
+                    {band.secondaryCTA && (
+                      <span className="text-sm font-medium text-white/90">
+                        {band.secondaryCTA}
                       </span>
                     )}
-                    <p className="text-sm leading-relaxed text-zinc-700">
-                      “{t.text}”
-                    </p>
-                    <footer className="mt-4 text-xs font-semibold text-zinc-900">
-                      {t.name}
-                    </footer>
-                  </blockquote>
-                ))}
-              </div>
-            </section>
-          )}
+                  </div>
+                </section>
+              );
+            }
 
-          {site.faq.length > 0 && (
-            <section className="px-5 py-12 sm:px-8">
-              <h3 className="text-2xl font-bold text-zinc-900">FAQ</h3>
-              <div className="mt-6 space-y-3">
-                {site.faq.map((item) => (
-                  <details
-                    key={item.question}
-                    className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
-                  >
-                    <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-900">
-                      {item.question}
-                    </summary>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-                      {item.answer}
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section
-            className="px-5 py-14 text-center text-white sm:px-8"
-            style={{
-              background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            }}
-          >
-            <h3 className="text-2xl font-bold sm:text-3xl">{site.hero.cta}</h3>
-            <p className="mx-auto mt-3 max-w-md text-sm opacity-90">
-              {site.seo.description}
-            </p>
-            <div className="mt-6 space-y-1">
-              <p className="text-2xl font-bold">{site.contact.phone}</p>
-              <p className="text-sm opacity-90">{site.contact.email}</p>
-              <p className="text-sm opacity-80">{site.contact.address}</p>
-            </div>
-            <button
-              type="button"
-              className="mt-6 rounded-full bg-white px-6 py-2.5 text-sm font-semibold"
-              style={{ color: theme.primary }}
-            >
-              {site.hero.cta}
-            </button>
-          </section>
+            return null;
+          })}
 
           <footer className="px-5 py-4 text-center text-[11px] text-zinc-400">
             © {new Date().getFullYear()} {businessName}. Preview by {brand.name}.

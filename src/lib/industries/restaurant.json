@@ -1,0 +1,53 @@
+{
+  "id": "restaurant",
+  "label": "Restaurant",
+  "aliases": ["restaurant", "bistro", "diner", "eatery", "kitchen", "grill", "dining", "brunch", "pizza"],
+  "preferredTemplate": "restaurant-modern",
+  "imageTrade": "restaurant",
+  "siteStructure": {
+    "sections": ["Hero", "About", "Menu", "Services", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Reserve a Table", "Order Takeaway", "View Menu"],
+    "secondary": ["Call to Book", "Private Dining", "Find Us"]
+  },
+  "faqThemes": [
+    "Reservations and walk-ins",
+    "Dietary and allergen options",
+    "Private dining and groups",
+    "Opening hours and takeaway",
+    "Parking and location",
+    "Kids / family friendly"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["restaurant", "dining", "reservations", "takeaway", "private dining", "brunch"],
+    "localModifiers": ["near me", "best in", "open now", "book a table"],
+    "avoid": ["Michelin-star claims", "world famous", "best restaurant ever"]
+  },
+  "textStyle": {
+    "voice": "Warm",
+    "writingStyle": "Elegant",
+    "do": ["Evoke atmosphere and cuisine style", "Invite booking clearly", "Highlight signature dishes without inventing awards"],
+    "dont": ["Fake Michelin or celebrity claims", "Generic 'fine dining experience' only", "Menu prices unless provided"]
+  },
+  "heroRules": {
+    "shellHint": "A",
+    "headlinePattern": "Atmosphere + cuisine cue — not 'Restaurant in City'",
+    "mustInclude": ["mood or cuisine", "invite to visit/book"],
+    "avoid": ["Welcome to Our Restaurant", "Fine Dining Experience", "Taste the Difference"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["plated signature dish", "warm dining room", "chef plating"],
+    "gallerySubjects": ["interior ambiance", "bar or patio", "group table"],
+    "avoid": ["empty sterile banquet hall stock", "unrelated fast-food packaging"]
+  },
+  "preferredWords": ["fresh", "seasonal", "table", "kitchen", "flavor", "evening", "reserve", "local", "menu", "welcome"],
+  "sectionHints": {
+    "about": "Story of the kitchen and room — hospitality, not corporate bio.",
+    "services": "If no menu section, use dining / events / takeaway cards.",
+    "faq": "Booking, allergens, hours first."
+  }
+}

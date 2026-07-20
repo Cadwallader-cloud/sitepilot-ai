@@ -2,10 +2,20 @@
 
 import { AuthButton, SignInGate } from "@/components/auth-button";
 import { BusinessForm } from "@/components/business-form";
+import { GenerationProgress } from "@/components/generation-progress";
+import { RequestAccess } from "@/components/request-access";
 import { PublishCTA } from "@/components/publish-cta";
+import { QualityAuditPanel } from "@/components/quality-audit-panel";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
+import {
+  applyGenerationEvent,
+  initialGenerationSteps,
+  type GenerationStepState,
+} from "@/lib/generation-progress";
 import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
+import { getHero } from "@/lib/site-types";
+import { websiteToGeneratedSite } from "@/lib/website";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +26,29 @@ type FormBuilderProps = {
   loadExample?: boolean;
   projectId?: string;
 };
+
+function parseSseChunk(
+  buffer: string,
+  onEvent: (event: string, data: unknown) => void,
+): string {
+  const parts = buffer.split("\n\n");
+  const rest = parts.pop() ?? "";
+  for (const block of parts) {
+    let eventName = "message";
+    const dataLines: string[] = [];
+    for (const line of block.split("\n")) {
+      if (line.startsWith("event:")) eventName = line.slice(6).trim();
+      else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+    }
+    if (!dataLines.length) continue;
+    try {
+      onEvent(eventName, JSON.parse(dataLines.join("\n")));
+    } catch {
+      // ignore malformed chunk
+    }
+  }
+  return rest;
+}
 
 export function FormBuilder({
   loadExample = false,
@@ -35,6 +68,10 @@ export function FormBuilder({
     "idle",
   );
   const [lastInput, setLastInput] = useState<BusinessFormInput | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [genSteps, setGenSteps] = useState<GenerationStepState>(() =>
+    initialGenerationSteps(),
+  );
   const generatingRef = useRef(false);
   const exampleStartedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
@@ -63,7 +100,22 @@ export function FormBuilder({
     }, 800);
   }
 
-  async function runGeneration(input: BusinessFormInput) {
+  useEffect(() => {
+    if (!loading) {
+      setElapsedSec(0);
+      return;
+    }
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [loading]);
+
+  async function runGeneration(
+    input: BusinessFormInput,
+    opts?: { regenerate?: boolean },
+  ) {
     if (generatingRef.current) return;
     generatingRef.current = true;
     setLoading(true);
@@ -71,13 +123,104 @@ export function FormBuilder({
     setLastInput(input);
     setHasEdited(false);
     setSaveState("idle");
+    setGenSteps(initialGenerationSteps());
+
+    const regenerate = Boolean(opts?.regenerate && site);
+    const previous =
+      regenerate && site
+        ? (() => {
+            const h = getHero(site);
+            return {
+              headline: h.headline,
+              subheadline: h.subheadline,
+              primaryCTA: h.primaryCTA,
+              heroTitle: h.headline,
+              heroSubtitle: h.subheadline,
+              heroCta: h.primaryCTA,
+              aboutText: site.about.text,
+            };
+          })()
+        : undefined;
+
+    const controller = new AbortController();
+    const timeoutMs = 100_000;
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          ...input,
+          stream: true,
+          regenerate,
+          projectId: regenerate ? projectId : undefined,
+          previous,
+        }),
       });
+
+      if (response.status === 401) {
+        throw new Error("Please sign in with Google to generate your website.");
+      }
+
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (contentType.includes("text/event-stream") && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        type StreamResult = {
+          site?: GeneratedSite;
+          source?: GenerateSource;
+          projectId?: string;
+          error?: string;
+        };
+        const streamBox: {
+          result: StreamResult | null;
+          error: string | null;
+        } = { result: null, error: null };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          buffer = parseSseChunk(buffer, (event, data) => {
+            if (event === "progress" && data && typeof data === "object") {
+              const row = data as { type?: string; step?: string };
+              if (typeof row.type === "string") {
+                setGenSteps((prev) =>
+                  applyGenerationEvent(prev, {
+                    type: row.type!,
+                    step: row.step,
+                  }),
+                );
+              }
+            } else if (event === "result" && data && typeof data === "object") {
+              streamBox.result = data as StreamResult;
+            } else if (event === "error" && data && typeof data === "object") {
+              const row = data as { error?: string };
+              streamBox.error = row.error ?? "Generation failed";
+            }
+          });
+        }
+
+        if (streamBox.error) throw new Error(streamBox.error);
+        if (!streamBox.result?.site) {
+          throw new Error("Invalid response from server");
+        }
+
+        setSite(streamBox.result.site);
+        setSource("ai");
+        if (streamBox.result.projectId) {
+          setProjectId(streamBox.result.projectId);
+          setSaveState("saved");
+        }
+        return;
+      }
 
       const data = (await response.json()) as {
         site?: GeneratedSite;
@@ -86,14 +229,9 @@ export function FormBuilder({
         error?: string;
       };
 
-      if (response.status === 401) {
-        throw new Error("Please sign in with Google to generate your website.");
-      }
-
       if (!response.ok) {
         throw new Error(data.error ?? "Generation failed");
       }
-
       if (!data.site) {
         throw new Error("Invalid response from server");
       }
@@ -105,16 +243,26 @@ export function FormBuilder({
         setSaveState("saved");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-      setSite(null);
-      setSource(null);
+      const aborted =
+        err instanceof DOMException && err.name === "AbortError";
+      setError(
+        aborted
+          ? "Generation timed out. Try again — if it keeps failing, check OpenAI / Vercel logs."
+          : err instanceof Error
+            ? err.message
+            : "Something went wrong",
+      );
+      if (!regenerate) {
+        setSite(null);
+        setSource(null);
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(false);
       generatingRef.current = false;
     }
   }
 
-  // Load an existing project from Supabase
   useEffect(() => {
     if (!initialProjectId || !session) return;
     let cancelled = false;
@@ -133,7 +281,7 @@ export function FormBuilder({
         if (!res.ok) throw new Error(data.error ?? "Project not found");
         if (cancelled || !data.project) return;
         setProjectId(data.project.id);
-        setSite(data.project.site);
+        setSite(websiteToGeneratedSite(data.project.site));
         setLastInput(data.project.input);
         setSource("ai");
         setSaveState("saved");
@@ -150,7 +298,6 @@ export function FormBuilder({
     };
   }, [initialProjectId, session]);
 
-  // Auto-run example once after sign-in (from /create?example=true)
   useEffect(() => {
     if (
       !loadExample ||
@@ -254,15 +401,7 @@ export function FormBuilder({
             </div>
 
             {loading ? (
-              <div className="flex min-h-[480px] flex-col items-center justify-center rounded-2xl border border-surface-border bg-surface/50 p-8 text-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-                <p className="mt-4 font-medium text-foreground">
-                  AI is writing your full website…
-                </p>
-                <p className="mt-2 text-sm text-muted">
-                  Hero · About · Services · Reviews · FAQ — usually under 60s
-                </p>
-              </div>
+              <GenerationProgress steps={genSteps} elapsedSec={elapsedSec} />
             ) : error ? (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
                 <div>
@@ -283,13 +422,16 @@ export function FormBuilder({
                 {lastInput && (
                   <button
                     type="button"
-                    onClick={() => runGeneration(lastInput)}
+                    onClick={() =>
+                      runGeneration(lastInput, { regenerate: true })
+                    }
                     disabled={loading}
                     className="mt-4 w-full rounded-xl border border-surface-border py-2.5 text-sm font-medium text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
                   >
                     ↻ Regenerate with AI
                   </button>
                 )}
+                <QualityAuditPanel site={site} input={lastInput} />
                 <PublishCTA
                   site={site}
                   projectId={projectId}
@@ -298,6 +440,15 @@ export function FormBuilder({
                     setProjectId(id);
                   }}
                 />
+                <div className="mt-8">
+                  <RequestAccess
+                    key={lastInput?.businessName ?? site.businessName ?? "lead"}
+                    compact
+                    defaultBusinessName={
+                      lastInput?.businessName ?? site.businessName ?? ""
+                    }
+                  />
+                </div>
               </>
             ) : (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">

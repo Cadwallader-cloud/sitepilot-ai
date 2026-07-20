@@ -1,0 +1,53 @@
+{
+  "id": "electrician",
+  "label": "Electrician",
+  "aliases": ["electrician", "electrical", "wiring", "consumer unit", "ev charger", "socket", "lighting", "fusebox", "panel upgrade"],
+  "preferredTemplate": "electrician-modern",
+  "imageTrade": "electrician",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Projects", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": true
+  },
+  "ctas": {
+    "primary": ["Book Electrician", "Request Safety Check", "Get EV Quote"],
+    "secondary": ["Call Now", "Panel Upgrade", "Emergency Callout"]
+  },
+  "faqThemes": [
+    "Consumer unit / panel upgrades",
+    "EV charger installation",
+    "Safety certificates and compliance",
+    "Emergency electrical callouts",
+    "Rewiring a home",
+    "Service area and booking"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["electrician", "electrical repair", "EV charger install", "consumer unit", "rewire", "lighting install"],
+    "localModifiers": ["near me", "certified", "emergency", "same day", "Part P"],
+    "avoid": ["cheap electrician", "DIY electrical tips as service copy", "world class"]
+  },
+  "textStyle": {
+    "voice": "Technical",
+    "writingStyle": "Educational",
+    "do": ["Sound safety-first without fearmongering", "Name concrete jobs", "Mention compliance only if true for the business"],
+    "dont": ["Invent licenses", "Scare with fake risks", "Use fluff like 'powering your dreams'"]
+  },
+  "heroRules": {
+    "shellHint": "B",
+    "headlinePattern": "Safe power outcome + job type (EV / panel / lighting)",
+    "mustInclude": ["safety or reliability cue", "specific job hint"],
+    "avoid": ["Electrical Services", "Powering Your Future", "Professional Electricians"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["electrician at consumer unit", "EV charger wall install", "lighting install"],
+    "gallerySubjects": ["panel upgrade", "socket/wiring detail", "van branded work"],
+    "avoid": ["generic lightbulb stock metaphors", "solar farm if not solar business"]
+  },
+  "preferredWords": ["safe", "certified", "install", "upgrade", "wiring", "power", "inspect", "EV", "lighting", "reliable"],
+  "sectionHints": {
+    "about": "Competence and careful work — homeowners feel safe hiring them.",
+    "services": "Repairs, upgrades, and specialty (EV/lighting) as three cards.",
+    "faq": "Certificates, EV, and emergency first."
+  }
+}

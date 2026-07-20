@@ -12,7 +12,9 @@ type BusinessFormProps = {
 export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) {
   const [form, setForm] = useState<BusinessFormInput>({
     businessName: initial?.businessName ?? "",
+    category: initial?.category ?? "",
     location: initial?.location ?? "",
+    description: initial?.description ?? "",
     services: initial?.services ?? "",
     phone: initial?.phone ?? "",
     email: initial?.email ?? "",
@@ -34,43 +36,57 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
 
   const isValid =
     form.businessName.trim() &&
+    form.category.trim() &&
     form.location.trim() &&
+    form.description.trim() &&
     form.services.trim() &&
     form.phone.trim() &&
     form.email.trim();
 
+  const fields = [
+    {
+      key: "businessName" as const,
+      label: "Business name",
+      placeholder: "Apex Roofing",
+    },
+    {
+      key: "category" as const,
+      label: "Category",
+      placeholder: "Roofing",
+    },
+    {
+      key: "location" as const,
+      label: "Location",
+      placeholder: "Dallas",
+    },
+    {
+      key: "description" as const,
+      label: "Description",
+      placeholder:
+        "Residential roofing for Dallas homeowners — repairs, replacements, storm damage.",
+      multiline: true,
+    },
+    {
+      key: "services" as const,
+      label: "Services",
+      placeholder: "Roof repair, roof replacement, storm damage, inspections",
+      multiline: true,
+    },
+    {
+      key: "phone" as const,
+      label: "Phone",
+      placeholder: "+1 214 555 0199",
+    },
+    {
+      key: "email" as const,
+      label: "Email",
+      placeholder: "hello@apexroofing.example",
+    },
+  ] as const;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {(
-        [
-          {
-            key: "businessName" as const,
-            label: "Business name",
-            placeholder: "London Roofing",
-          },
-          {
-            key: "location" as const,
-            label: "Location",
-            placeholder: "London",
-          },
-          {
-            key: "services" as const,
-            label: "Services",
-            placeholder: "Roof repair, gutter replacement, chimney repair",
-            multiline: true,
-          },
-          {
-            key: "phone" as const,
-            label: "Phone",
-            placeholder: "+44 20 7946 0958",
-          },
-          {
-            key: "email" as const,
-            label: "Email",
-            placeholder: "hello@londonroofing.co.uk",
-          },
-        ] as const
-      ).map((field) => (
+      {fields.map((field) => (
         <div key={field.key}>
           <label className="mb-1.5 block text-sm font-medium text-foreground">
             {field.label}
@@ -101,7 +117,7 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           disabled={!isValid || loading}
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {loading ? "Generating…" : "Generate"}
+          {loading ? "Building Business DNA…" : "Generate"}
         </button>
         <button
           type="button"
@@ -109,7 +125,7 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           disabled={loading}
           className="rounded-xl border border-surface-border px-4 py-3 text-sm text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
         >
-          Try London Roofing
+          Try Apex Roofing
         </button>
       </div>
     </form>

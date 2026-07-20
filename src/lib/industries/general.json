@@ -1,0 +1,53 @@
+{
+  "id": "general",
+  "label": "Local Business",
+  "aliases": [],
+  "preferredTemplate": "local-service-standard",
+  "imageTrade": "general",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Get a Free Quote", "Contact Us", "Book a Call"],
+    "secondary": ["Call Now", "Send a Message", "Learn More"]
+  },
+  "faqThemes": [
+    "How pricing and quotes work",
+    "What makes this business different",
+    "Service area coverage",
+    "How booking works",
+    "Response time",
+    "What to prepare before contacting"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["local business", "services near me", "free quote", "professional service"],
+    "localModifiers": ["near me", "local", "trusted", "licensed"],
+    "avoid": ["world class", "industry leading", "best in the world", "#1"]
+  },
+  "textStyle": {
+    "voice": "Professional",
+    "writingStyle": "Simple",
+    "do": ["Stay specific to the business description", "Use city naturally", "Keep CTAs clear"],
+    "dont": ["Generic filler", "Invent credentials", "Copy competitor slogans"]
+  },
+  "heroRules": {
+    "shellHint": "B",
+    "headlinePattern": "Concrete local outcome — never category + Services",
+    "mustInclude": ["outcome", "local cue"],
+    "avoid": ["Professional Services", "Quality You Can Trust", "Your Local Experts"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["real work context for the trade", "team on site", "finished result"],
+    "gallerySubjects": ["process", "detail of work", "customer-facing moment"],
+    "avoid": ["random handshake", "abstract gradients as hero subject"]
+  },
+  "preferredWords": ["local", "help", "clear", "reliable", "quote", "care", "result", "book", "trusted", "simple"],
+  "sectionHints": {
+    "about": "Why this local business is easy to trust.",
+    "services": "Three concrete offers from their real services list.",
+    "faq": "Pricing, coverage, and booking first."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "solar",
+  "label": "Solar Energy",
+  "aliases": ["solar", "solar panel", "photovoltaic", "pv install", "solar energy", "solar company", "rooftop solar"],
+  "preferredTemplate": "home-services-trust",
+  "imageTrade": "electrician",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Projects", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": true
+  },
+  "ctas": {
+    "primary": ["Get Solar Quote", "Book Free Assessment", "Calculate Savings"],
+    "secondary": ["Call Solar Team", "View Installations", "Homeowner Guide"]
+  },
+  "faqThemes": [
+    "How much can I save on bills",
+    "Roof suitability and survey",
+    "Installation timeline",
+    "Warranties on panels and work",
+    "Battery storage options",
+    "Permits and grid connection"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["solar panels", "solar install", "rooftop solar", "solar quote", "home solar", "solar battery"],
+    "localModifiers": ["near me", "free assessment", "incentives", "local installer"],
+    "avoid": ["guaranteed savings amount", "pay nothing forever", "unverified free solar claims"]
+  },
+  "textStyle": {
+    "voice": "Professional",
+    "writingStyle": "Educational",
+    "do": ["Explain savings honestly with ranges only if provided", "Focus on assessment and clarity", "Mention roof + energy outcome"],
+    "dont": ["Invent incentive amounts", "Promise zero bills", "Shame non-solar homeowners"]
+  },
+  "heroRules": {
+    "shellHint": "A",
+    "headlinePattern": "Clean energy / lower bills outcome for homeowners — not 'Solar Company'",
+    "mustInclude": ["home or energy cue", "assessment/quote path"],
+    "avoid": ["Go Green Today", "Solar Power Solutions", "Future of Energy"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["residential rooftop panels", "install crew on roof", "home with solar array"],
+    "gallerySubjects": ["inverter detail", "before-after roof", "family home exterior"],
+    "avoid": ["desert solar farm if residential brand", "glowing green earth stock"]
+  },
+  "preferredWords": ["solar", "panels", "savings", "roof", "assess", "install", "energy", "home", "battery", "quote"],
+  "sectionHints": {
+    "about": "Trusted local installer — clear process from survey to switch-on.",
+    "services": "Assessment, install, and battery/maintenance as three cards.",
+    "faq": "Savings honesty, roof fit, and timeline first."
+  }
+}

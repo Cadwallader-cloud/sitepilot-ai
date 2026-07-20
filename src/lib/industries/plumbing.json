@@ -1,0 +1,53 @@
+{
+  "id": "plumbing",
+  "label": "Plumbing",
+  "aliases": ["plumbing", "plumber", "drain", "pipe", "boiler", "water heater", "leak", "faucet", "blocked drain"],
+  "preferredTemplate": "plumber-local",
+  "imageTrade": "plumbing",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": true
+  },
+  "ctas": {
+    "primary": ["Book Same-Day Plumber", "Request Free Quote", "Schedule Repair"],
+    "secondary": ["Call Now", "Emergency Plumbing", "Get Drain Cleared"]
+  },
+  "faqThemes": [
+    "Same-day / emergency plumbing",
+    "Boilers and water heaters",
+    "Blocked drains and cameras",
+    "Pricing transparency",
+    "Service coverage area",
+    "What to do when a pipe bursts"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["plumber", "emergency plumber", "drain cleaning", "boiler repair", "leak detection", "water heater install"],
+    "localModifiers": ["near me", "24 hour", "same day", "licensed", "no call-out fee"],
+    "avoid": ["cheap plumber", "best plumber in the world", "guaranteed forever"]
+  },
+  "textStyle": {
+    "voice": "Friendly",
+    "writingStyle": "Simple",
+    "do": ["Emphasize speed and clarity", "Name common jobs homeowners recognize", "Keep CTA phone-friendly"],
+    "dont": ["Overuse jargon", "Invent certifications", "Shame the customer for DIY attempts"]
+  },
+  "heroRules": {
+    "shellHint": "C",
+    "headlinePattern": "Fast local fix + problem type (leak / drain / boiler)",
+    "mustInclude": ["urgency or clarity", "city or 'local'"],
+    "avoid": ["Plumbing Services", "Professional Plumbers", "Your Plumbing Experts"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["plumber at kitchen sink", "water heater install", "drain camera work"],
+    "gallerySubjects": ["bathroom plumbing", "pipe repair", "van / tools on site"],
+    "avoid": ["luxury spa only", "unrelated HVAC rooftop units"]
+  },
+  "preferredWords": ["fix", "clear", "leak", "drain", "boiler", "hot water", "same-day", "local", "reliable", "inspect"],
+  "sectionHints": {
+    "about": "Why call this plumber first — response time, honesty, local coverage.",
+    "services": "Emergency, drains, and installs/repairs as three clear cards.",
+    "faq": "Lead with emergency and pricing clarity."
+  }
+}

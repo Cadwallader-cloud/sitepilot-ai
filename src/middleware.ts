@@ -1,48 +1,112 @@
+import {
+  canUseAnalytics,
+  canUseCustomDomain,
+} from "@/lib/billing/permissions";
+import type { PlanEntitlements, PlanId } from "@/lib/billing/types";
+import { publicSiteUrl } from "@/lib/slug";
+import { resolveTenantHost } from "@/lib/tenancy";
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-const ROOT_DOMAINS = ["crestis.app", "localhost", "127.0.0.1"];
+/** Legacy public path: /site/[slug](/...) — not /site/by-host/... */
+const LEGACY_SITE_PATH = /^\/site\/(?!by-host(?:\/|$))([^/]+)(\/.*)?$/;
 
-function getSubdomain(host: string): string | null {
-  const hostname = host.split(":")[0].toLowerCase();
-
-  // slug.localhost:3000
-  if (hostname.endsWith(".localhost")) {
-    const sub = hostname.slice(0, -".localhost".length);
-    return sub && !sub.includes(".") ? sub : null;
-  }
-
-  for (const root of ROOT_DOMAINS) {
-    if (hostname === root || hostname === `www.${root}`) return null;
-    if (hostname.endsWith(`.${root}`)) {
-      const sub = hostname.slice(0, -(root.length + 1));
-      // only single-level subdomains: slug.crestis.app
-      if (sub && !sub.includes(".")) return sub;
-    }
-  }
-
-  return null;
-}
-
-export function middleware(request: NextRequest) {
+/**
+ * Tenancy routing + premium feature gates (plan from JWT).
+ * Uses getToken (not full auth()) to stay Edge-safe.
+ * APIs still enforce permissions server-side against Supabase.
+ */
+export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
-  const subdomain = getSubdomain(host);
+  const resolution = resolveTenantHost(host);
+  const { pathname, search } = request.nextUrl;
 
-  if (!subdomain) return NextResponse.next();
-
-  // Avoid rewriting app routes if somehow hit via subdomain
-  const { pathname } = request.nextUrl;
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/site/")
-  ) {
+  if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
     return NextResponse.next();
   }
 
-  const url = request.nextUrl.clone();
-  url.pathname =
-    pathname === "/" ? `/site/${subdomain}` : `/site/${subdomain}${pathname}`;
-  return NextResponse.rewrite(url);
+  if (resolution.kind !== "app") {
+    if (resolution.kind === "invalid_subdomain") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/site/__not-found__";
+      return NextResponse.rewrite(url);
+    }
+
+    const url = request.nextUrl.clone();
+
+    if (resolution.kind === "slug") {
+      const nested = pathname.match(LEGACY_SITE_PATH);
+      if (nested) {
+        const dest = request.nextUrl.clone();
+        dest.pathname = nested[2] || "/";
+        return NextResponse.redirect(dest, 308);
+      }
+
+      url.pathname =
+        pathname === "/"
+          ? `/site/${resolution.slug}`
+          : `/site/${resolution.slug}${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+
+    const domain = encodeURIComponent(resolution.domain);
+    url.pathname =
+      pathname === "/"
+        ? `/site/by-host/${domain}`
+        : `/site/by-host/${domain}${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  const legacy = pathname.match(LEGACY_SITE_PATH);
+  if (legacy) {
+    const slug = legacy[1];
+    const rest = legacy[2] || "";
+    const dest = new URL(publicSiteUrl(slug));
+    dest.pathname = rest || "/";
+    dest.search = search;
+    return NextResponse.redirect(dest, 308);
+  }
+
+  const needsPlanGate =
+    pathname.startsWith("/dashboard/analytics") ||
+    pathname.startsWith("/dashboard/domain");
+
+  if (needsPlanGate) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
+    });
+
+    const isAdmin = Boolean(token?.isAdmin);
+    const entitlements = token?.entitlements as PlanEntitlements | undefined;
+    const planId = (token?.planId as PlanId | undefined) ?? "free";
+
+    if (!isAdmin) {
+      if (
+        pathname.startsWith("/dashboard/analytics") &&
+        !canUseAnalytics(entitlements ?? planId)
+      ) {
+        const dest = request.nextUrl.clone();
+        dest.pathname = "/upgrade";
+        const project = request.nextUrl.searchParams.get("project");
+        dest.search = `?feature=analytics${project ? `&project=${project}` : ""}`;
+        return NextResponse.redirect(dest);
+      }
+
+      if (
+        pathname.startsWith("/dashboard/domain") &&
+        !canUseCustomDomain(entitlements ?? planId)
+      ) {
+        const dest = request.nextUrl.clone();
+        dest.pathname = "/upgrade";
+        dest.search = "?feature=custom_domain";
+        return NextResponse.redirect(dest);
+      }
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

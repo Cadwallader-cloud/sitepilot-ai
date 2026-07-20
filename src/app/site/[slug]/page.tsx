@@ -1,5 +1,6 @@
 import { PublishedWebsite } from "@/components/published-website";
 import { getPublishedSiteBySlug } from "@/lib/publish";
+import { siteSeoToMetadata } from "@/lib/seo-metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -15,11 +16,7 @@ export async function generateMetadata({
   if (!published) {
     return { title: "Site not found" };
   }
-  return {
-    title: published.site.seo.title,
-    description: published.site.seo.description,
-    keywords: published.site.seo.keywords,
-  };
+  return siteSeoToMetadata(published.site);
 }
 
 export default async function PublicSitePage({ params }: PageProps) {
@@ -27,5 +24,11 @@ export default async function PublicSitePage({ params }: PageProps) {
   const published = await getPublishedSiteBySlug(slug);
   if (!published) notFound();
 
-  return <PublishedWebsite site={published.site} />;
+  return (
+    <PublishedWebsite
+      site={published.site}
+      projectId={published.id}
+      slug={published.slug}
+    />
+  );
 }

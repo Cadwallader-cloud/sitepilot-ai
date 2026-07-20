@@ -1,25 +1,36 @@
 import Link from "next/link";
 import Image from "next/image";
-import { showcaseDemos } from "@/lib/showcase-demos";
+import { showcaseDemoCount, showcaseDemos } from "@/lib/showcase-demos";
+
+const featured = [
+  "roofing",
+  "plumbing",
+  "electrician",
+  "brightsmile-dental-austin",
+  "ember-table-restaurant",
+  "sterling-law-group",
+];
 
 export function DemoExamples() {
+  const demos = featured
+    .map((slug) => showcaseDemos.find((d) => d.slug === slug))
+    .filter(Boolean) as typeof showcaseDemos;
+
   return (
     <section id="examples" className="border-t border-surface-border px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <h2 className="text-3xl font-bold md:text-4xl">See our demo showcase</h2>
+          <h2 className="text-3xl font-bold md:text-4xl">
+            See finished websites first
+          </h2>
           <p className="mt-3 text-muted">
-            5 unique contractor websites — photos, animations, mobile-ready
+            {showcaseDemoCount} free demos across trades, clinics, firms &
+            restaurants
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {showcaseDemos.slice(0, 3).map((demo) => (
-            <DemoCard key={demo.slug} demo={demo} />
-          ))}
-        </div>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:mx-auto lg:max-w-2xl">
-          {showcaseDemos.slice(3).map((demo) => (
+          {demos.map((demo) => (
             <DemoCard key={demo.slug} demo={demo} />
           ))}
         </div>
@@ -29,7 +40,7 @@ export function DemoExamples() {
             href="/demos"
             className="inline-flex h-12 items-center justify-center rounded-full border border-surface-border px-8 text-sm font-semibold transition hover:border-brand/40 hover:text-brand-light"
           >
-            View all 5 demos →
+            View all {showcaseDemoCount} demos →
           </Link>
         </div>
       </div>

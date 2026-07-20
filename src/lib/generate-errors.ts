@@ -50,7 +50,7 @@ export function mapOpenAiError(error: unknown): GenerateError {
     );
   }
 
-  if (message === "OPENAI_EMPTY") {
+  if (message === "OPENAI_EMPTY" || message.startsWith("ENGINE_EMPTY:")) {
     return new GenerateError(
       "OPENAI_EMPTY",
       "OpenAI returned an empty response",
@@ -60,13 +60,28 @@ export function mapOpenAiError(error: unknown): GenerateError {
 
   if (
     message === "OPENAI_INVALID_JSON" ||
+    message.startsWith("ENGINE_INVALID_JSON:") ||
     message.startsWith("INVALID_FIELD") ||
-    message === "INVALID_JSON_SHAPE"
+    message === "INVALID_JSON_SHAPE" ||
+    message.startsWith("WEBSITE_VALIDATION_FAILED:")
   ) {
     return new GenerateError(
       "OPENAI_SCHEMA",
-      "OpenAI returned incomplete website JSON",
+      "Website JSON failed validation",
       502,
+    );
+  }
+
+  if (
+    message.includes("timed out") ||
+    message.includes("Timeout") ||
+    message.includes("ETIMEDOUT") ||
+    message.includes("AbortError")
+  ) {
+    return new GenerateError(
+      "OPENAI_FAILED",
+      "Generation timed out. Please try again.",
+      504,
     );
   }
 

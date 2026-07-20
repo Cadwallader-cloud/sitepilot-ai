@@ -1,0 +1,53 @@
+{
+  "id": "cleaning",
+  "label": "Cleaning",
+  "aliases": ["cleaning", "cleaner", "janitor", "maid", "house cleaning", "office cleaning", "commercial cleaning", "janitorial"],
+  "preferredTemplate": "cleaning-local",
+  "imageTrade": "general",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": true
+  },
+  "ctas": {
+    "primary": ["Get a Cleaning Quote", "Book a Clean", "Schedule Recurring Service"],
+    "secondary": ["Call Now", "One-Time Deep Clean", "Office Cleaning"]
+  },
+  "faqThemes": [
+    "What is included in a standard clean",
+    "Do you bring supplies and equipment",
+    "Recurring vs one-time pricing",
+    "Are cleaners insured and vetted",
+    "How to prepare before the visit",
+    "Service area and booking window"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["house cleaning", "office cleaning", "deep clean", "recurring cleaning", "move-out cleaning", "commercial cleaning"],
+    "localModifiers": ["near me", "insured", "same week", "eco-friendly"],
+    "avoid": ["cheapest cleaners", "hospital-grade guarantees", "world class sparkle"]
+  },
+  "textStyle": {
+    "voice": "Friendly",
+    "writingStyle": "Simple",
+    "do": ["Be specific about what's included", "Emphasize reliability and care for the home/office", "Make recurring easy to book"],
+    "dont": ["Invent eco certifications", "Overpromise sterile/medical claims", "Shame messy homes"]
+  },
+  "heroRules": {
+    "shellHint": "A",
+    "headlinePattern": "Clean home/office outcome + ease of booking",
+    "mustInclude": ["clean result", "easy booking cue"],
+    "avoid": ["Cleaning Services", "Professional Cleaners", "Sparkling Clean Every Time"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["bright cleaned kitchen", "team with supplies", "office after clean"],
+    "gallerySubjects": ["bathroom detail", "living room tidy", "commercial lobby"],
+    "avoid": ["dirty before shots as hero", "chemical spill aesthetics"]
+  },
+  "preferredWords": ["clean", "fresh", "reliable", "recurring", "detail", "home", "office", "spotless", "care", "schedule"],
+  "sectionHints": {
+    "about": "Trusted in homes and offices — careful, consistent crews.",
+    "services": "Standard, deep, and commercial/recurring as three cards.",
+    "faq": "Inclusions, supplies, and vetting first."
+  }
+}

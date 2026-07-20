@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npx --yes tsx --test src/lib/website.roundtrip.test.ts src/lib/website-ownership.test.ts src/lib/website-validator.test.ts src/lib/website-acceptance.test.ts src/lib/ai/retry/retry.test.ts src/lib/ai/retry/retry-acceptance.test.ts src/lib/ai/orchestrator/orchestrator-acceptance.test.ts",
+    "typecheck": "tsc --noEmit",
+    "ai:quality:batch": "node --env-file=.env.local scripts/ai-quality/run-batch.mjs",
+    "ai:quality:analyze": "node scripts/ai-quality/analyze.mjs",
+    "ai:quality": "npm run ai:quality:batch -- --limit=50 --concurrency=3 && npm run ai:quality:analyze"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
@@ -16,7 +21,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.17.2",
-    "stripe": "^22.3.2"
+    "stripe": "^22.3.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

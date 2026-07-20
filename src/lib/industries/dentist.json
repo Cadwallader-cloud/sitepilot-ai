@@ -1,0 +1,53 @@
+{
+  "id": "dentist",
+  "label": "Dentist",
+  "aliases": ["dentist", "dental", "orthodont", "teeth", "tooth", "smile clinic", "oral care"],
+  "preferredTemplate": "dentist-family",
+  "imageTrade": "dentist",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Book Appointment", "Schedule Check-Up", "Request Smile Consult"],
+    "secondary": ["Call the Practice", "New Patient Forms", "Emergency Dental"]
+  },
+  "faqThemes": [
+    "Do you accept emergency patients",
+    "Insurance and payment options",
+    "First visit what to expect",
+    "Whitening and cosmetic options",
+    "Family / kids dentistry",
+    "How to book and cancel"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["dentist", "dental clinic", "teeth cleaning", "dental checkup", "cosmetic dentistry", "emergency dentist"],
+    "localModifiers": ["near me", "family", "accepting patients", "same week"],
+    "avoid": ["painless guaranteed", "best smile in the world", "Hollywood teeth"]
+  },
+  "textStyle": {
+    "voice": "Warm",
+    "writingStyle": "Conversational",
+    "do": ["Calm anxiety", "Focus on comfort and clarity", "Speak to families and first-time patients"],
+    "dont": ["Clinical scare tactics", "Invent board certifications", "Overpromise whitening results"]
+  },
+  "heroRules": {
+    "shellHint": "B",
+    "headlinePattern": "Comfortable care + smile/health outcome — not 'Dental Services'",
+    "mustInclude": ["comfort or confidence", "care cue"],
+    "avoid": ["Dental Practice", "Professional Dental Care", "Your Local Dentist"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["bright modern dental suite", "friendly chairside consult", "clean clinic reception"],
+    "gallerySubjects": ["hygiene bay", "team in clinic", "patient comfort detail"],
+    "avoid": ["extreme before-after gore", "stock white coats only with no clinic context"]
+  },
+  "preferredWords": ["healthy", "comfortable", "smile", "care", "confidence", "gentle", "checkup", "family", "clean", "calm"],
+  "sectionHints": {
+    "about": "Gentle, clear care — why patients feel at ease here.",
+    "services": "Check-ups, restorative, and cosmetic/emergency as three cards.",
+    "faq": "First visit, insurance, and emergency booking."
+  }
+}

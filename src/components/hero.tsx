@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RequestAccess } from "@/components/request-access";
 import { brand } from "@/lib/brand";
 
 export function Hero() {
@@ -14,41 +15,39 @@ export function Hero() {
       />
 
       <div className="mx-auto max-w-4xl text-center">
-        <p className="mb-4 inline-flex flex-col items-center gap-1">
-          <span className="text-sm font-bold uppercase tracking-[0.28em] text-brand-light">
-            {brand.name}
-          </span>
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted">
-            {brand.tagline}
-          </span>
-        </p>
-
-        <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-          Launch a professional website in{" "}
-          <span className="bg-gradient-to-r from-brand-light to-indigo-300 bg-clip-text text-transparent">
-            60 seconds
-          </span>
-          .
+        <h1 className="text-5xl font-bold uppercase tracking-[0.18em] text-foreground md:text-7xl">
+          {brand.name}
         </h1>
-
-        <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-muted md:text-2xl">
-          {brand.heroSubtitle}
+        <p className="mt-4 text-lg font-medium text-brand-light md:text-2xl">
+          {brand.tagline}
         </p>
 
-        <p className="mt-4 text-lg text-muted">No coding. No designers.</p>
+        <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
+          Launch a professional website in 60 seconds. No coding. No designers.
+        </p>
 
-        <div className="mt-10">
+        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/create"
             className="inline-flex h-14 items-center justify-center rounded-full bg-brand px-10 text-lg font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-light"
           >
             {brand.cta}
           </Link>
+          <a
+            href="#early-access"
+            className="inline-flex h-14 items-center justify-center rounded-full border border-surface-border px-8 text-lg font-semibold transition hover:border-brand/40"
+          >
+            Get Early Access
+          </a>
         </div>
 
         <p className="mt-4 text-sm text-muted">
           Free preview · No credit card · Ready in under a minute
         </p>
+      </div>
+
+      <div className="mx-auto mt-16 max-w-lg">
+        <RequestAccess />
       </div>
     </section>
   );

@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/scripts/ai-quality/output/
 
 # next.js
 /.next/

@@ -1,0 +1,53 @@
+{
+  "id": "real_estate",
+  "label": "Real Estate",
+  "aliases": ["real estate", "realtor", "estate agent", "property agent", "homes for sale", "listing agent", "broker"],
+  "preferredTemplate": "b2b-corporate",
+  "imageTrade": "general",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Projects", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": false
+  },
+  "ctas": {
+    "primary": ["Book a Valuation", "Browse Listings", "Talk to an Agent"],
+    "secondary": ["Sell Your Home", "Buyer Consultation", "Call the Office"]
+  },
+  "faqThemes": [
+    "How home valuations work",
+    "Buyer vs seller representation",
+    "Typical timeline to sell",
+    "Fees and commission clarity",
+    "Neighborhood expertise",
+    "First-time buyer support"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["real estate agent", "homes for sale", "home valuation", "property listing", "buyer agent", "sell my house"],
+    "localModifiers": ["near me", "in [city]", "top agent", "local market"],
+    "avoid": ["guaranteed sale price", "always beats the market", "number one realtor"]
+  },
+  "textStyle": {
+    "voice": "Premium",
+    "writingStyle": "Persuasive",
+    "do": ["Highlight local market knowledge", "Separate buy vs sell paths clearly", "Invite valuation without pressure"],
+    "dont": ["Invent sales volume or rankings", "Promise specific sale prices", "Use pushy scarcity hype"]
+  },
+  "heroRules": {
+    "shellHint": "A",
+    "headlinePattern": "Local market outcome for buyers or sellers — not 'Real Estate Services'",
+    "mustInclude": ["city or neighborhood cue", "buy or sell clarity"],
+    "avoid": ["Real Estate Experts", "Your Dream Home Awaits", "Number One Agency"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["welcoming home exterior", "agent with clients at property", "modern listing interior"],
+    "gallerySubjects": ["key handoff tasteful", "neighborhood street", "open house table"],
+    "avoid": ["mansion fantasies unrelated to market", "cash raining stock"]
+  },
+  "preferredWords": ["home", "market", "list", "value", "neighborhood", "tour", "offer", "local", "guide", "move"],
+  "sectionHints": {
+    "about": "Local guide — market knowledge without fake rankings.",
+    "services": "Buy, sell, and valuation/consult as three cards.",
+    "faq": "Fees, timeline, and valuation process."
+  }
+}

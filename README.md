@@ -1,15 +1,16 @@
-# SitePilot AI for Contractors
+# Crestis
 
-AI-powered website builder for trade businesses — roofers, builders, plumbers, electricians, landscapers.
+AI Website Builder for Local Businesses — [crestis.app](https://crestis.app)
 
-**Preview free · Publish for $199**
+**Free → Preview → Draft → Upgrade (Pro / Business)**
 
 ## Features
 
-- Landing page with demo showcase (5 unique contractor sites)
+- Landing page + demo showcase
 - Form-based website builder at `/create`
-- Stripe checkout at `/publish`
-- OpenAI generation API (optional)
+- Crypto checkout at `/checkout` (USDT / USDC / BTC)
+- Provider-agnostic billing (Free / Pro / Business)
+- Early access leads (`Request Access` → Supabase `leads`)
 
 ## Local development
 
@@ -21,42 +22,36 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### Environment variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | Optional | Enables AI generation |
-| `STRIPE_SECRET_KEY` | For checkout | Stripe test/live secret key |
-| `NEXT_PUBLIC_APP_URL` | Production | Your Vercel URL for Stripe redirects |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Optional | Google Analytics for ads |
-| `NEXT_PUBLIC_META_PIXEL_ID` | Optional | Meta Pixel for Facebook ads |
-
-## Deploy on Vercel
-
-1. Go to [vercel.com/new](https://vercel.com/new)
-2. Import **Cadwallader-cloud/sitepilot-ai** from GitHub
-3. Add environment variables (at minimum `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_APP_URL`)
-4. Deploy
-
-Or via CLI:
+## Deploy
 
 ```bash
-npx vercel
+npx vercel --prod
 ```
 
-Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://sitepilot-ai.vercel.app`).
+Set `NEXT_PUBLIC_APP_URL` to `https://crestis.app`.
 
-## Stripe test checkout
+## Model routing (site generation)
 
-1. Add `STRIPE_SECRET_KEY` from [Stripe Dashboard → Test mode](https://dashboard.stripe.com/test/apikeys)
-2. Go to `/publish` and click **Pay $199**
-3. Use test card: `4242 4242 4242 4242`, any future expiry, any CVC
+Simple Engine uses **GPT-5 mini only** (3 calls):
 
-## Ads setup
+1. Brand Personality → DNA JSON  
+2. Website Plan → Plan JSON  
+3. Website JSON → copy + SEO + visual tokens  
 
-After deploy, add tracking IDs to Vercel env vars:
+```bash
+OPENAI_MODEL=gpt-5-mini
+```
 
-- **Google Ads / Analytics:** `NEXT_PUBLIC_GA_MEASUREMENT_ID`
-- **Facebook Ads:** `NEXT_PUBLIC_META_PIXEL_ID`
+Full `gpt-5` / `gpt-4o` env values are remapped to `gpt-5-mini` unless `CRESTIS_ALLOW_FULL_MODEL=true`.
 
-Then create campaigns targeting contractors in your region.
+Optional cheaper: `OPENAI_MODEL=gpt-5-nano`.
+
+## Supabase
+
+Run SQL in the Supabase SQL Editor as needed:
+
+- `supabase/schema.sql`
+- `supabase/schema-subscriptions.sql` or `schema-billing-v2.sql`
+- `supabase/schema-crypto-orders.sql`
+- `supabase/schema-payment-wallets.sql`
+- `supabase/schema-leads.sql`

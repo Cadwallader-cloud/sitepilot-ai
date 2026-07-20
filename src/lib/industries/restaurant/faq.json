@@ -1,0 +1,20 @@
+{
+  "common_questions": [
+    "Can I reserve a table?",
+    "Do you offer takeaway?",
+    "Do you have vegetarian options?",
+    "Can you host a private group?",
+    "What are your opening hours like?",
+    "Where are you located and is parking nearby?",
+    "How do I book for a special occasion?",
+    "Do you handle allergy requests?"
+  ],
+  "common_objections": [
+    "Availability",
+    "Dietary needs",
+    "Price",
+    "Atmosphere fit",
+    "Parking / location",
+    "Wait times"
+  ]
+}

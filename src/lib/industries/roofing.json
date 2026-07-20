@@ -1,0 +1,53 @@
+{
+  "id": "roofing",
+  "label": "Roofing",
+  "aliases": ["roofing", "roofer", "roof", "shingle", "gutter", "chimney", "slate roof", "tile roof"],
+  "preferredTemplate": "construction-premium",
+  "imageTrade": "roofing",
+  "siteStructure": {
+    "sections": ["Hero", "Trust", "Services", "About", "Projects", "Testimonials", "FAQ", "CTA", "Contact"],
+    "stickyCTA": true,
+    "floatingPhone": true
+  },
+  "ctas": {
+    "primary": ["Request Free Estimate", "Book Roof Inspection", "Get Storm Quote"],
+    "secondary": ["Call Now", "View Recent Work", "Emergency Roof Repair"]
+  },
+  "faqThemes": [
+    "Emergency roof repair availability",
+    "Storm and weather damage claims",
+    "Warranties and materials used",
+    "How long a typical reroof takes",
+    "Service area and response time",
+    "Free inspection / estimate process"
+  ],
+  "seoVocab": {
+    "primaryTerms": ["roof repair", "roof replacement", "roof inspection", "storm damage", "gutter repair", "local roofer"],
+    "localModifiers": ["near me", "emergency", "same day", "licensed", "insured"],
+    "avoid": ["cheap roofs", "world class", "industry leading", "#1 roofer"]
+  },
+  "textStyle": {
+    "voice": "Direct",
+    "writingStyle": "Persuasive",
+    "do": ["Lead with protection and urgency when storm-related", "Name materials and process plainly", "Put city in trust context"],
+    "dont": ["Invent years in business or awards", "Use vague 'quality craftsmanship' alone", "Promise lifetime guarantees without context"]
+  },
+  "heroRules": {
+    "shellHint": "A",
+    "headlinePattern": "City + roof outcome (protect / inspect / repair) — not 'Roofing Services'",
+    "mustInclude": ["concrete outcome", "local relevance"],
+    "avoid": ["Roofing Company", "Professional Roofing Services", "Your Trusted Roofer"],
+    "wordCountIdeal": "5–9 words"
+  },
+  "imageGuidance": {
+    "heroSubjects": ["crew on residential roof", "new shingle install", "inspection on pitched roof"],
+    "gallerySubjects": ["before-after roof", "gutter detail", "storm damage repair"],
+    "avoid": ["generic handshake", "stock smiling office", "unrelated construction cranes only"]
+  },
+  "preferredWords": ["protect", "inspect", "repair", "weather", "home", "roof", "craftsmanship", "estimate", "storm", "secure"],
+  "sectionHints": {
+    "about": "Frame as why homeowners trust this crew for weather protection — no invented history.",
+    "services": "Three cards: inspection, repair, replacement (or specialty) with concrete benefits.",
+    "faq": "Answer storm, warranty, timeline, and service-area questions first."
+  }
+}

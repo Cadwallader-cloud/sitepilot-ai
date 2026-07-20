@@ -1,7 +1,5 @@
 import Stripe from "stripe";
 
-export const PUBLISH_PRICE_CENTS = 19_900;
-
 export function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {

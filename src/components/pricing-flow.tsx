@@ -1,68 +1,92 @@
 import Link from "next/link";
-import { brand } from "@/lib/brand";
+import { BUSINESS_FEATURES } from "@/lib/plans";
 
-const steps = [
-  {
-    label: "Generate",
-    description: "Describe your business — free",
-  },
-  {
-    label: "Preview",
-    description: "See your full website — free",
-  },
-  {
-    label: "Publish",
-    description: "Get a live URL — next",
-    highlight: true,
-  },
-];
+const FREE_PLAN_FEATURES = ["1 website", "AI generation", "Preview"] as const;
+
+const PRO_PLAN_FEATURES = [
+  "Unlimited websites",
+  "Publish",
+  "Custom domain",
+  "Analytics",
+] as const;
 
 export function PricingFlow() {
   return (
-    <section id="how-it-works" className="border-t border-surface-border px-6 py-20">
-      <div className="mx-auto max-w-4xl">
-        <h2 className="text-center text-3xl font-bold md:text-4xl">
-          See the result before you pay
-        </h2>
+    <section id="pricing" className="border-t border-surface-border px-6 py-20">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="text-center text-3xl font-bold md:text-4xl">Pricing</h2>
         <p className="mt-3 text-center text-muted">
-          Generate and preview free. Publish when you&apos;re ready.
+          Start free. Upgrade when you&apos;re ready to publish.
         </p>
 
-        <div className="mt-12 flex flex-col items-center gap-4 md:flex-row md:justify-center md:gap-0">
-          {steps.map((step, index) => (
-            <div key={step.label} className="flex items-center">
-              <div
-                className={`rounded-2xl border px-6 py-5 text-center ${
-                  step.highlight
-                    ? "border-brand bg-brand/10 shadow-lg shadow-brand/20"
-                    : "border-surface-border bg-surface"
-                }`}
-              >
-                <p
-                  className={`text-lg font-bold ${
-                    step.highlight ? "text-brand-light" : "text-foreground"
-                  }`}
-                >
-                  {step.label}
-                </p>
-                <p className="mt-1 max-w-[140px] text-xs text-muted">
-                  {step.description}
-                </p>
-              </div>
-              {index < steps.length - 1 && (
-                <span className="mx-2 hidden text-2xl text-muted md:block">↓</span>
-              )}
+        <div className="mx-auto mt-12 grid max-w-3xl gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-surface-border bg-surface px-6 py-7">
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold">Free</p>
+              <span className="rounded-md bg-zinc-500/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Beta
+              </span>
             </div>
-          ))}
+            <p className="mt-3 text-4xl font-bold tracking-tight">$0</p>
+            <ul className="mt-6 space-y-2 text-sm text-muted">
+              {FREE_PLAN_FEATURES.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <span className="text-emerald-400">✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/create"
+              className="mt-8 flex h-11 items-center justify-center rounded-full border border-surface-border bg-background/60 text-sm font-semibold transition hover:border-brand/40"
+            >
+              Start Free
+            </Link>
+          </div>
+
+          <div className="rounded-2xl border border-brand bg-brand/10 px-6 py-7 shadow-lg shadow-brand/15">
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold">Pro</p>
+              <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                Recommended
+              </span>
+            </div>
+            <p className="mt-3 text-4xl font-bold tracking-tight">
+              $29
+              <span className="text-lg font-medium text-muted">/mo</span>
+            </p>
+            <ul className="mt-6 space-y-2 text-sm text-muted">
+              {PRO_PLAN_FEATURES.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <span className="text-emerald-400">✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/checkout?plan=pro"
+              className="mt-8 flex h-11 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition hover:bg-brand-light"
+            >
+              Upgrade
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <Link
-            href="/create"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-brand px-8 font-semibold text-white transition hover:bg-brand-light"
-          >
-            {brand.cta}
-          </Link>
+        <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-surface-border bg-surface/40 px-6 py-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Business</p>
+              <p className="mt-1 text-sm text-muted">
+                {BUSINESS_FEATURES.slice(0, 3).join(" · ")}
+              </p>
+            </div>
+            <Link
+              href="/checkout?plan=business"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-surface-border px-5 text-sm font-semibold transition hover:border-brand/40"
+            >
+              Upgrade to Business
+            </Link>
+          </div>
         </div>
       </div>
     </section>

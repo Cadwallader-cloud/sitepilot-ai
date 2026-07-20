@@ -6,6 +6,7 @@ import {
 } from "@/lib/projects";
 import { publicSiteUrl } from "@/lib/slug";
 import type { GeneratedSite } from "@/lib/site-types";
+import { websiteToGeneratedSite } from "@/lib/website";
 import { NextResponse } from "next/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -31,8 +32,9 @@ export async function GET(_request: Request, context: RouteContext) {
         id: project.id,
         businessName: project.business_name,
         input: project.input,
-        site: project.site,
+        site: websiteToGeneratedSite(project.site as GeneratedSite),
         slug: project.slug,
+        plan: project.plan,
         status: published ? "published" : "draft",
         url:
           published && project.slug ? publicSiteUrl(project.slug) : null,

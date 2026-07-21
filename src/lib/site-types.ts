@@ -20,6 +20,8 @@ export type ServiceItem = {
   description: string;
   /** Exactly 3 outcome benefit lines */
   benefits?: string[];
+  /** Per-service action CTA — e.g. Get Free Quote, Book Inspection */
+  cta?: string;
   /** Lucide-style icon name (Crestis renders — never AI SVG) */
   icon?: string;
   /** One primary / most profitable offer */

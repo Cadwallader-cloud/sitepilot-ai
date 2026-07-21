@@ -4,6 +4,7 @@
 
 import { assembleWebsiteJson } from "../../../ai-engine/assemble";
 import { commitWebsiteViaOwnership } from "../../../ai-engine/commit-website";
+import { runContentReviewSelfHealing } from "../../../ai-engine/content-review-self-healing";
 import { computeFinalScoreBaseline } from "../../../ai-engine/final-score";
 import { detectHumanCrestis } from "../../../ai-engine/human-crestis";
 import { synthesizeQaReport } from "../../../ai-engine/qa-synthesize";
@@ -23,6 +24,7 @@ import {
   applyQATheme,
   prepareQARun,
 } from "../../context";
+import { reviewContent } from "@/lib/review/content/engine";
 import { themeFieldsFromPreset } from "@/theme";
 import type { PipelineContext, PipelineStep } from "../context";
 
@@ -81,6 +83,49 @@ export class QAStep implements PipelineStep<PipelineContext> {
     };
 
     meta.onProgress?.({
+      stage: "content_review",
+      label: "Content Review",
+    });
+    const reviewInput = {
+      location: meta.input.location,
+      category: meta.input.category,
+      hero: meta.content!.hero,
+      about: meta.content!.about,
+      services: meta.content!.services,
+      faq: meta.content!.faq,
+      cta: meta.content!.cta,
+      contact: meta.content!.contact,
+    };
+    let contentReview = reviewContent(reviewInput);
+
+    const engineCtx = {
+      input: meta.input,
+      options: { ...meta.options, runId: meta.runId },
+      runId: meta.runId,
+      brief: meta.brief,
+      plan: meta.plan!,
+    };
+    const agentCtx = {
+      ctx: engineCtx,
+      brief: meta.brief!,
+      plan: meta.plan!,
+    };
+
+    const healed = await runContentReviewSelfHealing({
+      agentCtx,
+      input: reviewInput,
+      content: meta.content!,
+      report: contentReview,
+      onProgress: (payload) =>
+        meta.onProgress?.({
+          stage: payload.stage,
+          label: payload.label,
+        }),
+    });
+    meta.content = healed.content;
+    contentReview = healed.report;
+
+    meta.onProgress?.({
       stage: "quality_reviewer",
       label: "QA",
     });
@@ -116,6 +161,7 @@ export class QAStep implements PipelineStep<PipelineContext> {
       qa: qaReport,
       human,
       scores,
+      contentReview,
       previousSeoMemory: meta.options.seoMemory,
     });
     const assembled = websiteFromFlat(websiteJson, {

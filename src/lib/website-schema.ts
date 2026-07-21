@@ -238,6 +238,7 @@ export function parseWebsiteContent(raw: unknown): WebsiteContent {
         title: str(s.title, `services[${i}].title`),
         description,
         ...(benefits && benefits.length ? { benefits } : {}),
+        ...(typeof s.cta === "string" && s.cta.trim() ? { cta: s.cta.trim() } : {}),
         ...(icon ? { icon } : {}),
         ...(s.featured === true ? { featured: true } : {}),
         ...(s.priority === "featured" ||

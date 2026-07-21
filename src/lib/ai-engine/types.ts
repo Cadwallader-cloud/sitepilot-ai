@@ -218,6 +218,8 @@ export type EngineStageName =
   | "design_planner"
   | "visual_ai"
   | "cro_ai"
+  | "content_review"
+  | "content_review_healing"
   | "quality_reviewer"
   | "ai_quality_scorer"
   | "qa_ai"

@@ -231,6 +231,7 @@ function normalizeService(raw: unknown, _index: number): Service {
   const icon = String(row.icon ?? "").trim() || "wrench";
   const featured =
     row.featured === true || row.priority === "featured";
+  const cta = String(row.cta ?? "").trim();
 
   return {
     title,
@@ -238,6 +239,7 @@ function normalizeService(raw: unknown, _index: number): Service {
     benefits,
     icon,
     featured,
+    ...(cta ? { cta } : {}),
   };
 }
 
@@ -264,6 +266,7 @@ function servicesToFlatItems(services: Service[]): ServiceItem[] {
     benefits: s.benefits,
     icon: s.icon,
     featured: s.featured,
+    ...(s.cta ? { cta: s.cta } : {}),
     priority: s.featured ? ("featured" as const) : ("secondary" as const),
   }));
 }
@@ -490,6 +493,7 @@ export interface Service {
   benefits: string[];
   icon: string;
   featured: boolean;
+  cta?: string;
 }
 
 export interface ServicesSectionData {

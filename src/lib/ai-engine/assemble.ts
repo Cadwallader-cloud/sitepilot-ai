@@ -1,3 +1,4 @@
+import type { ContentReviewReport } from "@/lib/review/content/engine";
 import type { BusinessDna } from "../business-dna";
 import type { BrandPersonality } from "../brand-personality";
 import type { BusinessFormInput } from "../business-form";
@@ -44,6 +45,7 @@ export function assembleWebsiteJson(params: {
   qa?: QaReport;
   human?: HumanDetectorReport;
   scores?: FinalScore;
+  contentReview?: ContentReviewReport;
   previousSeoMemory?: SeoMemory | null;
 }): WebsiteJson {
   const {
@@ -61,6 +63,7 @@ export function assembleWebsiteJson(params: {
     qa,
     human,
     scores,
+    contentReview,
     previousSeoMemory,
   } = params;
 
@@ -236,6 +239,26 @@ export function assembleWebsiteJson(params: {
           trust: scores.trust,
           design: scores.design,
           humanScore: scores.humanScore,
+        }
+      : undefined,
+    contentReview: contentReview
+      ? {
+          final: contentReview.final,
+          report: contentReview.report,
+          selfHealing: contentReview.selfHealing,
+          sections: Object.fromEntries(
+            Object.entries(contentReview.sections).map(([id, section]) => [
+              id,
+              {
+                id: section.id,
+                label: section.label,
+                score: section.score,
+                summary: section.summary,
+              },
+            ]),
+          ),
+          issues: contentReview.issues,
+          strengths: contentReview.strengths,
         }
       : undefined,
   };

@@ -188,6 +188,50 @@ export type WebsiteJson = {
     design: number;
     humanScore: number;
   };
+  /** Phase 3.1 — Content Review Engine */
+  contentReview?: {
+    final: {
+      score: number;
+      grade: "excellent" | "good" | "needs_work" | "poor";
+      passed: boolean;
+      summary: string;
+    };
+    report: {
+      overall: number;
+      hero: number;
+      about: number;
+      services: number;
+      faq: number;
+      cta: number;
+      issues: Array<{
+        severity: "warning" | "error";
+        section: string;
+        message: string;
+        suggestion: string;
+      }>;
+    };
+    selfHealing?: {
+      tasks: Array<{
+        action: string;
+        section: string;
+        score: number;
+        reasons: string[];
+        status: "pending" | "completed" | "failed";
+      }>;
+      regeneratedSections: string[];
+    };
+    sections: Record<
+      string,
+      {
+        id: string;
+        label: string;
+        score: number;
+        summary: string;
+      }
+    >;
+    issues: string[];
+    strengths: string[];
+  };
 };
 
 /** Detect nested Website JSON vs legacy flat GeneratedSite */

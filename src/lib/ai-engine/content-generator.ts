@@ -34,7 +34,13 @@ type Ctx = {
   ctx: EngineContext;
   brief: BusinessBrief;
   plan: WebsitePlan;
+  contentReviewFeedback?: string;
 };
+
+function withContentReviewFeedback(user: string, c: Ctx): string {
+  if (!c.contentReviewFeedback?.trim()) return user;
+  return `${user}\n\n${c.contentReviewFeedback.trim()}`;
+}
 
 /** Clamp AI trustBar to signals already present on Brand Profile */
 export function normalizeTrustBar(
@@ -108,7 +114,8 @@ export async function generateHeroSection(c: Ctx): Promise<ContentDraft["hero"]>
     userEmail: c.ctx.options.userEmail,
     temperature: c.ctx.options.regenerate ? 1.05 : 0.95,
     system: HERO_SYSTEM,
-    user: heroUser({
+    user: withContentReviewFeedback(
+      heroUser({
       businessName: c.ctx.input.businessName,
       city: c.brief.city,
       niche: c.brief.niche,
@@ -140,6 +147,8 @@ export async function generateHeroSection(c: Ctx): Promise<ContentDraft["hero"]>
         ? `Template: ${c.plan.template} / variant ${c.plan.variant}`
         : undefined,
     }),
+      c,
+    ),
   });
 
   const hero = {
@@ -170,7 +179,8 @@ export async function generateAboutSection(
     userEmail: c.ctx.options.userEmail,
     temperature: 0.85,
     system: ABOUT_SYSTEM,
-    user: aboutUser({
+    user: withContentReviewFeedback(
+      aboutUser({
       businessName: c.ctx.input.businessName,
       city: c.brief.city,
       niche: c.brief.niche,
@@ -209,6 +219,8 @@ export async function generateAboutSection(
       ),
       advantages: c.brief.dna.advantages,
     }),
+      c,
+    ),
   });
 
   const about = normalizeAboutFromAi(ai, "About Us");
@@ -237,7 +249,8 @@ export async function generateServicesSection(
     system: servicesSystem({
       isMenu: c.plan.sections.some((s) => s.id === "menu"),
     }),
-    user: servicesUser({
+    user: withContentReviewFeedback(
+      servicesUser({
       businessName: c.ctx.input.businessName,
       city: c.brief.city,
       niche: c.brief.dna.industry || c.brief.niche,
@@ -273,6 +286,8 @@ export async function generateServicesSection(
           )
         : undefined,
     }),
+      c,
+    ),
   });
 
   const services = normalizeServicesFromAi(ai.services, priority);
@@ -372,7 +387,8 @@ export async function generateFaqSection(
     temperature: 0.55,
     maxCompletionTokens: 3072,
     system: FAQ_SYSTEM,
-    user: faqUser({
+    user: withContentReviewFeedback(
+      faqUser({
       businessName: c.ctx.input.businessName,
       city: c.brief.city,
       niche: c.brief.dna.industry || c.brief.niche,
@@ -394,6 +410,8 @@ export async function generateFaqSection(
         2,
       ),
     }),
+      c,
+    ),
   });
 
   const faq = normalizeFaqFromAi(ai.faq, faqBank.common_questions);
@@ -411,7 +429,8 @@ export async function generateCtaSection(
     userEmail: c.ctx.options.userEmail,
     temperature: 0.85,
     system: CTA_SYSTEM,
-    user: ctaUser({
+    user: withContentReviewFeedback(
+      ctaUser({
       businessName: c.ctx.input.businessName,
       city: c.brief.city,
       tone: toneOf(c),
@@ -422,6 +441,8 @@ export async function generateCtaSection(
       heroPrimaryCta: hero?.primaryCTA,
       personalityBrief: personalityBriefOf(c),
     }),
+      c,
+    ),
   });
 
   return {

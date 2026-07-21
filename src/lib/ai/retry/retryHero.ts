@@ -9,6 +9,7 @@ import type { Hero } from "../../website";
 import { validateHero } from "../../validation/validate";
 import type { HeroInput } from "../../validation/hero";
 import type { PipelineContext } from "../orchestrator/context";
+import { prepareHeroRun, type HeroSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -34,13 +35,18 @@ export async function retryHero(
   maxAttempts?: number,
 ): Promise<RetryResult<HeroInput>>;
 
-/** Orchestrator: await retryHero(ctx) */
+/** Orchestrator: await retryHero(run) */
+export async function retryHero(
+  run: HeroSectionRun,
+): Promise<RetryHeroFromContext>;
+
+/** @deprecated Prefer HeroSectionRun from Context Manager */
 export async function retryHero(
   ctx: PipelineContext,
 ): Promise<RetryHeroFromContext>;
 
 export async function retryHero(
-  arg: (() => Promise<unknown>) | PipelineContext,
+  arg: (() => Promise<unknown>) | HeroSectionRun | PipelineContext,
   maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<HeroInput> | RetryHeroFromContext> {
   if (typeof arg === "function") {
@@ -50,7 +56,9 @@ export async function retryHero(
     });
   }
 
-  const ctx = arg;
+  const run = "hero" in arg ? arg : prepareHeroRun(arg);
+  const ctx = run.pipeline;
+  void run.hero;
   const { meta } = ctx;
   if (!meta.plan || !meta.selection) {
     throw new Error("ORCHESTRATOR:hero requires plan");

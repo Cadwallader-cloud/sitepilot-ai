@@ -8,6 +8,7 @@ import type { About } from "../../website";
 import { validateAbout } from "../../validation/validate";
 import type { AboutInput } from "../../validation/about";
 import type { PipelineContext } from "../orchestrator/context";
+import { prepareAboutRun, type AboutSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -38,13 +39,18 @@ export async function retryAbout(
   maxAttempts?: number,
 ): Promise<RetryResult<AboutInput>>;
 
-/** Orchestrator: await retryAbout(ctx) */
+/** Orchestrator: await retryAbout(run) */
+export async function retryAbout(
+  run: AboutSectionRun,
+): Promise<RetryAboutFromContext>;
+
+/** @deprecated Prefer AboutSectionRun from Context Manager */
 export async function retryAbout(
   ctx: PipelineContext,
 ): Promise<RetryAboutFromContext>;
 
 export async function retryAbout(
-  arg: (() => Promise<unknown>) | PipelineContext,
+  arg: (() => Promise<unknown>) | AboutSectionRun | PipelineContext,
   maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<AboutInput> | RetryAboutFromContext> {
   if (typeof arg === "function") {
@@ -55,7 +61,9 @@ export async function retryAbout(
     );
   }
 
-  const ctx = arg;
+  const run = "about" in arg ? arg : prepareAboutRun(arg);
+  const ctx = run.pipeline;
+  void run.about;
   const { meta } = ctx;
   if (!meta.plan || !meta.selection || !meta.agentCtx) {
     throw new Error("ORCHESTRATOR:about requires plan + agentCtx");

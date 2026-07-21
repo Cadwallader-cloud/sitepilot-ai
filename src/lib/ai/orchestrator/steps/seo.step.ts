@@ -5,7 +5,7 @@
  *   SEO → Retry → FAIL → PipelineError
  */
 
-import { applySeoPatch } from "../../../website-ownership";
+import { applySEOResult, prepareSEORun } from "../../context";
 import { retrySEO } from "../../retry/retrySEO";
 import type { PipelineContext, PipelineStep } from "../context";
 
@@ -13,16 +13,9 @@ export class SEOStep implements PipelineStep<PipelineContext> {
   id = "seo";
 
   async run(ctx: PipelineContext): Promise<PipelineContext> {
-    const result = await retrySEO(ctx);
-
-    return {
-      ...ctx,
-      website: applySeoPatch(ctx.website, result.seo),
-      meta: {
-        ...ctx.meta,
-        seo: result.seoDraft,
-      },
-    };
+    const run = prepareSEORun(ctx);
+    const result = await retrySEO(run);
+    return applySEOResult(run.pipeline, result);
   }
 }
 

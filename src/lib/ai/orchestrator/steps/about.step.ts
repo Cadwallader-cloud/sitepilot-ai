@@ -5,7 +5,7 @@
  *   About → Retry → FAIL → PipelineError
  */
 
-import { applyAboutDataPatch } from "../../../website-ownership";
+import { applyAboutResult, prepareAboutRun } from "../../context";
 import { retryAbout } from "../../retry/retryAbout";
 import type { PipelineContext, PipelineStep } from "../context";
 
@@ -13,21 +13,14 @@ export class AboutStep implements PipelineStep<PipelineContext> {
   id = "about";
 
   async run(ctx: PipelineContext): Promise<PipelineContext> {
-    ctx.meta.onProgress?.({
+    const run = prepareAboutRun(ctx);
+    run.pipeline.meta.onProgress?.({
       stage: "content_generator",
       label: "About",
     });
 
-    const result = await retryAbout(ctx);
-
-    return {
-      ...ctx,
-      website: applyAboutDataPatch(ctx.website, result.about),
-      meta: {
-        ...ctx.meta,
-        aboutResult: result.aboutResult,
-      },
-    };
+    const result = await retryAbout(run);
+    return applyAboutResult(run.pipeline, result);
   }
 }
 

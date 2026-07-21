@@ -8,6 +8,7 @@ import type { SEO } from "../../website";
 import { validateSEO } from "../../validation/validate";
 import type { SeoInput } from "../../validation/seo";
 import type { PipelineContext } from "../orchestrator/context";
+import { prepareSEORun, type SEOSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -38,13 +39,18 @@ export async function retrySEO(
   maxAttempts?: number,
 ): Promise<RetryResult<SeoInput>>;
 
-/** Orchestrator: await retrySEO(ctx) */
+/** Orchestrator: await retrySEO(run) */
+export async function retrySEO(
+  run: SEOSectionRun,
+): Promise<RetrySEOFromContext>;
+
+/** @deprecated Prefer SEOSectionRun from Context Manager */
 export async function retrySEO(
   ctx: PipelineContext,
 ): Promise<RetrySEOFromContext>;
 
 export async function retrySEO(
-  arg: (() => Promise<unknown>) | PipelineContext,
+  arg: (() => Promise<unknown>) | SEOSectionRun | PipelineContext,
   maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<SeoInput> | RetrySEOFromContext> {
   if (typeof arg === "function") {
@@ -55,7 +61,9 @@ export async function retrySEO(
     );
   }
 
-  const ctx = arg;
+  const run = "seo" in arg ? arg : prepareSEORun(arg);
+  const ctx = run.pipeline;
+  void run.seo;
   const { meta } = ctx;
   if (!meta.engineCtx || !meta.plan || !meta.content) {
     throw new Error("ORCHESTRATOR:seo requires content + plan");

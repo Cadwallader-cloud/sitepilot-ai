@@ -7,6 +7,7 @@ import type { FAQ } from "../../website";
 import { validateFAQ } from "../../validation/validate";
 import type { FaqSectionInput } from "../../validation/faq";
 import type { PipelineContext } from "../orchestrator/context";
+import { prepareFAQRun, type FAQSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -31,13 +32,18 @@ export async function retryFAQ(
   maxAttempts?: number,
 ): Promise<RetryResult<FaqSectionInput>>;
 
-/** Orchestrator: await retryFAQ(ctx) */
+/** Orchestrator: await retryFAQ(run) */
+export async function retryFAQ(
+  run: FAQSectionRun,
+): Promise<RetryFAQFromContext>;
+
+/** @deprecated Prefer FAQSectionRun from Context Manager */
 export async function retryFAQ(
   ctx: PipelineContext,
 ): Promise<RetryFAQFromContext>;
 
 export async function retryFAQ(
-  arg: (() => Promise<unknown>) | PipelineContext,
+  arg: (() => Promise<unknown>) | FAQSectionRun | PipelineContext,
   maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<FaqSectionInput> | RetryFAQFromContext> {
   if (typeof arg === "function") {
@@ -48,7 +54,9 @@ export async function retryFAQ(
     );
   }
 
-  const ctx = arg;
+  const run = "faq" in arg ? arg : prepareFAQRun(arg);
+  const ctx = run.pipeline;
+  void run.faq;
   const { meta } = ctx;
   if (!meta.agentCtx || !meta.content) {
     throw new Error("ORCHESTRATOR:faq requires content");

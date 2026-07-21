@@ -10,25 +10,20 @@ import { synthesizeQaReport } from "../../../ai-engine/qa-synthesize";
 import { selectTheme } from "../../../ai-engine/theme-selector";
 import { websiteFromFlat } from "../../../website";
 import { runJsonValidatorGate } from "../../../website-validator";
-import { applyThemePatch } from "../../../website-ownership";
+import {
+  applyQAResult,
+  applyQATheme,
+  prepareQARun,
+} from "../../context";
 import type { PipelineContext, PipelineStep } from "../context";
 
 export class QAStep implements PipelineStep<PipelineContext> {
   id = "qa";
 
   async run(ctx: PipelineContext): Promise<PipelineContext> {
-    const { meta } = ctx;
-    const templateId = meta.templateId;
-    if (
-      !meta.plan ||
-      !meta.content ||
-      !meta.seo ||
-      !templateId ||
-      !meta.aboutResult ||
-      !meta.personality
-    ) {
-      throw new Error("ORCHESTRATOR:qa requires content + seo + plan");
-    }
+    const run = prepareQARun(ctx);
+    void run.qa; // only QA agent sees full website
+    const { meta } = run.pipeline;
 
     meta.onProgress?.({
       stage: "theme_selector",
@@ -37,14 +32,14 @@ export class QAStep implements PipelineStep<PipelineContext> {
     const design = await selectTheme({
       input: meta.input,
       brief: meta.brief,
-      plan: meta.plan,
-      content: meta.content,
+      plan: meta.plan!,
+      content: meta.content!,
       runId: meta.runId,
-      templateId,
+      templateId: meta.templateId!,
     });
 
     const themePatch = {
-      template: design.design.theme || templateId,
+      template: design.design.theme || meta.templateId!,
       palette: design.design.palette,
       font: design.design.font,
       radius: design.design.borderRadius,
@@ -69,28 +64,28 @@ export class QAStep implements PipelineStep<PipelineContext> {
       blockers: [] as string[],
       patched: [] as string[],
       patches: {},
-      verdict: `About QA picked ${meta.aboutResult.selectedStyle}: ${meta.aboutResult.reason}`,
+      verdict: `About QA picked ${meta.aboutResult!.selectedStyle}: ${meta.aboutResult!.reason}`,
     };
-    const { qa, quality } = synthesizeQaReport({
+    const { qa: qaReport, quality } = synthesizeQaReport({
       cro,
-      seo: meta.seo,
+      seo: meta.seo!,
       design: design.design,
     });
-    const human = detectHumanCrestis(meta.content);
-    const scores = computeFinalScoreBaseline({ qa, cro, human });
+    const human = detectHumanCrestis(meta.content!);
+    const scores = computeFinalScoreBaseline({ qa: qaReport, cro, human });
 
     meta.onProgress?.({ stage: "assemble", label: "Website JSON" });
     const websiteJson = assembleWebsiteJson({
       input: meta.input,
-      content: meta.content,
-      seo: meta.seo,
+      content: meta.content!,
+      seo: meta.seo!,
       design,
-      plan: meta.plan,
+      plan: meta.plan!,
       dna: meta.liveDna,
-      personality: meta.personality,
+      personality: meta.personality!,
       quality,
       cro,
-      qa,
+      qa: qaReport,
       human,
       scores,
       previousSeoMemory: meta.options.seoMemory,
@@ -103,14 +98,14 @@ export class QAStep implements PipelineStep<PipelineContext> {
 
     let website = {
       ...assembled,
-      business: ctx.business,
-      branding: ctx.branding,
+      business: run.pipeline.business,
+      branding: run.pipeline.branding,
       metadata: {
         ...assembled.metadata,
         id: meta.runId,
       },
     };
-    website = applyThemePatch(website, themePatch);
+    website = applyQATheme(website, themePatch);
     website = commitWebsiteViaOwnership(website);
 
     meta.onProgress?.({ stage: "json_validator", label: "JSON Validator" });
@@ -122,12 +117,7 @@ export class QAStep implements PipelineStep<PipelineContext> {
       });
     }
 
-    return {
-      ...ctx,
-      business: gated.website.business,
-      branding: gated.website.branding,
-      website: gated.website,
-    };
+    return applyQAResult(run.pipeline, gated.website);
   }
 }
 

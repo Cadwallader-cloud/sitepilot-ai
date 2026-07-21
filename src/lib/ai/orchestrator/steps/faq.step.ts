@@ -5,7 +5,7 @@
  *   FAQ → Retry → FAIL → PipelineError
  */
 
-import { applyFaqDataPatch } from "../../../website-ownership";
+import { applyFAQResult, prepareFAQRun } from "../../context";
 import { retryFAQ } from "../../retry/retryFAQ";
 import type { PipelineContext, PipelineStep } from "../context";
 
@@ -13,21 +13,9 @@ export class FAQStep implements PipelineStep<PipelineContext> {
   id = "faq";
 
   async run(ctx: PipelineContext): Promise<PipelineContext> {
-    const result = await retryFAQ(ctx);
-
-    return {
-      ...ctx,
-      website: applyFaqDataPatch(ctx.website, { items: result.faq }),
-      meta: {
-        ...ctx.meta,
-        content: ctx.meta.content
-          ? {
-              ...ctx.meta.content,
-              faq: result.draftItems,
-            }
-          : ctx.meta.content,
-      },
-    };
+    const run = prepareFAQRun(ctx);
+    const result = await retryFAQ(run);
+    return applyFAQResult(run.pipeline, result);
   }
 }
 

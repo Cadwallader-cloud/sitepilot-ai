@@ -18,6 +18,7 @@ import type { Service } from "../../website";
 import { validateServices } from "../../validation/validate";
 import type { ServicesSectionInput } from "../../validation/services";
 import type { PipelineContext } from "../orchestrator/context";
+import { prepareServicesRun, type ServicesSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -62,13 +63,18 @@ export async function retryServices(
   maxAttempts?: number,
 ): Promise<RetryResult<ServicesSectionInput>>;
 
-/** Orchestrator: await retryServices(ctx) */
+/** Orchestrator: await retryServices(run) */
+export async function retryServices(
+  run: ServicesSectionRun,
+): Promise<RetryServicesFromContext>;
+
+/** @deprecated Prefer ServicesSectionRun from Context Manager */
 export async function retryServices(
   ctx: PipelineContext,
 ): Promise<RetryServicesFromContext>;
 
 export async function retryServices(
-  arg: (() => Promise<unknown>) | PipelineContext,
+  arg: (() => Promise<unknown>) | ServicesSectionRun | PipelineContext,
   maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<ServicesSectionInput> | RetryServicesFromContext> {
   if (typeof arg === "function") {
@@ -79,7 +85,9 @@ export async function retryServices(
     );
   }
 
-  const ctx = arg;
+  const run = "services" in arg ? arg : prepareServicesRun(arg);
+  const ctx = run.pipeline;
+  void run.services;
   const { meta } = ctx;
   if (
     !meta.plan ||

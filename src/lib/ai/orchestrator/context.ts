@@ -44,6 +44,7 @@ import {
   type Page,
   type Website,
 } from "../../website";
+import { DEFAULT_TEMPLATE_BLOCKS } from "../../template-engine";
 
 export type PipelineProgress = {
   stage: EngineStageName;
@@ -270,6 +271,7 @@ export function seedWebsiteShell(params: {
       radius: "soft",
       spacing: "comfortable",
       buttonStyle: "rounded",
+      blocks: DEFAULT_TEMPLATE_BLOCKS,
     },
     settings: {
       analytics: true,

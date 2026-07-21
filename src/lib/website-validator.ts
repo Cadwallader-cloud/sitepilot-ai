@@ -7,6 +7,7 @@
  */
 
 import { validateWebsiteJson } from "./validation/validate";
+import { normalizeTemplateBlocks } from "./template-engine";
 import {
   ensureWebsite,
   type BrandingStyle,
@@ -303,6 +304,7 @@ export function repairWebsite(raw: unknown): Website {
       radius: site.theme?.radius?.trim() || "Medium",
       spacing: site.theme?.spacing?.trim() || "Large",
       buttonStyle: site.theme?.buttonStyle?.trim() || "rounded",
+      blocks: normalizeTemplateBlocks(site.theme?.blocks),
     },
     settings: {
       analytics: site.settings?.analytics !== false,

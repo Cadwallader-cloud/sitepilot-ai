@@ -1,4 +1,13 @@
 import { z } from "zod";
+import {
+  ABOUT_TEMPLATE_IDS,
+  FAQ_TEMPLATE_IDS,
+  FOOTER_TEMPLATE_IDS,
+  HERO_TEMPLATE_IDS,
+  NAVBAR_TEMPLATE_IDS,
+  SERVICES_TEMPLATE_IDS,
+  normalizeTemplateBlocks,
+} from "@/lib/template-engine";
 import { AboutSchema } from "./about";
 import { FAQSectionSchema } from "./faq";
 import { HeroSchema } from "./hero";
@@ -59,14 +68,29 @@ export const contactSchema = z.object({
   form: z.boolean(),
 });
 
-export const themeSchema = z.object({
-  template: z.string().min(1),
-  palette: z.string().min(1),
-  font: z.string().min(1),
-  radius: z.string().min(1),
-  spacing: z.string().min(1),
-  buttonStyle: z.string().min(1),
+export const templateBlocksSchema = z.object({
+  hero: z.enum(HERO_TEMPLATE_IDS),
+  navbar: z.enum(NAVBAR_TEMPLATE_IDS),
+  services: z.enum(SERVICES_TEMPLATE_IDS),
+  faq: z.enum(FAQ_TEMPLATE_IDS),
+  about: z.enum(ABOUT_TEMPLATE_IDS),
+  footer: z.enum(FOOTER_TEMPLATE_IDS),
 });
+
+export const themeSchema = z
+  .object({
+    template: z.string().min(1),
+    palette: z.string().min(1),
+    font: z.string().min(1),
+    radius: z.string().min(1),
+    spacing: z.string().min(1),
+    buttonStyle: z.string().min(1),
+    blocks: templateBlocksSchema.optional(),
+  })
+  .transform((theme) => ({
+    ...theme,
+    blocks: normalizeTemplateBlocks(theme.blocks),
+  }));
 
 export const settingsSchema = z.object({
   analytics: z.boolean(),

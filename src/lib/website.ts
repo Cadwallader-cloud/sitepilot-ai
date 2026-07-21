@@ -36,6 +36,11 @@ import type {
 } from "./site-types";
 import type { WebsiteJson, WebsiteProject } from "./website-json";
 import { isWebsiteJson, toGeneratedSite, toWebsiteJson } from "./website-json";
+import {
+  DEFAULT_TEMPLATE_BLOCKS,
+  normalizeTemplateBlocks,
+  type TemplateBlocks,
+} from "./template-engine";
 
 // ── Top level ────────────────────────────────────────────────────────
 
@@ -581,6 +586,8 @@ export interface Theme {
   radius: string;
   spacing: string;
   buttonStyle: string;
+  /** React template block picks — Theme Engine only (no HTML). */
+  blocks: TemplateBlocks;
 }
 
 function buttonStyleFromDesign(design: {
@@ -604,6 +611,7 @@ function themeFromFlat(flat: WebsiteJson): Theme {
     radius: design.borderRadius,
     spacing: design.spacing,
     buttonStyle: buttonStyleFromDesign(design),
+    blocks: DEFAULT_TEMPLATE_BLOCKS,
   };
 }
 

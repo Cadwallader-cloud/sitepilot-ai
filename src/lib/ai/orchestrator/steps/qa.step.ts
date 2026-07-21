@@ -7,6 +7,10 @@ import { commitWebsiteViaOwnership } from "../../../ai-engine/commit-website";
 import { computeFinalScoreBaseline } from "../../../ai-engine/final-score";
 import { detectHumanCrestis } from "../../../ai-engine/human-crestis";
 import { synthesizeQaReport } from "../../../ai-engine/qa-synthesize";
+import {
+  runTemplateSelector,
+  templateSelectorInputFromPipeline,
+} from "../../../ai-engine/template-selector-ai";
 import { selectTheme } from "../../../ai-engine/theme-selector";
 import { websiteFromFlat } from "../../../website";
 import { runJsonValidatorGate } from "../../../website-validator";
@@ -38,6 +42,18 @@ export class QAStep implements PipelineStep<PipelineContext> {
       templateId: meta.templateId!,
     });
 
+    meta.onProgress?.({
+      stage: "template_selector_ai",
+      label: "Template Selector",
+    });
+    const templateInput = templateSelectorInputFromPipeline({
+      brief: meta.brief,
+      plan: meta.plan!,
+      templateId: meta.templateId!,
+      designTheme: design.design.theme,
+      brandingTone: ctx.branding.tone,
+    });
+
     const themePatch = {
       template: design.design.theme || meta.templateId!,
       palette: design.design.palette,
@@ -50,6 +66,9 @@ export class QAStep implements PipelineStep<PipelineContext> {
           : String(design.design.borderRadius ?? "").toLowerCase() === "soft"
             ? "pill"
             : "rounded",
+      blocks: await runTemplateSelector(templateInput, {
+        userEmail: meta.options.userEmail,
+      }),
     };
 
     meta.onProgress?.({

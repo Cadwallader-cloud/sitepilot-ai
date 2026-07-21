@@ -192,6 +192,7 @@ export type EngineStageName =
   | "ux_planner"
   | "website_planner"
   | "template_selector"
+  | "template_selector_ai"
   | "brand_personality"
   | "seo_planner"
   | "hero_headlines"

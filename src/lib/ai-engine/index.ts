@@ -67,6 +67,13 @@ export {
 } from "./model-router";
 export { runSimplePipeline } from "./simple-pipeline";
 export { selectTemplate, applyTemplateSelection } from "./template-selector";
+export {
+  runTemplateSelector,
+  selectTemplateBlocksWithAi,
+  templateSelectorInputFromPipeline,
+  type TemplateSelectorInput,
+  type TemplateSelectorOutput,
+} from "./template-selector-ai";
 export { selectTheme } from "./theme-selector";
 export { runHeroPipeline } from "./hero-pipeline";
 export { runAboutPipeline } from "./about-pipeline";

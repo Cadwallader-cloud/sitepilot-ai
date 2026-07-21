@@ -16,6 +16,8 @@ export const STAGE_MODEL_TIERS: Record<string, ModelTier> = {
   competitor_intelligence: "fast",
   ux_planner: "fast",
   website_planner: "fast",
+  template_selector_ai: "fast",
+  template_block_selector: "fast",
   copy_hero_ai: "fast",
   copy_about_ai: "fast",
   copy_cta_ai: "fast",

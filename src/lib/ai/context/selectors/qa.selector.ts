@@ -9,6 +9,7 @@
  */
 
 import type { Website } from "../../../website";
+import type { TemplateBlocks } from "../../../template-engine";
 import { applyThemePatch } from "../../../website-ownership";
 import type { PipelineContext } from "../../orchestrator/context";
 import type { SharedContext } from "../shared";
@@ -61,10 +62,20 @@ export type QAThemePatch = {
   radius: string;
   spacing: string;
   buttonStyle: string;
+  blocks: TemplateBlocks;
 };
 
 export function applyQATheme(website: Website, patch: QAThemePatch): Website {
-  return applyThemePatch(website, patch);
+  return applyThemePatch(website, {
+    ...website.theme,
+    template: patch.template,
+    palette: patch.palette,
+    font: patch.font,
+    radius: patch.radius,
+    spacing: patch.spacing,
+    buttonStyle: patch.buttonStyle,
+    blocks: patch.blocks,
+  });
 }
 
 export function applyQAResult(

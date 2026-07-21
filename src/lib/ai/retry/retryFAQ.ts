@@ -11,9 +11,10 @@ import { prepareFAQRun, type FAQSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
-  unwrapRetryResult,
+  softRetryResult,
   type RetryResult,
 } from "./retry";
+import { faqInputFallback } from "./section-fallbacks";
 
 /** Generators return FAQ[]; section schema expects { items } */
 export function faqForValidation(raw: unknown): unknown {
@@ -79,14 +80,22 @@ export async function retryFAQ(
     return faqForValidation(await generateFaqSection(meta.agentCtx!));
   };
 
-  const validated = unwrapRetryResult(
-    await retry<FaqSectionInput>(generateFAQ, validateFAQ, {
-      module: "FAQ",
-      userEmail: meta.options.userEmail,
-      runId: meta.runId,
-      maxAttempts,
+  const faqRetry = await retry<FaqSectionInput>(generateFAQ, validateFAQ, {
+    module: "FAQ",
+    userEmail: meta.options.userEmail,
+    runId: meta.runId,
+    maxAttempts,
+  });
+  const validated = softRetryResult(
+    faqRetry,
+    faqInputFallback({
+      businessName: meta.input.businessName,
+      category: meta.category || meta.industryPack.label || meta.tradeKey,
+      location: meta.input.location,
+      services: meta.input.services,
+      description: meta.input.description,
     }),
-  );
+  ).data;
 
   const draftItems = Array.isArray(validated.items) ? validated.items : [];
   const faq: FAQ[] = draftItems.map((f) => ({

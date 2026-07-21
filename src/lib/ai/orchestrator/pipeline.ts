@@ -58,6 +58,14 @@ import { FAQStep } from "./steps/faq.step";
 import { SEOStep } from "./steps/seo.step";
 import { QAStep } from "./steps/qa.step";
 
+/** Content steps may fail softly — pipeline continues with fallbacks */
+const RESILIENT_STEP_IDS = new Set([
+  "hero",
+  "about",
+  "services",
+  "faq",
+  "seo",
+]);
 export { PipelineError } from "./pipeline-error";
 export {
   emitPipelineEvent,
@@ -230,6 +238,15 @@ export async function runPipeline(
             cost,
             reason,
           });
+
+          if (RESILIENT_STEP_IDS.has(step.id)) {
+            console.warn(
+              `[pipeline-soft-continue] ${step.id} failed — continuing`,
+              reason,
+            );
+            continue;
+          }
+
           throw PipelineError.fromUnknown(step.id, err);
         }
 

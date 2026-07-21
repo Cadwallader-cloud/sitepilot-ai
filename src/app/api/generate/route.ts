@@ -170,6 +170,7 @@ export async function POST(request: Request) {
 
     const runGenerate = async (
       onEvent?: (event: PipelineEvent) => void,
+      onProgress?: (payload: { stage: string; label: string }) => void,
     ) => {
       let seoMemory = undefined;
       if (regenerate && projectId && email) {
@@ -190,6 +191,11 @@ export async function POST(request: Request) {
           previous,
           seoMemory,
           onEvent,
+          onProgress: (payload) =>
+            onProgress?.({
+              stage: payload.stage,
+              label: payload.label,
+            }),
         }),
         GENERATE_HARD_TIMEOUT_MS,
         "Crestis generate",
@@ -237,9 +243,18 @@ export async function POST(request: Request) {
           };
 
           try {
-            const result = await runGenerate((event) => {
-              send("progress", event);
-            });
+            const result = await runGenerate(
+              (event) => {
+                send("progress", event);
+              },
+              (payload) => {
+                send("progress", {
+                  type: "stage:progress",
+                  stage: payload.stage,
+                  label: payload.label,
+                });
+              },
+            );
             void logApiUsage({
               route: "/api/generate",
               userEmail: email,

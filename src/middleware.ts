@@ -3,7 +3,6 @@ import {
   canUseCustomDomain,
 } from "@/lib/billing/permissions";
 import type { PlanEntitlements, PlanId } from "@/lib/billing/types";
-import { publicSiteUrl } from "@/lib/slug";
 import { resolveTenantHost } from "@/lib/tenancy";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
@@ -59,12 +58,8 @@ export async function middleware(request: NextRequest) {
 
   const legacy = pathname.match(LEGACY_SITE_PATH);
   if (legacy) {
-    const slug = legacy[1];
-    const rest = legacy[2] || "";
-    const dest = new URL(publicSiteUrl(slug));
-    dest.pathname = rest || "/";
-    dest.search = search;
-    return NextResponse.redirect(dest, 308);
+    // Serve /site/[slug] on the app domain — canonical public URL path.
+    return NextResponse.next();
   }
 
   const needsPlanGate =

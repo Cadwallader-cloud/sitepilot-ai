@@ -117,7 +117,7 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           disabled={!isValid || loading}
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {loading ? "Building Business DNA…" : "Generate"}
+          {loading ? "Generating website…" : "Generate Website"}
         </button>
         <button
           type="button"

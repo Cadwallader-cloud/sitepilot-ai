@@ -17,6 +17,7 @@ export {
   canUseAnalytics,
   canUseBusinessFeatures,
   canUseCustomDomain,
+  canUsePremiumTemplates,
   canUseUnlimitedProjects,
 } from "@/lib/billing/permissions";
 export {

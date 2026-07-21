@@ -56,22 +56,25 @@ export function publicSiteRootDomain(): string {
   return root.replace(/^www\./, "").split("/")[0] || "crestis.app";
 }
 
-/**
- * Public URL for a published site: https://[slug].crestis.app
- * (internal rendering still uses /site/[slug] via middleware rewrite)
- */
-export function publicSiteUrl(slug: string): string {
-  const clean = slug.toLowerCase().trim();
-  const domain = publicSiteRootDomain();
+/** App origin for published site links (no trailing slash). */
+export function publicAppOrigin(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
 
+  const domain = publicSiteRootDomain();
   if (domain === "localhost" || domain.startsWith("localhost:")) {
     const port = domain.includes(":") ? domain.split(":")[1] : "3000";
-    return `http://${clean}.localhost:${port}`;
+    return `http://localhost:${port}`;
   }
 
-  if (domain.endsWith(".localhost")) {
-    return `http://${clean}.${domain}`;
-  }
+  return `https://${domain.replace(/^www\./, "")}`;
+}
 
-  return `https://${clean}.${domain}`;
+/**
+ * Public URL for a published site: https://crestis.app/site/[slug]
+ * (subdomain *.crestis.app still rewrites to this path via middleware)
+ */
+export function publicSiteUrl(slug: string): string {
+  const clean = toSlug(slug);
+  return `${publicAppOrigin()}/site/${clean}`;
 }

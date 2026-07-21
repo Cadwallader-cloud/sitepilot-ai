@@ -6,16 +6,35 @@ export const ANALYTICS_EVENT_TYPES = [
   "contact_click",
   "phone_click",
   "maps_click",
+  "form_submission",
+  "lead",
 ] as const;
 
 export type AnalyticsEventType = (typeof ANALYTICS_EVENT_TYPES)[number];
 
+/** Click events rolled up into the Clicks metric. */
+export const ANALYTICS_CLICK_EVENT_TYPES = [
+  "contact_click",
+  "phone_click",
+  "maps_click",
+] as const;
+
+export type AnalyticsClickEventType =
+  (typeof ANALYTICS_CLICK_EVENT_TYPES)[number];
+
+/** Dashboard metrics (Task 8). */
+export const ANALYTICS_METRICS = [
+  "Visitors",
+  "Leads",
+  "Form submissions",
+  "Clicks",
+] as const;
+
 export type AnalyticsSummary = {
   visitors: number;
-  pageViews: number;
-  contactClicks: number;
-  phoneClicks: number;
-  mapsClicks: number;
+  leads: number;
+  formSubmissions: number;
+  clicks: number;
 };
 
 export function isAnalyticsEventType(
@@ -71,10 +90,9 @@ export async function getAnalyticsSummary(
 ): Promise<AnalyticsSummary> {
   const empty: AnalyticsSummary = {
     visitors: 0,
-    pageViews: 0,
-    contactClicks: 0,
-    phoneClicks: 0,
-    mapsClicks: 0,
+    leads: 0,
+    formSubmissions: 0,
+    clicks: 0,
   };
 
   const supabase = getSupabaseAdmin();
@@ -91,28 +109,31 @@ export async function getAnalyticsSummary(
   }
 
   const visitorIds = new Set<string>();
-  let pageViews = 0;
-  let contactClicks = 0;
-  let phoneClicks = 0;
-  let mapsClicks = 0;
+  let leads = 0;
+  let formSubmissions = 0;
+  let clicks = 0;
 
   for (const row of data ?? []) {
     const type = row.event_type as string;
     if (type === "page_view") {
-      pageViews += 1;
       if (typeof row.visitor_id === "string" && row.visitor_id) {
         visitorIds.add(row.visitor_id);
       }
-    } else if (type === "contact_click") contactClicks += 1;
-    else if (type === "phone_click") phoneClicks += 1;
-    else if (type === "maps_click") mapsClicks += 1;
+    } else if (type === "lead") {
+      leads += 1;
+    } else if (type === "form_submission") {
+      formSubmissions += 1;
+    } else if (
+      (ANALYTICS_CLICK_EVENT_TYPES as readonly string[]).includes(type)
+    ) {
+      clicks += 1;
+    }
   }
 
   return {
     visitors: visitorIds.size,
-    pageViews,
-    contactClicks,
-    phoneClicks,
-    mapsClicks,
+    leads,
+    formSubmissions,
+    clicks,
   };
 }

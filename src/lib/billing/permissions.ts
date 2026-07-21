@@ -33,6 +33,11 @@ export function canUseUnlimitedProjects(input: PermissionInput): boolean {
   return resolve(input).canUseUnlimitedProjects;
 }
 
+export function canUsePremiumTemplates(input: PermissionInput): boolean {
+  const ent = resolve(input);
+  return ent.canPublish;
+}
+
 export function canUseAIEditing(input: PermissionInput): boolean {
   return resolve(input).canUseAIEditing;
 }

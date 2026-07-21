@@ -13,9 +13,10 @@ import { prepareHeroRun, type HeroSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
-  unwrapRetryResult,
+  softRetryResult,
   type RetryResult,
 } from "./retry";
+import { heroInputFallback } from "./section-fallbacks";
 
 export type RetryHeroFromContext = {
   hero: Hero;
@@ -107,14 +108,25 @@ export async function retryHero(
     return generateHeroSection(agentCtx);
   };
 
-  const heroInput = unwrapRetryResult(
-    await retry<HeroInput>(generateHero, validateHero, {
-      module: "Hero",
-      userEmail: meta.options.userEmail,
-      runId: meta.runId,
-      maxAttempts,
-    }),
-  );
+  const heroRetry = await retry<HeroInput>(generateHero, validateHero, {
+    module: "Hero",
+    userEmail: meta.options.userEmail,
+    runId: meta.runId,
+    maxAttempts,
+  });
+  const heroInput = softRetryResult(
+    heroRetry,
+    heroInputFallback(
+      {
+        businessName: meta.input.businessName,
+        category: meta.category || meta.industryPack.label || meta.tradeKey,
+        location: meta.input.location,
+        services: meta.input.services,
+        description: meta.input.description,
+      },
+      heroResult.hero,
+    ),
+  ).data;
 
   heroResult = {
     ...heroResult,

@@ -1,12 +1,11 @@
 "use client";
 
-import { CustomDomainPanel } from "@/components/custom-domain-panel";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import type { ProjectSummary } from "@/lib/projects";
 import type { FeatureKey } from "@/lib/billing/types";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   useCallback,
   useEffect,
@@ -39,15 +38,13 @@ function ActionButton({
   children: ReactNode;
   onClick?: () => void;
   href?: string;
-  variant?: "default" | "danger" | "primary";
+  variant?: "default" | "danger";
   disabled?: boolean;
 }) {
-  const className = `rounded-full px-3.5 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
+  const className = `rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
     variant === "danger"
       ? "border border-red-500/30 text-red-300 hover:bg-red-500/10"
-      : variant === "primary"
-        ? "bg-brand text-white hover:bg-brand-light"
-        : "border border-surface-border text-muted hover:border-brand/40 hover:text-foreground"
+      : "border border-surface-border text-muted hover:border-brand/40 hover:text-foreground"
   }`;
 
   if (href && !disabled) {
@@ -76,18 +73,13 @@ export function WebsitesDashboard() {
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [upgradeFeature, setUpgradeFeature] = useState<FeatureKey | null>(
-    null,
-  );
+  const [upgradeFeature, setUpgradeFeature] = useState<FeatureKey | null>(null);
 
   const entitlements = session?.user?.entitlements;
   const isAdmin = Boolean(session?.user?.isAdmin);
-  const allowPublish =
-    isAdmin || Boolean(entitlements?.canPublish);
-  const allowAnalytics =
-    isAdmin || Boolean(entitlements?.canUseAnalytics);
-  const allowDomain =
-    isAdmin || Boolean(entitlements?.canUseCustomDomain);
+  const allowPublish = isAdmin || Boolean(entitlements?.canPublish);
+  const allowAnalytics = isAdmin || Boolean(entitlements?.canUseAnalytics);
+  const allowDomain = isAdmin || Boolean(entitlements?.canUseCustomDomain);
 
   const load = useCallback(async () => {
     try {
@@ -140,6 +132,30 @@ export function WebsitesDashboard() {
         setBusyId(null);
       }
     })();
+  }
+
+  function handleAnalytics(project: ProjectSummary) {
+    if (!allowAnalytics) {
+      setUpgradeFeature("analytics");
+      return;
+    }
+    if (project.status !== "published") {
+      setError("Publish this site to open Analytics.");
+      return;
+    }
+    router.push(`/dashboard/analytics?project=${project.id}`);
+  }
+
+  function handleDomain(project: ProjectSummary) {
+    if (!allowDomain) {
+      setUpgradeFeature("custom_domain");
+      return;
+    }
+    if (project.status !== "published") {
+      setError("Publish this site to connect a custom domain.");
+      return;
+    }
+    router.push(`/dashboard/domain?project=${project.id}`);
   }
 
   async function handleDelete(project: ProjectSummary) {
@@ -203,23 +219,21 @@ export function WebsitesDashboard() {
         </p>
       )}
 
-      <ul className="divide-y divide-surface-border overflow-hidden rounded-2xl border border-surface-border bg-surface/40">
-        {projects.map((project) => {
-          const busy = busyId === project.id;
-          return (
-            <li key={project.id} className="px-5 py-5 sm:px-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-t border-surface-border pt-6">
+        <ul className="space-y-0 divide-y divide-surface-border">
+          {projects.map((project) => {
+            const busy = busyId === project.id;
+            return (
+              <li
+                key={project.id}
+                className="flex flex-col gap-4 py-5 first:pt-0 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="truncate text-lg font-semibold text-foreground">
                       {project.businessName}
                     </h2>
                     <StatusBadge status={project.status} />
-                    {project.plan && (
-                      <span className="rounded-full bg-brand/20 px-2.5 py-0.5 text-xs font-semibold capitalize text-brand-light">
-                        {project.plan}
-                      </span>
-                    )}
                   </div>
                   {project.url ? (
                     <a
@@ -239,88 +253,32 @@ export function WebsitesDashboard() {
                   <ActionButton href={`/create?project=${project.id}`}>
                     Edit
                   </ActionButton>
-
-                  <ActionButton
-                    href={
-                      allowAnalytics
-                        ? `/dashboard/analytics?project=${project.id}`
-                        : undefined
-                    }
-                    onClick={
-                      allowAnalytics
-                        ? undefined
-                        : () => setUpgradeFeature("analytics")
-                    }
-                  >
+                  <ActionButton onClick={() => handleAnalytics(project)}>
                     Analytics
                   </ActionButton>
-
-                  {project.status === "published" ? (
-                    <>
-                      {!project.plan && (
-                        <ActionButton
-                          variant="primary"
-                          href={`/upgrade?project=${project.id}`}
-                        >
-                          Upgrade
-                        </ActionButton>
-                      )}
-                      <ActionButton
-                        variant="danger"
-                        disabled={busy}
-                        onClick={() => void handleDelete(project)}
-                      >
-                        {busy ? "…" : "Delete"}
-                      </ActionButton>
-                    </>
-                  ) : (
+                  <ActionButton onClick={() => handleDomain(project)}>
+                    Domain
+                  </ActionButton>
+                  {project.status === "draft" && (
                     <ActionButton
-                      variant="primary"
                       onClick={() => handlePublish(project.id)}
+                      disabled={busy}
                     >
-                      Publish
+                      {busy ? "Publishing…" : "Publish"}
                     </ActionButton>
                   )}
+                  <ActionButton
+                    variant="danger"
+                    disabled={busy}
+                    onClick={() => void handleDelete(project)}
+                  >
+                    {busy ? "…" : "Delete"}
+                  </ActionButton>
                 </div>
-              </div>
-
-              {project.status === "published" && allowDomain && (
-                <CustomDomainPanel
-                  projectId={project.id}
-                  initialDomain={project.customDomain}
-                  onUpdated={(domain) => {
-                    setProjects((prev) =>
-                      (prev ?? []).map((p) =>
-                        p.id === project.id
-                          ? { ...p, customDomain: domain }
-                          : p,
-                      ),
-                    );
-                  }}
-                />
-              )}
-              {project.status === "published" && !allowDomain && (
-                <button
-                  type="button"
-                  onClick={() => setUpgradeFeature("custom_domain")}
-                  className="mt-4 text-left text-sm text-brand-light hover:underline"
-                >
-                  Custom domain — Upgrade to Pro
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mt-6 text-center">
-        <button
-          type="button"
-          onClick={() => router.push("/create")}
-          className="text-sm text-muted transition hover:text-foreground"
-        >
-          + New website
-        </button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

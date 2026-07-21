@@ -1,14 +1,9 @@
 import Link from "next/link";
-import { BUSINESS_FEATURES } from "@/lib/plans";
+import { BUSINESS_FEATURES, PRO_UNLOCK_FEATURES } from "@/lib/plans";
 
 const FREE_PLAN_FEATURES = ["1 website", "AI generation", "Preview"] as const;
 
-const PRO_PLAN_FEATURES = [
-  "Unlimited websites",
-  "Publish",
-  "Custom domain",
-  "Analytics",
-] as const;
+const PRO_PLAN_FEATURES = PRO_UNLOCK_FEATURES;
 
 export function PricingFlow() {
   return (

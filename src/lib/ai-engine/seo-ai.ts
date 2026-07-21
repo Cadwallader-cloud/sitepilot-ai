@@ -32,6 +32,7 @@ export async function runFinalSeoReview(
   content: ContentDraft,
   plan?: WebsitePlan,
   seoPlan?: SeoPlan,
+  reviewFeedback?: string,
 ): Promise<SeoDraft> {
   const { input, options } = ctx;
   const city = brief.city;
@@ -122,7 +123,7 @@ export async function runFinalSeoReview(
           : undefined,
         seoPlanBrief: activePlan ? seoPlanBrief(activePlan) : undefined,
         seoMemoryBrief: seoMemoryBrief(options.seoMemory),
-      }),
+      }) + (reviewFeedback?.trim() ? `\n\n${reviewFeedback.trim()}` : ""),
     });
 
     const packNormalized = normalizeSeoAiPackage(ai, fallbackInputs);

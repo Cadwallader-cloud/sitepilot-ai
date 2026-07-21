@@ -12,9 +12,10 @@ import { prepareSEORun, type SEOSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
-  unwrapRetryResult,
+  softRetryResult,
   type RetryResult,
 } from "./retry";
+import { seoInputFallback } from "./section-fallbacks";
 
 /** Keep core SeoSchema fields for validation */
 export function seoForValidation(raw: unknown): unknown {
@@ -100,14 +101,25 @@ export async function retrySEO(
     return seoForValidation(seoDraft);
   };
 
-  const seoInput = unwrapRetryResult(
-    await retry<SeoInput>(generateSEO, validateSEO, {
-      module: "SEO",
-      userEmail: meta.options.userEmail,
-      runId: meta.runId,
-      maxAttempts,
-    }),
-  );
+  const seoRetry = await retry<SeoInput>(generateSEO, validateSEO, {
+    module: "SEO",
+    userEmail: meta.options.userEmail,
+    runId: meta.runId,
+    maxAttempts,
+  });
+  const seoInput = softRetryResult(
+    seoRetry,
+    seoInputFallback(
+      {
+        businessName: meta.input.businessName,
+        category: meta.category || meta.industryPack.label || meta.tradeKey,
+        location: meta.input.location,
+        services: meta.input.services,
+        description: meta.input.description,
+      },
+      seoForValidation(seoDraft) as Partial<SeoInput>,
+    ),
+  ).data;
 
   const seoMerged = { ...seoDraft, ...seoInput };
   const seo: SEO = {

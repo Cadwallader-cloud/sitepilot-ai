@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { BrandLogo } from "@/components/brand-logo";
-import { CryptoCheckout } from "@/components/crypto-checkout";
+import { CheckoutFlow } from "@/components/checkout-flow";
+import { normalizePlanId } from "@/lib/billing/catalog";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -20,6 +21,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
 
   const { order, project, plan } = await searchParams;
   const planId = plan === "business" ? "business" : "pro";
+  const currentPlanId = normalizePlanId(session.user.planId);
 
   return (
     <div className="min-h-screen">
@@ -36,7 +38,8 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
       </header>
 
       <main className="px-6 py-12">
-        <CryptoCheckout
+        <CheckoutFlow
+          currentPlanId={currentPlanId}
           projectId={project ?? null}
           initialOrderId={order ?? null}
           planId={planId}

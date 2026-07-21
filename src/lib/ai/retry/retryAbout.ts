@@ -12,9 +12,10 @@ import { prepareAboutRun, type AboutSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
-  unwrapRetryResult,
+  softRetryResult,
   type RetryResult,
 } from "./retry";
+import { aboutInputFallback } from "./section-fallbacks";
 
 /** Map ContentDraft about → AboutSchema shape */
 export function aboutForValidation(raw: unknown): unknown {
@@ -100,14 +101,25 @@ export async function retryAbout(
     return aboutForValidation(await generateAboutSection(meta.agentCtx!));
   };
 
-  const aboutInput = unwrapRetryResult(
-    await retry<AboutInput>(generateAbout, validateAbout, {
-      module: "About",
-      userEmail: meta.options.userEmail,
-      runId: meta.runId,
-      maxAttempts,
-    }),
-  );
+  const aboutRetry = await retry<AboutInput>(generateAbout, validateAbout, {
+    module: "About",
+    userEmail: meta.options.userEmail,
+    runId: meta.runId,
+    maxAttempts,
+  });
+  const aboutInput = softRetryResult(
+    aboutRetry,
+    aboutInputFallback(
+      {
+        businessName: meta.input.businessName,
+        category: meta.category || meta.industryPack.label || meta.tradeKey,
+        location: meta.input.location,
+        services: meta.input.services,
+        description: meta.input.description,
+      },
+      aboutForValidation(aboutResult.about) as Partial<AboutInput>,
+    ),
+  ).data;
 
   aboutResult = {
     ...aboutResult,

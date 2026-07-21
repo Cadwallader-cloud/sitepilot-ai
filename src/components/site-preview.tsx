@@ -20,6 +20,8 @@ import { useState, type CSSProperties } from "react";
 type SitePreviewProps = {
   site: GeneratedSite;
   onChange?: (site: GeneratedSite) => void;
+  /** Hide built-in edit panel when using PreviewEditorPanel */
+  inlineEditor?: boolean;
 };
 
 function toSlug(title: string) {
@@ -29,7 +31,11 @@ function toSlug(title: string) {
     .replace(/^-|-$/g, "");
 }
 
-export function SitePreview({ site, onChange }: SitePreviewProps) {
+export function SitePreview({
+  site,
+  onChange,
+  inlineEditor = true,
+}: SitePreviewProps) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [editing, setEditing] = useState(false);
   const theme = site.theme;
@@ -40,6 +46,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
     : [site.images.hero];
   const sections = getSiteSections(site);
   const hero = getHero(site);
+  const editingActive = editing || !inlineEditor;
   const design = normalizeDesignSystem(site.design);
   const designVars = designSystemToCssVars(design, theme);
   const fontsHref = googleFontsHrefFor(design.font);
@@ -106,7 +113,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
               Mobile
             </button>
           </div>
-          {onChange && (
+          {onChange && inlineEditor && (
             <button
               type="button"
               onClick={() => setEditing((v) => !v)}
@@ -125,7 +132,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
         </p>
       </div>
 
-      {editing && onChange && (
+      {inlineEditor && editing && onChange && (
         <div className="mb-4 space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-amber-200">
             Edit content
@@ -261,7 +268,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
                     heroImage={site.images.hero}
                     primaryColor={theme.primary}
                     renderAddress={(className) =>
-                      editing ? (
+                      editingActive ? (
                         <input
                           className={`${className} w-full bg-transparent outline-none`}
                           value={site.contact.address}
@@ -274,7 +281,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
                       )
                     }
                     renderPrimaryCta={(className, style) =>
-                      editing ? (
+                      editingActive ? (
                         <input
                           className={`${className} outline-none`}
                           style={style}
@@ -290,7 +297,7 @@ export function SitePreview({ site, onChange }: SitePreviewProps) {
                       )
                     }
                     renderSecondaryCta={(className) =>
-                      editing ? (
+                      editingActive ? (
                         <input
                           className={`${className} bg-transparent outline-none`}
                           value={hero.secondaryCTA || site.contact.phone}

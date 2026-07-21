@@ -52,6 +52,13 @@ export const PRO_FEATURES = [
   "AI editing",
 ] as const;
 
+/** Unlocked immediately after Pro crypto payment (Task 7). */
+export const PRO_UNLOCK_FEATURES = [
+  "Custom Domain",
+  "Unlimited Publish",
+  "Premium Templates",
+] as const;
+
 export const BUSINESS_FEATURES = [
   "Everything in Pro",
   "Team members",

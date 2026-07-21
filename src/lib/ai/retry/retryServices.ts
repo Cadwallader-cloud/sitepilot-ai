@@ -22,9 +22,10 @@ import { prepareServicesRun, type ServicesSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
-  unwrapRetryResult,
+  softRetryResult,
   type RetryResult,
 } from "./retry";
+import { servicesInputFallback } from "./section-fallbacks";
 
 /** Generators return Service[]; section schema expects { items } */
 export function servicesForValidation(raw: unknown): unknown {
@@ -136,14 +137,26 @@ export async function retryServices(
     return servicesForValidation(await generateServicesSection(agentCtx));
   };
 
-  const validated = unwrapRetryResult(
-    await retry<ServicesSectionInput>(generateServices, validateServices, {
+  const servicesRetry = await retry<ServicesSectionInput>(
+    generateServices,
+    validateServices,
+    {
       module: "Services",
       userEmail: meta.options.userEmail,
       runId: meta.runId,
       maxAttempts,
-    }),
+    },
   );
+  const validated = softRetryResult(
+    servicesRetry,
+    servicesInputFallback({
+      businessName: meta.input.businessName,
+      category: meta.category || meta.industryPack.label || meta.tradeKey,
+      location: meta.input.location,
+      services: meta.input.services,
+      description: meta.input.description,
+    }),
+  ).data;
 
   const draftItems = Array.isArray(validated.items) ? validated.items : [];
   const services = toWebsiteServices(draftItems);

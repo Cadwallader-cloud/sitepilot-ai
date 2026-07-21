@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { BrandLogo } from "@/components/brand-logo";
-import { canUseAnalytics, getUserBilling } from "@/lib/billing";
+import { CustomDomainPanel } from "@/components/custom-domain-panel";
+import { canUseCustomDomain, getUserBilling } from "@/lib/billing";
 import { isAdminEmail } from "@/lib/admin";
 import { getProject } from "@/lib/projects";
-import { ANALYTICS_METRICS, getAnalyticsSummary } from "@/lib/site-analytics";
 import { publicSiteUrl } from "@/lib/slug";
 import { redirect } from "next/navigation";
 
@@ -12,10 +12,10 @@ type PageProps = {
   searchParams: Promise<{ project?: string }>;
 };
 
-export default async function AnalyticsPage({ searchParams }: PageProps) {
+export default async function DomainPage({ searchParams }: PageProps) {
   const session = await auth();
   const email = session?.user?.email?.trim();
-  if (!email) redirect("/login?callbackUrl=/dashboard");
+  if (!email) redirect("/login?callbackUrl=/dashboard/domain");
 
   const { project: projectId } = await searchParams;
   const isUuid =
@@ -27,32 +27,22 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
 
   if (!isAdminEmail(email)) {
     const billing = await getUserBilling(email);
-    if (!canUseAnalytics(billing.entitlements)) {
-      redirect(`/upgrade?feature=analytics&project=${projectId}`);
+    if (!canUseCustomDomain(billing.entitlements)) {
+      redirect(`/upgrade?feature=custom_domain&project=${projectId}`);
     }
   }
 
   let project;
-  let summary;
   try {
     project = await getProject(projectId, email);
     if (!project) redirect("/dashboard");
-    summary = await getAnalyticsSummary(projectId);
   } catch {
     redirect("/dashboard");
   }
 
+  const published = Boolean(project.published_at);
   const url =
-    project.slug && project.published_at
-      ? publicSiteUrl(project.slug)
-      : null;
-
-  const stats = [
-    { label: ANALYTICS_METRICS[0], value: summary.visitors },
-    { label: ANALYTICS_METRICS[1], value: summary.leads },
-    { label: ANALYTICS_METRICS[2], value: summary.formSubmissions },
-    { label: ANALYTICS_METRICS[3], value: summary.clicks },
-  ];
+    published && project.slug ? publicSiteUrl(project.slug) : null;
 
   return (
     <div className="min-h-screen">
@@ -68,9 +58,9 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-12">
+      <main className="mx-auto max-w-2xl px-6 py-12">
         <p className="text-sm font-medium uppercase tracking-wider text-muted">
-          Analytics
+          Domain
         </p>
         <h1 className="mt-2 text-3xl font-bold">{project.business_name}</h1>
         {url ? (
@@ -84,30 +74,25 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
           </a>
         ) : (
           <p className="mt-2 text-sm text-muted">
-            Publish this site to start collecting analytics.
+            Publish this site before connecting a custom domain.
           </p>
         )}
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-surface-border bg-surface/40 px-5 py-6"
-            >
-              <p className="text-xs uppercase tracking-wider text-muted">
-                {stat.label}
-              </p>
-              <p className="mt-2 text-3xl font-bold tabular-nums">
-                {stat.value.toLocaleString("en-US")}
-              </p>
-            </div>
-          ))}
-        </div>
+        {published ? (
+          <div className="mt-10">
+            <CustomDomainPanel
+              projectId={project.id}
+              initialDomain={project.custom_domain}
+            />
+          </div>
+        ) : (
+          <div className="mt-10 rounded-2xl border border-surface-border bg-surface/40 p-6 text-sm text-muted">
+            Publish your website first, then return here to connect a custom
+            domain.
+          </div>
+        )}
 
         <p className="mt-8 text-sm text-muted">
-          Visitors are unique sessions on your live site. Leads and form
-          submissions come from the contact form. Clicks count phone, email, and
-          map taps.{" "}
           <Link href="/dashboard" className="text-brand-light hover:underline">
             Back to My Websites
           </Link>

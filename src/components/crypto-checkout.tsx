@@ -3,6 +3,7 @@
 import { formatCryptoPayAmount } from "@/lib/crypto/assets";
 import type { CryptoAsset } from "@/lib/crypto/assets";
 import type { CryptoOrderPublic } from "@/lib/crypto/types";
+import { PRO_UNLOCK_FEATURES } from "@/lib/plans";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -27,12 +28,15 @@ type CryptoCheckoutProps = {
   projectId?: string | null;
   initialOrderId?: string | null;
   planId?: "pro" | "business";
+  /** Hide title when wrapped by CheckoutFlow */
+  embedded?: boolean;
 };
 
 export function CryptoCheckout({
   projectId = null,
   initialOrderId = null,
   planId = "pro",
+  embedded = false,
 }: CryptoCheckoutProps) {
   const [methods, setMethods] = useState<MethodOption[]>([]);
   const [amountUsd, setAmountUsd] = useState(() =>
@@ -200,13 +204,23 @@ export function CryptoCheckout({
 
   if (!order) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className={embedded ? "space-y-6" : "mx-auto max-w-lg space-y-6"}>
         <div className="rounded-2xl border border-surface-border bg-surface/40 p-6 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-2xl font-bold">Upgrade to {planLabel}</h1>
-            <p className="text-2xl font-bold tabular-nums">${amountUsd}</p>
-          </div>
-          <p className="mt-2 text-sm text-muted">
+          {!embedded && (
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-2xl font-bold">Upgrade to {planLabel}</h1>
+              <p className="text-2xl font-bold tabular-nums">${amountUsd}</p>
+            </div>
+          )}
+          {embedded ? (
+            <div className="flex items-start justify-between gap-4">
+              <p className="text-sm font-semibold uppercase tracking-wider text-muted">
+                Crypto Checkout
+              </p>
+              <p className="text-2xl font-bold tabular-nums">${amountUsd}</p>
+            </div>
+          ) : null}
+          <p className={`text-sm text-muted ${embedded ? "mt-2" : "mt-2"}`}>
             Choose a network, then send the exact amount to the wallet shown.
           </p>
 
@@ -335,9 +349,14 @@ export function CryptoCheckout({
         {order.status === "paid" && (
           <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-4 text-center">
             <p className="font-semibold text-emerald-300">Payment confirmed</p>
-            <p className="mt-1 text-sm text-muted">
-              Your subscription is upgraded.
-            </p>
+            <p className="mt-1 text-sm text-muted">Pro is active — you unlocked:</p>
+            <ul className="mt-3 space-y-1.5 text-sm text-muted">
+              {PRO_UNLOCK_FEATURES.map((feature) => (
+                <li key={feature}>
+                  <span className="text-emerald-400">✓</span> {feature}
+                </li>
+              ))}
+            </ul>
             <Link
               href="/dashboard"
               className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white"

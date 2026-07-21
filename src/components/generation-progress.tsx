@@ -21,7 +21,11 @@ export function GenerationProgress({
           Crestis AI is building your site
         </p>
 
-        <ul className="mt-8 space-y-3.5" aria-live="polite" aria-busy="true">
+        <ul
+          className="mt-8 max-h-[420px] space-y-2.5 overflow-y-auto pr-1"
+          aria-live="polite"
+          aria-busy="true"
+        >
           {GENERATION_STEPS.map((step) => {
             const status = steps[step.id];
             const mark =
@@ -44,7 +48,7 @@ export function GenerationProgress({
             return (
               <li
                 key={step.id}
-                className={`flex items-baseline gap-3 text-[15px] leading-snug ${tone} ${
+                className={`flex items-baseline gap-3 text-sm leading-snug ${tone} ${
                   status === "active" ? "font-medium" : ""
                 }`}
               >

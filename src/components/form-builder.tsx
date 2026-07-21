@@ -4,8 +4,11 @@ import { AuthButton, SignInGate } from "@/components/auth-button";
 import { BusinessForm } from "@/components/business-form";
 import { GenerationProgress } from "@/components/generation-progress";
 import { RequestAccess } from "@/components/request-access";
-import { PublishCTA } from "@/components/publish-cta";
-import { QualityAuditPanel } from "@/components/quality-audit-panel";
+import { PreviewEditorHeader } from "@/components/preview-editor-header";
+import { PreviewEditorPanel } from "@/components/preview-editor-panel";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { ImprovePanel } from "@/components/improve-panel";
+import { PublishSuccessBanner } from "@/components/publish-success-banner";
 import { SitePreview } from "@/components/site-preview";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
 import {
@@ -16,6 +19,7 @@ import {
 import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
 import { getHero } from "@/lib/site-types";
 import { websiteToGeneratedSite } from "@/lib/website";
+import { usePublishSite } from "@/lib/use-publish-site";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -72,11 +76,29 @@ export function FormBuilder({
   const [genSteps, setGenSteps] = useState<GenerationStepState>(() =>
     initialGenerationSteps(),
   );
+  const [editorTab, setEditorTab] = useState<"preview" | "improve">("preview");
+  const [editorSection, setEditorSection] = useState<
+    "hero" | "about" | "cta" | "colors" | "template"
+  >("hero");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [liveSlug, setLiveSlug] = useState<string | null>(null);
   const generatingRef = useRef(false);
   const exampleStartedRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   const activeStep = !session ? 1 : site ? (hasEdited ? 4 : 3) : 2;
+
+  const { publish, publishing, liveUrl, error: publishError } = usePublishSite({
+    site,
+    projectId,
+    input: lastInput,
+    onUpgradeRequired: () => setUpgradeOpen(true),
+    onPublished: ({ projectId: id, slug }) => {
+      setProjectId(id);
+      setLiveSlug(slug);
+    },
+  });
 
   async function persistSite(next: GeneratedSite, id: string) {
     setSaveState("saving");
@@ -98,6 +120,12 @@ export function FormBuilder({
     saveTimerRef.current = window.setTimeout(() => {
       void persistSite(next, id);
     }, 800);
+  }
+
+  function handleSiteChange(next: GeneratedSite) {
+    setSite(next);
+    setHasEdited(true);
+    if (projectId) scheduleSave(next, projectId);
   }
 
   useEffect(() => {
@@ -123,7 +151,11 @@ export function FormBuilder({
     setLastInput(input);
     setHasEdited(false);
     setSaveState("idle");
-    setGenSteps(initialGenerationSteps());
+    setGenSteps(
+      applyGenerationEvent(initialGenerationSteps(), {
+        type: "generation:start",
+      }),
+    );
 
     const regenerate = Boolean(opts?.regenerate && site);
     const previous =
@@ -190,12 +222,20 @@ export function FormBuilder({
           buffer += decoder.decode(value, { stream: true });
           buffer = parseSseChunk(buffer, (event, data) => {
             if (event === "progress" && data && typeof data === "object") {
-              const row = data as { type?: string; step?: string };
+              const row = data as {
+                type?: string;
+                step?: string;
+                stage?: string;
+                label?: string;
+              };
               if (typeof row.type === "string") {
+                const eventType = row.type;
                 setGenSteps((prev) =>
                   applyGenerationEvent(prev, {
-                    type: row.type!,
+                    type: eventType,
                     step: row.step,
+                    stage: row.stage,
+                    label: row.label,
                   }),
                 );
               }
@@ -215,10 +255,19 @@ export function FormBuilder({
 
         setSite(streamBox.result.site);
         setSource("ai");
+        setGenSteps((prev) =>
+          applyGenerationEvent(prev, { type: "generation:preview" }),
+        );
         if (streamBox.result.projectId) {
           setProjectId(streamBox.result.projectId);
           setSaveState("saved");
         }
+        window.requestAnimationFrame(() => {
+          previewRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
         return;
       }
 
@@ -238,10 +287,19 @@ export function FormBuilder({
 
       setSite(data.site);
       setSource("ai");
+      setGenSteps((prev) =>
+        applyGenerationEvent(prev, { type: "generation:preview" }),
+      );
       if (data.projectId) {
         setProjectId(data.projectId);
         setSaveState("saved");
       }
+      window.requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     } catch (err) {
       const aborted =
         err instanceof DOMException && err.name === "AbortError";
@@ -351,6 +409,107 @@ export function FormBuilder({
 
       {!session ? (
         <SignInGate />
+      ) : site && !loading ? (
+        <div ref={previewRef}>
+          <UpgradeModal
+            open={upgradeOpen}
+            onClose={() => setUpgradeOpen(false)}
+            feature="publish"
+            businessName={site.businessName}
+          />
+
+          <PreviewEditorHeader
+            activeTab={editorTab}
+            onPreview={() => setEditorTab("preview")}
+            onImprove={() => setEditorTab("improve")}
+            onPublish={() => void publish()}
+            publishing={publishing}
+            publishLabel={liveUrl ? "Republish" : "Publish"}
+          />
+
+          {liveUrl && (
+            <PublishSuccessBanner url={liveUrl} slug={liveSlug ?? "site"} />
+          )}
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {projectId && saveState === "saved" && (
+              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300">
+                Saved
+              </span>
+            )}
+            {projectId && saveState === "saving" && (
+              <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted">
+                Saving…
+              </span>
+            )}
+            {source === "ai" && (
+              <span className="rounded-full bg-brand/20 px-3 py-1 text-xs font-medium text-brand-light">
+                AI generated
+              </span>
+            )}
+            {liveUrl && (
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300"
+              >
+                Live
+              </a>
+            )}
+          </div>
+
+          {publishError && (
+            <p className="mb-4 text-sm text-red-300">{publishError}</p>
+          )}
+
+          {editorTab === "preview" ? (
+            <div className="grid gap-8 xl:grid-cols-[minmax(280px,340px)_1fr] xl:items-start">
+              <PreviewEditorPanel
+                site={site}
+                onChange={handleSiteChange}
+                activeSection={editorSection}
+                onSectionChange={setEditorSection}
+              />
+              <SitePreview
+                site={site}
+                onChange={handleSiteChange}
+                inlineEditor={false}
+              />
+            </div>
+          ) : lastInput ? (
+            <ImprovePanel
+              site={site}
+              input={lastInput}
+              onImproved={handleSiteChange}
+            />
+          ) : (
+            <div className="rounded-2xl border border-surface-border bg-surface/50 p-8 text-center text-muted">
+              Business details are required to run AI Improve.
+            </div>
+          )}
+
+          {lastInput && (
+            <button
+              type="button"
+              onClick={() => runGeneration(lastInput, { regenerate: true })}
+              disabled={loading}
+              className="mt-6 w-full rounded-xl border border-surface-border py-2.5 text-sm font-medium text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
+            >
+              ↻ Regenerate entire site with AI
+            </button>
+          )}
+
+          <div className="mt-8">
+            <RequestAccess
+              key={lastInput?.businessName ?? site.businessName ?? "lead"}
+              compact
+              defaultBusinessName={
+                lastInput?.businessName ?? site.businessName ?? ""
+              }
+            />
+          </div>
+        </div>
       ) : (
         <div className="grid gap-10 xl:grid-cols-[380px_1fr] xl:items-start">
           <div>
@@ -376,7 +535,7 @@ export function FormBuilder({
             </Link>
           </div>
 
-          <div>
+          <div ref={previewRef}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-sm font-medium uppercase tracking-wider text-muted">
                 Website preview
@@ -411,44 +570,7 @@ export function FormBuilder({
               </div>
             ) : site ? (
               <>
-                <SitePreview
-                  site={site}
-                  onChange={(next) => {
-                    setSite(next);
-                    setHasEdited(true);
-                    if (projectId) scheduleSave(next, projectId);
-                  }}
-                />
-                {lastInput && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      runGeneration(lastInput, { regenerate: true })
-                    }
-                    disabled={loading}
-                    className="mt-4 w-full rounded-xl border border-surface-border py-2.5 text-sm font-medium text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
-                  >
-                    ↻ Regenerate with AI
-                  </button>
-                )}
-                <QualityAuditPanel site={site} input={lastInput} />
-                <PublishCTA
-                  site={site}
-                  projectId={projectId}
-                  input={lastInput}
-                  onPublished={({ projectId: id }) => {
-                    setProjectId(id);
-                  }}
-                />
-                <div className="mt-8">
-                  <RequestAccess
-                    key={lastInput?.businessName ?? site.businessName ?? "lead"}
-                    compact
-                    defaultBusinessName={
-                      lastInput?.businessName ?? site.businessName ?? ""
-                    }
-                  />
-                </div>
+                <SitePreview site={site} onChange={handleSiteChange} />
               </>
             ) : (
               <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface/50 p-8 text-center text-muted">
@@ -458,7 +580,8 @@ export function FormBuilder({
                     Your finished website will appear here
                   </p>
                   <p className="mt-2 text-sm">
-                    Enter details and press Generate — not JSON, a real preview
+                    Enter details and press Generate Website — not JSON, a real
+                    preview
                   </p>
                 </div>
               </div>

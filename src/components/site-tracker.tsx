@@ -1,10 +1,15 @@
 "use client";
 
-import type { AnalyticsEventType } from "@/lib/site-analytics";
+import type {
+  AnalyticsClickEventType,
+  AnalyticsEventType,
+} from "@/lib/site-analytics";
 import {
   useEffect,
   useEffectEvent,
+  useState,
   type CSSProperties,
+  type FormEvent,
   type MouseEvent,
   type ReactNode,
 } from "react";
@@ -83,7 +88,7 @@ export function SitePageView({ projectId, slug }: SitePageViewProps) {
 
 type TrackedLinkProps = {
   projectId: string;
-  eventType: Exclude<AnalyticsEventType, "page_view">;
+  eventType: AnalyticsClickEventType;
   href: string;
   className?: string;
   style?: CSSProperties;
@@ -120,4 +125,74 @@ export function mapsSearchUrl(address: string): string {
   const q = address.trim();
   if (!q) return "https://www.google.com/maps";
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+type SiteContactFormProps = {
+  projectId: string;
+  slug: string;
+  className?: string;
+};
+
+/** Minimal contact form — tracks form_submission + lead on submit. */
+export function SiteContactForm({
+  projectId,
+  slug,
+  className = "",
+}: SiteContactFormProps) {
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || sent) return;
+    setBusy(true);
+    trackSiteEvent(projectId, "form_submission", { slug });
+    trackSiteEvent(projectId, "lead", { slug });
+    setSent(true);
+    setBusy(false);
+  }
+
+  if (sent) {
+    return (
+      <p className={`text-sm font-medium text-white/95 ${className}`}>
+        Thanks — we received your message and will be in touch soon.
+      </p>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(e) => void handleSubmit(e)}
+      className={`mx-auto mt-8 max-w-md space-y-3 text-left ${className}`}
+    >
+      <input
+        type="text"
+        name="name"
+        required
+        placeholder="Your name"
+        className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/60 outline-none focus:ring-2 focus:ring-white/30"
+      />
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="Email"
+        className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/60 outline-none focus:ring-2 focus:ring-white/30"
+      />
+      <textarea
+        name="message"
+        required
+        rows={3}
+        placeholder="How can we help?"
+        className="w-full resize-none rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/60 outline-none focus:ring-2 focus:ring-white/30"
+      />
+      <button
+        type="submit"
+        disabled={busy}
+        className="w-full rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-900 transition hover:bg-white/90 disabled:opacity-60"
+      >
+        {busy ? "Sending…" : "Send message"}
+      </button>
+    </form>
+  );
 }

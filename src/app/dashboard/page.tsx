@@ -45,12 +45,12 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <main className="mx-auto max-w-4xl px-6 py-12">
         <h1 className="text-3xl font-bold">My Websites</h1>
         <p className="mt-2 text-muted">
-          Manage drafts, publish live sites, and open analytics.
+          Edit drafts, publish live sites, and manage domains.
         </p>
-        <div className="mt-8">
+        <div className="mt-6">
           <WebsitesDashboard />
         </div>
       </main>

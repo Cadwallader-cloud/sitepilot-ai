@@ -3,6 +3,7 @@
 import { SiteJsonLd } from "@/components/site-json-ld";
 import {
   mapsSearchUrl,
+  SiteContactForm,
   SitePageView,
   TrackedLink,
 } from "@/components/site-tracker";
@@ -536,6 +537,7 @@ export function PublishedWebsite({
                   </TrackedLink>
                 )}
               </div>
+              <SiteContactForm projectId={projectId} slug={slug} />
             </section>
           );
         }

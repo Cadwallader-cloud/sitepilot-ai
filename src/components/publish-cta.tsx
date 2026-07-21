@@ -129,7 +129,7 @@ export function PublishCTA({
             <>
               Publish to{" "}
               <span className="font-medium text-foreground">
-                {displaySlug}.crestis.app
+                crestis.app/site/{displaySlug}
               </span>
             </>
           )}

@@ -21,6 +21,7 @@ export type GenerateOptions = {
   previous?: WebsitePromptOptions["avoid"];
   /** Prior SEO Memory for this site (regenerate / iterate) */
   seoMemory?: SeoMemory;
+  onProgress?: (p: { stage: string; label: string }) => void;
   onEvent?: import("./ai/orchestrator/events").PipelineEventHandler;
 };
 
@@ -46,7 +47,7 @@ export async function generateSiteWithOpenAI(
       previous: options.previous,
       seoMemory: options.seoMemory,
     },
-    undefined,
+    options.onProgress,
     options.onEvent,
   );
 }

@@ -1,8 +1,15 @@
 import type { ReactNode } from "react";
-import type { About, FAQ, Hero, Service, Theme, Website } from "@/lib/website";
+import type { About, FAQ, Hero, Service, Website, WebsiteTheme } from "@/lib/website";
+import {
+  isThemePresetId,
+  resolveThemePreset,
+  themeCssVars,
+  type Theme,
+  type ThemeMode,
+} from "@/theme";
 import type { TemplateBlocks } from "@/lib/template-engine";
 import { DEFAULT_TEMPLATE_BLOCKS } from "@/lib/template-engine/defaults";
-import { responsiveVisibility } from "@/components/ui";
+import { responsiveVisibility, css } from "@/components/ui";
 import { resolveRegisteredBlockComponent } from "@/components/registry";
 import { HeroRegistry } from "./registry";
 import {
@@ -63,9 +70,9 @@ export function NavbarBlock({
     <NavbarComponent
       navigation={website.navigation}
       businessName={businessName}
-      addressLink={addressLink("text-[11px] uppercase tracking-wide text-zinc-500")}
+      addressLink={addressLink(`text-[11px] uppercase tracking-wide ${css.muted}`)}
       phoneLink={phoneLink(
-        `rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold ${responsiveVisibility.inlineFromTablet}`,
+        `rounded-full ${css.borderAll} px-3 py-1.5 text-xs font-semibold ${responsiveVisibility.inlineFromTablet}`,
       )}
     />
   );
@@ -166,9 +173,19 @@ export function resolveWebsiteHero(website: Website): Hero | null {
   return websiteHero(website);
 }
 
-/** Resolve theme from Website JSON. */
+/** CSS variables for Renderer — --primary, --background, --radius, --shadow, --font-heading */
+export function resolveWebsiteRendererVars(
+  website: Website,
+  mode: ThemeMode = "light",
+): Record<string, string> {
+  return themeCssVars(resolveWebsiteTheme(website), mode);
+}
+
+/** Resolve full Theme tokens from Website JSON. */
 export function resolveWebsiteTheme(website: Website): Theme {
-  return website.theme;
+  const id = website.theme.id;
+  if (isThemePresetId(id)) return resolveThemePreset(id);
+  return resolveThemePreset("local-service-standard");
 }
 
 /** Low-level lookup — matches documented renderer pattern. */

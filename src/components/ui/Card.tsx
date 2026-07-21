@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { PaddingToken, RadiusToken } from "./tokens";
+import { css } from "./semantic-css";
 import { padding, radius } from "./tokens";
 
 export type CardProps = {
@@ -10,10 +11,10 @@ export type CardProps = {
 };
 
 const variantClass = {
-  outline: "border border-zinc-200 bg-white",
-  elevated: "border border-zinc-100 bg-white shadow-sm",
+  outline: `${css.borderAll} ${css.surface}`,
+  elevated: `${css.borderAll} ${css.surface} ${css.shadow}`,
   ghost: "bg-transparent",
-  overlay: "bg-white/95 shadow-2xl backdrop-blur",
+  overlay: `bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] ${css.shadow} backdrop-blur`,
 };
 
 export function Card({

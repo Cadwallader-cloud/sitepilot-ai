@@ -1,6 +1,7 @@
 import type { Hero } from "@/lib/website";
+import { css, inset, marginTop, spacing } from "@/components/ui/tokens";
 import type { EngineAlign, EngineThemeSlice } from "../types";
-import { alignClass, engineButtonRadius, enginePrimary } from "../types";
+import { alignClass, engineButtonRadius } from "../types";
 
 export type CTAGroupProps = EngineThemeSlice & {
   hero: Pick<Hero, "primaryCTA" | "secondaryCTA">;
@@ -15,23 +16,21 @@ export function CTAGroup({
   align = "left",
   className = "",
 }: CTAGroupProps) {
-  const primary = enginePrimary(theme);
   const radius = engineButtonRadius(theme);
 
   return (
     <div
-      className={`flex flex-wrap gap-3 ${alignClass(align)} ${className || "mt-8"}`.trim()}
+      className={`flex flex-wrap ${spacing.md} ${alignClass(align)} ${className || marginTop.lg}`.trim()}
       data-component="CTAGroup"
     >
       <span
-        className={`inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white ${radius}`}
-        style={{ backgroundColor: primary }}
+        className={`inline-flex items-center justify-center ${inset.button} text-sm font-semibold ${css.primaryBg} ${css.onPrimary} ${radius}`}
       >
         {hero.primaryCTA}
       </span>
       {hero.secondaryCTA ? (
         <span
-          className={`inline-flex items-center justify-center border border-zinc-200 bg-white px-6 py-3 text-sm font-semibold text-zinc-800 ${radius}`}
+          className={`inline-flex items-center justify-center ${css.borderAll} ${css.surface} ${inset.button} text-sm font-semibold ${css.text} ${radius}`}
         >
           {hero.secondaryCTA}
         </span>

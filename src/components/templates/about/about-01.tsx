@@ -1,5 +1,6 @@
 import NextImage from "next/image";
 import {
+  css,
   Container,
   Grid,
   Heading,
@@ -41,7 +42,7 @@ export function About01({
               <Grid cols="threeFromTablet" gap="sm" className={marginTop.md}>
                 {data.highlights.map((item) => (
                   <Card key={item} variant="outline" padding="sm">
-                    <Text as="span" size="sm" className="block text-center font-medium text-zinc-700">
+                    <Text as="span" size="sm" className={`block text-center font-medium ${css.text}`}>
                       {item}
                     </Text>
                   </Card>

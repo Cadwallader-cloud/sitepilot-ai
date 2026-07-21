@@ -1,6 +1,7 @@
 import type { HeroProps } from "@/components/hero/types";
 import { CTAGroup } from "@/components/hero/components/CTAGroup";
 import {
+  css,
   Container,
   Headline,
   Image,
@@ -22,7 +23,7 @@ export function Hero02({ hero }: HeroProps) {
       template="hero-02"
       className={`${responsiveLayout.heroSplit} ${size.heroMin}`}
     >
-      <Container className={`flex flex-col justify-center bg-zinc-50 ${paddingY["2xl"]}`} maxWidth="full">
+      <Container className={`flex flex-col justify-center ${css.surface} ${paddingY["2xl"]}`} maxWidth="full">
         <Headline tone="dark" className="max-w-xl">
           {hero.headline}
         </Headline>

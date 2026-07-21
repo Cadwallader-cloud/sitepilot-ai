@@ -1,6 +1,7 @@
 import type { HeroProps } from "@/components/hero/types";
 import { CTAGroup } from "@/components/hero/components/CTAGroup";
 import {
+  css,
   Badge,
   Container,
   Headline,
@@ -21,7 +22,7 @@ export function Hero04({ hero }: HeroProps) {
       id="hero"
       template="hero-04"
       spacing="lg"
-      className="border-b border-zinc-100 bg-white"
+      className={`border-b ${css.border} ${css.surface}`}
     >
       <Container align="center" maxWidth="lg">
         {eyebrow ? <Badge label={eyebrow} tone="brand" /> : null}

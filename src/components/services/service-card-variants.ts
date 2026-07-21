@@ -1,4 +1,5 @@
 import type { ServicesTemplateId } from "@/lib/template-engine";
+import { css } from "@/components/ui/tokens";
 
 /** ServiceCard visual variants — AI picks via services-0X template id. */
 export const SERVICE_CARD_VARIANTS = ["1", "2", "3"] as const;
@@ -21,7 +22,7 @@ export function serviceCardVariant(template: ServicesTemplateId): ServiceCardVar
 
 /** Static surface classes per card variant. */
 export const serviceCardSurfaceClass: Record<ServiceCardVariant, string> = {
-  "1": "border border-zinc-100 bg-white",
-  "2": "border border-zinc-200 bg-zinc-50",
+  "1": `${css.borderAll} ${css.surface}`,
+  "2": `${css.borderAll} bg-[color-mix(in_srgb,var(--surface)_88%,var(--background))]`,
   "3": "border-transparent bg-transparent",
 };

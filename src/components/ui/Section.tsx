@@ -57,7 +57,7 @@ function SectionBackgroundLayer({
         style={{
           background:
             background.gradient ??
-            `linear-gradient(135deg, ${color}, #0f172a)`,
+            `linear-gradient(135deg, ${color}, var(--text))`,
         }}
         data-component="SectionBackground"
         aria-hidden

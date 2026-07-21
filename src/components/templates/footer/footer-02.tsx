@@ -1,5 +1,6 @@
 import {
   Container,
+  css,
   Footer,
   Grid,
   marginTop,
@@ -20,7 +21,7 @@ export function Footer02({
   return (
     <Footer
       template="footer-02"
-      className={`bg-zinc-950 ${paddingX.site} ${paddingY["2xl"]} text-white`}
+      className={`${css.invertedBg} ${paddingX.site} ${paddingY["2xl"]} ${css.invertedText}`}
     >
       <Container maxWidth="2xl">
         <Grid cols={3} gap="lg">
@@ -33,7 +34,7 @@ export function Footer02({
             </Text>
           </div>
           <div>
-            <Text as="p" size="xs" className="font-semibold uppercase tracking-wider text-zinc-500">
+            <Text as="p" size="xs" className={`font-semibold uppercase tracking-wider ${css.muted}`}>
               Contact
             </Text>
             <div className={`${marginTop.sm} space-y-2`}>
@@ -43,7 +44,7 @@ export function Footer02({
             </div>
           </div>
           <div>
-            <Text as="p" size="xs" className="font-semibold uppercase tracking-wider text-zinc-500">
+            <Text as="p" size="xs" className={`font-semibold uppercase tracking-wider ${css.muted}`}>
               Hours
             </Text>
             <ul className={`${marginTop.sm} space-y-1`}>

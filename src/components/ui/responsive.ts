@@ -3,6 +3,11 @@
  * Rule: breakpoint prefixes live ONLY in this file.
  */
 
+import {
+  bodyScaleClass,
+  headingScaleClass,
+} from "@/theme/tokens/typography";
+
 export const VIEWPORTS = ["mobile", "tablet", "desktop"] as const;
 
 export type Viewport = (typeof VIEWPORTS)[number];
@@ -117,13 +122,13 @@ export const responsiveVisibility = {
   inlineFromTablet: `hidden ${BREAKPOINT.tablet}:inline-flex`,
 } as const;
 
-/** Typography scales */
+/** Typography scales — sourced from theme tokens */
 export const responsiveTypography = {
-  subheadline: responsive("text-base", "text-lg"),
-  headingSm: `${responsive("text-2xl", "text-3xl")} font-bold leading-tight`,
-  headingMd: `${responsive("text-3xl", "text-4xl")} font-bold leading-tight`,
-  headingLg: `${responsive("text-4xl", "text-5xl")} font-bold leading-tight`,
-  headingXl: `${responsive("text-4xl", "text-6xl")} font-bold tracking-tight`,
+  subheadline: bodyScaleClass.subheadline,
+  headingSm: headingScaleClass.sm,
+  headingMd: headingScaleClass.md,
+  headingLg: headingScaleClass.lg,
+  headingXl: headingScaleClass.xl,
 } as const;
 
 /** Insets with viewport scaling */

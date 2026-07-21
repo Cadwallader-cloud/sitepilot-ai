@@ -53,6 +53,7 @@ export {
   type ThemeProviderProps,
 } from "./theme-context";
 export {
+  css,
   gridCols,
   gridGap,
   inset,
@@ -63,6 +64,8 @@ export {
   paddingX,
   paddingY,
   radius,
+  shadow,
+  animation,
   sectionSpacing,
   size,
   spacing,
@@ -76,6 +79,8 @@ export {
   type PaddingXToken,
   type PaddingYToken,
   type RadiusToken,
+  type ShadowToken,
+  type AnimationToken,
   type SectionSpacingToken,
   type SizeToken,
   type SpacingToken,
@@ -83,9 +88,7 @@ export {
 } from "./tokens";
 export {
   alignClass,
-  uiAccent,
-  uiButtonRadius,
-  uiPrimary,
+  buttonRadiusClass,
   type UiAlign,
   type UiTone,
 } from "./theme";

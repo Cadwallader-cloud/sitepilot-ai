@@ -27,7 +27,7 @@ import type {
   Section,
   SEO,
   Service,
-  Theme,
+  WebsiteTheme,
   Website,
 } from "./website";
 
@@ -236,7 +236,7 @@ export function applySeoPatch(site: Website, seo: SEO): Website {
 }
 
 /** Theme Engine → theme */
-export function applyThemePatch(site: Website, theme: Theme): Website {
+export function applyThemePatch(site: Website, theme: WebsiteTheme): Website {
   assertAgentMayWrite("theme_engine", "theme");
   return { ...site, theme };
 }

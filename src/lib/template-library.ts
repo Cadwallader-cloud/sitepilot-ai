@@ -30,7 +30,7 @@ export const TEMPLATE_IDS = [
   "dentist-premium",
   "dentist-family",
   "medical-clean",
-  "restaurant-luxury",
+  "restaurant-dark",
   "restaurant-modern",
   "cafe-warm",
   "law-minimal",
@@ -301,8 +301,8 @@ export const TEMPLATE_LIBRARY: Record<TemplateId, TemplateDefinition> = {
     styleBucket: "Medical",
     defaultVariant: "B",
   },
-  "restaurant-luxury": {
-    id: "restaurant-luxury",
+  "restaurant-dark": {
+    id: "restaurant-dark",
     niche: "restaurant",
     bestFor: "fine dining, tasting menus, upscale rooms",
     voice: "Refined, selective, appetite-first. Never shouty.",
@@ -787,7 +787,7 @@ export function suggestTemplateFromHints(hints?: {
     return "medical-clean";
   }
   if (/restaurant|dining|fine dining/.test(blob)) {
-    return premium ? "restaurant-luxury" : "restaurant-modern";
+    return premium ? "restaurant-dark" : "restaurant-modern";
   }
   if (/cafe|coffee|bakery|brunch/.test(blob)) return "cafe-warm";
   if (/law|attorney|legal|solicitor/.test(blob)) {
@@ -843,7 +843,7 @@ export function resolveTemplateId(
     if (isTemplateId(trimmed)) return trimmed;
 
     const legacyStyle: Record<string, TemplateId> = {
-      luxury: "restaurant-luxury",
+      luxury: "restaurant-dark",
       modern: "local-service-standard",
       corporate: "b2b-corporate",
       friendly: "dentist-family",

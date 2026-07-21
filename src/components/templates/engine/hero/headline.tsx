@@ -1,18 +1,18 @@
 import type { EngineTone } from "../types";
+import { css } from "@/components/ui/tokens";
 
 export type HeadlineProps = {
   children: string;
   tone?: EngineTone;
-  color?: string;
   size?: "md" | "lg" | "xl";
   className?: string;
 };
 
 const toneClass: Record<EngineTone, string> = {
-  light: "text-white",
-  dark: "text-zinc-900",
-  brand: "",
-  muted: "text-zinc-800",
+  light: css.invertedText,
+  dark: css.text,
+  brand: css.primary,
+  muted: css.muted,
 };
 
 const sizeClass = {
@@ -24,14 +24,12 @@ const sizeClass = {
 export function Headline({
   children,
   tone = "dark",
-  color,
   size = "lg",
   className = "",
 }: HeadlineProps) {
   return (
     <h1
-      className={`${sizeClass[size]} ${toneClass[tone]} ${className}`.trim()}
-      style={tone === "brand" && color ? { color } : undefined}
+      className={`${css.fontHeading} ${sizeClass[size]} ${toneClass[tone]} ${className}`.trim()}
       data-component="Headline"
     >
       {children}

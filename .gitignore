@@ -37,6 +37,13 @@ yarn-error.log*
 
 # vercel
 .vercel
+vercel-deploy-out.txt
+
+# local debug output
+_test-out.txt
+_typecheck-out*.txt
+scripts/_*-probe.mjs
+scripts/_schema-probe-report.json
 
 # typescript
 *.tsbuildinfo

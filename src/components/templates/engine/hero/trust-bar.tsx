@@ -1,3 +1,5 @@
+import { css, inset, marginTop, radius, spacing } from "@/components/ui/tokens";
+
 export type TrustBarProps = {
   items: string[];
   align?: "left" | "center";
@@ -14,13 +16,13 @@ export function TrustBar({
 
   return (
     <ul
-      className={`mt-12 flex flex-wrap gap-3 ${align === "center" ? "justify-center" : ""} ${className}`.trim()}
+      className={`${marginTop["2xl"]} flex flex-wrap ${spacing.md} ${align === "center" ? "justify-center" : ""} ${className}`.trim()}
       data-component="TrustBar"
     >
       {items.map((item) => (
         <li
           key={item}
-          className="rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700"
+          className={`${radius.full} ${css.borderAll} ${inset.badge} text-sm font-medium ${css.text}`}
         >
           {item}
         </li>

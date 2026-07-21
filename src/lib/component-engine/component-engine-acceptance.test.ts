@@ -206,6 +206,22 @@ describe("Component Engine Acceptance", () => {
     const tokensSrc = readFileSync(join(uiDir, "tokens.ts"), "utf8");
     assert.match(tokensSrc, /export const spacing/);
     assert.match(tokensSrc, /export const padding/);
+    assert.match(tokensSrc, /@\/theme\/tokens\/spacing/);
+    assert.match(tokensSrc, /@\/theme\/tokens\/radius/);
+    assert.match(tokensSrc, /@\/theme\/tokens\/shadow/);
+    assert.match(tokensSrc, /@\/theme\/tokens\/animation/);
+    assert.match(tokensSrc, /export const shadow/);
+    assert.match(tokensSrc, /export const animation/);
+
+    const engineHeroDir = join(here, "../../components/templates/engine/hero");
+    for (const file of readdirSync(engineHeroDir).filter((n) => n.endsWith(".tsx"))) {
+      const src = readFileSync(join(engineHeroDir, file), "utf8");
+      assert.doesNotMatch(
+        src,
+        FORBIDDEN_SPACING_PATTERN,
+        `engine/hero/${file} must use design tokens instead of raw spacing utilities`,
+      );
+    }
   });
 
   it("✅ ServiceCard system — variants 1–3, AI picks template id only", () => {
@@ -252,7 +268,17 @@ describe("Component Engine Acceptance", () => {
     );
     assert.match(viewSrc, /ThemeProvider/);
     assert.match(viewSrc, /theme=\{website\.theme\}/);
-    assert.equal(THEME_INJECTION_RULE.includes("ThemeProvider"), true);
+    assert.equal(THEME_INJECTION_RULE.includes("--primary"), true);
+
+    const rendererSrc = readFileSync(
+      join(here, "../../components/templates/renderer.tsx"),
+      "utf8",
+    );
+    assert.match(rendererSrc, /resolveWebsiteRendererVars/);
+
+    const tokensSrc = readFileSync(join(uiDir, "semantic-css.ts"), "utf8");
+    assert.match(tokensSrc, /export const css/);
+    assert.match(tokensSrc, /var\(--primary\)/);
 
     const isThemeResolver = (file: string) => {
       const normalized = file.replace(/\\/g, "/");
@@ -480,7 +506,7 @@ describe("Acceptance Criteria — Phase 2.2 gate", () => {
       const src = readFileSync(join(uiDir, `${name}.tsx`), "utf8");
       assert.match(
         src,
-        /useTheme|useThemeStyle/,
+        /useTheme|useThemeStyle|semantic-css|css\.|var\(--primary\)/,
         `${name} must consume injected theme`,
       );
     }

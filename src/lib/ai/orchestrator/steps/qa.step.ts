@@ -11,6 +11,10 @@ import {
   runTemplateSelector,
   templateSelectorInputFromPipeline,
 } from "../../../ai-engine/template-selector-ai";
+import {
+  runThemeSelector,
+  themeSelectorInputFromPipeline,
+} from "../../../ai-engine/theme-selector-ai";
 import { selectTheme } from "../../../ai-engine/theme-selector";
 import { websiteFromFlat } from "../../../website";
 import { runJsonValidatorGate } from "../../../website-validator";
@@ -19,6 +23,7 @@ import {
   applyQATheme,
   prepareQARun,
 } from "../../context";
+import { themeFieldsFromPreset } from "@/theme";
 import type { PipelineContext, PipelineStep } from "../context";
 
 export class QAStep implements PipelineStep<PipelineContext> {
@@ -30,8 +35,22 @@ export class QAStep implements PipelineStep<PipelineContext> {
     const { meta } = run.pipeline;
 
     meta.onProgress?.({
-      stage: "theme_selector",
+      stage: "theme_selector_ai",
       label: "Theme Selector",
+    });
+    const themeSelectorInput = themeSelectorInputFromPipeline({
+      brief: meta.brief,
+      brandingTone: ctx.branding.tone,
+    });
+    const themeSelection = await runThemeSelector(themeSelectorInput, {
+      userEmail: meta.options.userEmail,
+      fallbackTemplateId: meta.templateId,
+    });
+    const presetId = themeSelection.theme;
+
+    meta.onProgress?.({
+      stage: "theme_selector",
+      label: "Theme Engine",
     });
     const design = await selectTheme({
       input: meta.input,
@@ -39,7 +58,7 @@ export class QAStep implements PipelineStep<PipelineContext> {
       plan: meta.plan!,
       content: meta.content!,
       runId: meta.runId,
-      templateId: meta.templateId!,
+      templateId: presetId,
     });
 
     meta.onProgress?.({
@@ -49,23 +68,13 @@ export class QAStep implements PipelineStep<PipelineContext> {
     const templateInput = templateSelectorInputFromPipeline({
       brief: meta.brief,
       plan: meta.plan!,
-      templateId: meta.templateId!,
+      templateId: presetId,
       designTheme: design.design.theme,
       brandingTone: ctx.branding.tone,
     });
 
     const themePatch = {
-      template: design.design.theme || meta.templateId!,
-      palette: design.design.palette,
-      font: design.design.font,
-      radius: design.design.borderRadius,
-      spacing: design.design.spacing,
-      buttonStyle:
-        String(design.design.borderRadius ?? "").toLowerCase() === "sharp"
-          ? "sharp"
-          : String(design.design.borderRadius ?? "").toLowerCase() === "soft"
-            ? "pill"
-            : "rounded",
+      ...themeFieldsFromPreset(presetId),
       blocks: await runTemplateSelector(templateInput, {
         userEmail: meta.options.userEmail,
       }),

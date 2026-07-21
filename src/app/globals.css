@@ -28,6 +28,58 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+/* Theme Engine — light / dark mode via data-theme on .theme-root */
+.theme-root,
+.theme-root[data-theme="light"] {
+  --primary: var(--theme-light-primary);
+  --background: var(--theme-light-background);
+  --text: var(--theme-light-text);
+  --surface: var(--theme-light-surface);
+  --border: var(--theme-light-border);
+  --muted: var(--theme-light-muted);
+  --accent: var(--theme-light-accent);
+  --color-primary: var(--theme-light-primary);
+  --color-secondary: var(--theme-light-secondary);
+  --color-accent: var(--theme-light-accent);
+  --color-background: var(--theme-light-background);
+  --color-surface: var(--theme-light-surface);
+  --color-text: var(--theme-light-text);
+  --color-muted: var(--theme-light-muted);
+  --color-border: var(--theme-light-border);
+  --color-success: var(--theme-light-success);
+  --color-warning: var(--theme-light-warning);
+  --color-danger: var(--theme-light-danger);
+  --site-primary: var(--theme-light-primary);
+  --site-accent: var(--theme-light-accent);
+  --theme-primary: var(--theme-light-primary);
+  --theme-accent: var(--theme-light-accent);
+}
+
+.theme-root[data-theme="dark"] {
+  --primary: var(--theme-dark-primary);
+  --background: var(--theme-dark-background);
+  --text: var(--theme-dark-text);
+  --surface: var(--theme-dark-surface);
+  --border: var(--theme-dark-border);
+  --muted: var(--theme-dark-muted);
+  --accent: var(--theme-dark-accent);
+  --color-primary: var(--theme-dark-primary);
+  --color-secondary: var(--theme-dark-secondary);
+  --color-accent: var(--theme-dark-accent);
+  --color-background: var(--theme-dark-background);
+  --color-surface: var(--theme-dark-surface);
+  --color-text: var(--theme-dark-text);
+  --color-muted: var(--theme-dark-muted);
+  --color-border: var(--theme-dark-border);
+  --color-success: var(--theme-dark-success);
+  --color-warning: var(--theme-dark-warning);
+  --color-danger: var(--theme-dark-danger);
+  --site-primary: var(--theme-dark-primary);
+  --site-accent: var(--theme-dark-accent);
+  --theme-primary: var(--theme-dark-primary);
+  --theme-accent: var(--theme-dark-accent);
+}
+
 @keyframes float {
   0%,
   100% {
@@ -81,6 +133,36 @@ body {
   }
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up var(--site-anim, 400ms) ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--site-anim, 350ms) ease-out forwards;
+}
+
 .animate-fade-up {
   animation: fade-up 0.9s ease-out forwards;
 }
@@ -118,6 +200,8 @@ body {
   .animate-fade-up-delay-2,
   .animate-fade-up-delay-3,
   .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in,
   .animate-ken-burns,
   .animate-float,
   .animate-pulse-ring {

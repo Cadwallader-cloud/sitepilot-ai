@@ -1,8 +1,32 @@
 /**
  * Crestis Design Tokens — semantic spacing & sizing for the UI Kit.
- * Responsive breakpoints: see responsive.ts (single source).
+ * Tailwind classes derived from @/theme/tokens/spacing (single source).
  */
 
+import {
+  gapClass,
+  marginTopClass,
+  paddingClass,
+  paddingXClass,
+  paddingYClass,
+  spacing as spacingScale,
+  type SpacingToken,
+} from "@/theme/tokens/spacing";
+import {
+  radius as radiusScale,
+  radiusClass,
+  type RadiusToken,
+} from "@/theme/tokens/radius";
+import {
+  shadow as shadowScale,
+  shadowClass,
+  type ShadowToken,
+} from "@/theme/tokens/shadow";
+import {
+  animation as animationScale,
+  animationClass,
+  type AnimationToken,
+} from "@/theme/tokens/animation";
 import {
   responsiveGridCols,
   responsiveInset,
@@ -12,54 +36,55 @@ import {
   type ResponsiveGridCols,
 } from "./responsive";
 
-export type SpacingToken = keyof typeof spacing;
-export type PaddingToken = keyof typeof padding;
+export type { SpacingToken };
+
+export type SpacingTokenKey = SpacingToken;
+export type PaddingToken = "none" | "sm" | "md" | "lg" | "xl";
 export type PaddingXToken = keyof typeof paddingX;
 export type PaddingYToken = keyof typeof paddingY;
 export type SectionSpacingToken = keyof typeof sectionSpacing;
 export type MarginTopToken = keyof typeof marginTop;
-export type RadiusToken = keyof typeof radius;
 export type SizeToken = keyof typeof size;
 
-/** Gap between flex/grid items */
+/** Gap between flex/grid items — spacing.xl not gap-6 */
 export const spacing = {
-  none: "gap-0",
-  xs: "gap-1",
-  sm: "gap-2",
-  md: "gap-3",
-  lg: "gap-4",
-  xl: "gap-6",
-  "2xl": "gap-8",
-  "3xl": "gap-10",
+  none: gapClass("none"),
+  xs: gapClass("xs"),
+  sm: gapClass("sm"),
+  md: gapClass("md"),
+  lg: gapClass("lg"),
+  xl: gapClass("xl"),
+  "2xl": gapClass("2xl"),
+  "3xl": gapClass("3xl"),
 } as const;
 
 /** Padding — all sides */
 export const padding = {
-  none: "",
-  sm: "p-4",
-  md: "p-6",
-  lg: "p-8",
-  xl: "p-10",
+  none: paddingClass("none"),
+  sm: paddingClass("sm"),
+  md: paddingClass("md"),
+  lg: paddingClass("lg"),
+  xl: paddingClass("xl"),
 } as const;
 
 /** Horizontal padding */
 export const paddingX = {
   none: "",
   site: responsivePaddingX.site,
-  button: "px-6",
-  input: "px-4",
-  badge: "px-4",
+  button: paddingXClass("lg"),
+  input: paddingXClass("sm"),
+  badge: paddingXClass("sm"),
 } as const;
 
 /** Vertical padding */
 export const paddingY = {
   none: "",
-  sm: "py-2",
-  md: "py-3",
-  lg: "py-4",
-  xl: "py-10",
-  "2xl": "py-12",
-  "3xl": "py-14",
+  sm: paddingYClass("sm"),
+  md: paddingYClass("md"),
+  lg: paddingYClass("lg"),
+  xl: paddingYClass("xl"),
+  "2xl": paddingYClass("2xl"),
+  "3xl": paddingYClass("3xl"),
   "4xl": responsivePaddingY.sectionLg,
   input: "py-2.5",
   list: "py-5",
@@ -74,13 +99,13 @@ export const sectionSpacing = {
 
 /** Margin top */
 export const marginTop = {
-  none: "",
-  tight: "mt-1",
-  sm: "mt-4",
-  md: "mt-6",
-  lg: "mt-8",
-  xl: "mt-10",
-  "2xl": "mt-12",
+  none: marginTopClass("none"),
+  tight: marginTopClass("xs"),
+  sm: marginTopClass("sm"),
+  md: marginTopClass("md"),
+  lg: marginTopClass("lg"),
+  xl: marginTopClass("xl"),
+  "2xl": marginTopClass("2xl"),
 } as const;
 
 /** Fixed component insets */
@@ -92,15 +117,36 @@ export const inset = {
   heroCard: responsiveInset.heroCard,
 } as const;
 
-/** Border radius */
+export type { RadiusToken, ShadowToken, AnimationToken };
+
+/** Border radius — radius.md not rounded-xl */
 export const radius = {
-  none: "rounded-none",
-  sm: "rounded-lg",
-  md: "rounded-xl",
-  lg: "rounded-2xl",
-  xl: "rounded-3xl",
-  full: "rounded-full",
+  none: radiusClass("none"),
+  sm: radiusClass("sm"),
+  md: radiusClass("md"),
+  lg: radiusClass("lg"),
+  xl: radiusClass("xl"),
+  full: radiusClass("full"),
 } as const;
+
+/** Box shadow — shadow.medium not shadow-md literals in templates */
+export const shadow = {
+  none: shadowClass("none"),
+  soft: shadowClass("soft"),
+  medium: shadowClass("medium"),
+  large: shadowClass("large"),
+} as const;
+
+/** Motion — animation.fade not animate-fade-in literals in templates */
+export const animation = {
+  none: animationClass("none"),
+  fade: animationClass("fade"),
+  slide: animationClass("slide"),
+  scale: animationClass("scale"),
+} as const;
+
+/** Renderer CSS variables — re-export from semantic-css (breaks typography cycle). */
+export { css } from "./semantic-css";
 
 /** Layout sizes */
 export const size = {
@@ -157,3 +203,6 @@ export type GridColsToken = ResponsiveGridCols;
 export type MaxWidthToken = keyof typeof maxWidth;
 
 export { typographyScale } from "./typography";
+
+/** Re-export canonical rem scale for Theme Engine consumers */
+export { spacingScale, radiusScale, shadowScale, animationScale };

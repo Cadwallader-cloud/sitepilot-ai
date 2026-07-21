@@ -8,6 +8,7 @@ import {
   SERVICES_TEMPLATE_IDS,
   normalizeTemplateBlocks,
 } from "@/lib/template-engine";
+import { isThemePresetId } from "@/theme";
 import { AboutSchema } from "./about";
 import { FAQSectionSchema } from "./faq";
 import { HeroSchema } from "./hero";
@@ -79,16 +80,23 @@ export const templateBlocksSchema = z.object({
 
 export const themeSchema = z
   .object({
-    template: z.string().min(1),
-    palette: z.string().min(1),
-    font: z.string().min(1),
-    radius: z.string().min(1),
-    spacing: z.string().min(1),
-    buttonStyle: z.string().min(1),
+    id: z.string().min(1).optional(),
+    /** @deprecated use id */
+    template: z.string().min(1).optional(),
     blocks: templateBlocksSchema.optional(),
   })
+  .superRefine((theme, ctx) => {
+    const rawId = theme.id?.trim() || theme.template?.trim();
+    if (!rawId || !isThemePresetId(rawId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `theme.id must be a Theme Engine preset id (e.g. construction-modern), got "${rawId ?? ""}"`,
+        path: ["id"],
+      });
+    }
+  })
   .transform((theme) => ({
-    ...theme,
+    id: theme.id?.trim() || theme.template!.trim(),
     blocks: normalizeTemplateBlocks(theme.blocks),
   }));
 

@@ -6,8 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { inset, paddingBottom, spacing } from "./tokens";
-import { useThemeStyle } from "./theme-context";
+import { css, inset, paddingBottom, spacing } from "./tokens";
 
 type AccordionContextValue = {
   openIndex: number;
@@ -63,7 +62,6 @@ export function AccordionItem({
   className = "",
 }: AccordionItemProps) {
   const context = useContext(AccordionContext);
-  const { color } = useThemeStyle();
   if (!context) {
     throw new Error("AccordionItem must be used within Accordion");
   }
@@ -78,17 +76,15 @@ export function AccordionItem({
         onClick={() => context.toggle(index)}
         aria-expanded={open}
       >
-        <span className="font-semibold text-zinc-900">{title}</span>
-        <span
-          className="text-xl leading-none"
-          style={color()}
-          aria-hidden
-        >
+        <span className={`font-semibold ${css.text}`}>{title}</span>
+        <span className={`text-xl leading-none ${css.primary}`} aria-hidden>
           {open ? "−" : "+"}
         </span>
       </button>
       {open ? (
-        <div className={`text-sm leading-relaxed text-zinc-600 ${paddingBottom.sm}`}>{children}</div>
+        <div className={`text-sm leading-relaxed ${css.muted} ${paddingBottom.sm}`}>
+          {children}
+        </div>
       ) : null}
     </div>
   );

@@ -2,12 +2,12 @@
 
 import type { ElementType, ReactNode } from "react";
 import type { UiTone } from "./theme";
-import { useThemeStyle } from "./theme-context";
 import {
   headingSizeClass,
   toneHeadingClass,
   type HeadingSize,
 } from "./typography";
+import { css } from "./semantic-css";
 
 export type HeadingProps = {
   children: ReactNode;
@@ -34,12 +34,10 @@ export function Heading({
   className = "",
 }: HeadingProps) {
   const Tag = headingTags[level];
-  const { color } = useThemeStyle();
 
   return (
     <Tag
-      className={`${headingSizeClass[size]} ${toneHeadingClass[tone]} ${className}`.trim()}
-      style={tone === "brand" ? color() : undefined}
+      className={`${css.fontHeading} ${headingSizeClass[size]} ${toneHeadingClass[tone]} ${className}`.trim()}
       data-component="Heading"
     >
       {children}

@@ -25,7 +25,7 @@ export function Hero05({ hero }: HeroProps) {
       className={`overflow-hidden ${paddingY["2xl"]} ${size.heroMinLg}`}
       background={{ variant: "dim" }}
     >
-      <Image src={image} fallbackColor="#18181b" sizes="100vw" />
+      <Image src={image} fallbackColor="var(--text)" sizes="100vw" />
       <Container
         className={`relative flex ${responsiveLayout.flexAlignEndCenter} ${size.heroPanelMin}`}
         maxWidth="2xl"

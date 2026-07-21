@@ -36,7 +36,11 @@ export function Background({
     return (
       <div
         className={`absolute inset-0 ${className}`.trim()}
-        style={{ background: gradient ?? `linear-gradient(135deg, ${color ?? "#2563eb"}, #0f172a)` }}
+        style={{
+          background:
+            gradient ??
+            `linear-gradient(135deg, ${color ?? "var(--primary)"}, var(--text))`,
+        }}
         data-component="Background"
         aria-hidden
       />

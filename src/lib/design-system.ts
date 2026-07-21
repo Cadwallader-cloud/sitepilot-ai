@@ -1,4 +1,9 @@
 import type { SiteTheme } from "./site-types";
+import { animationDurationFor } from "@/theme/tokens/animation";
+import { colorsForPalette as themeColorsForPalette } from "@/theme/tokens/colors";
+import { radiusPxFor } from "@/theme/tokens/radius";
+import { spacingPxFor } from "@/theme/tokens/spacing";
+import { fontStackFor } from "@/theme/tokens/typography";
 
 /**
  * Layer 5 — Visual AI tokens (Crestis design system).
@@ -50,39 +55,23 @@ export type DesignImageStyle =
   | "Documentary";
 export type DesignSectionStyle = "Alternating" | "Stacked" | "Banded";
 
-const PALETTE_COLORS: Record<
-  DesignPaletteName,
-  { primary: string; accent: string }
-> = {
-  "Dark Blue": { primary: "#1e3a5f", accent: "#2563eb" },
-  Teal: { primary: "#0f766e", accent: "#14b8a6" },
-  "Clinical Mint": { primary: "#0e7490", accent: "#67e8f9" },
-  "Warm Burgundy": { primary: "#7f1d1d", accent: "#f59e0b" },
-  Slate: { primary: "#1f2937", accent: "#6b7280" },
-  Forest: { primary: "#15803d", accent: "#22c55e" },
-  "Amber Trade": { primary: "#a16207", accent: "#eab308" },
-  "Electric Orange": { primary: "#c2410c", accent: "#f97316" },
-};
+export function colorsForPalette(palette: DesignPaletteName): {
+  primary: string;
+  accent: string;
+} {
+  return themeColorsForPalette(palette);
+}
 
-const SPACING_PX: Record<DesignSpacing, { section: string; gap: string }> = {
-  Compact: { section: "2.5rem", gap: "0.75rem" },
-  Medium: { section: "3.5rem", gap: "1rem" },
-  Large: { section: "4.5rem", gap: "1.25rem" },
-};
-
-const RADIUS_PX: Record<DesignBorderRadius, string> = {
-  Sharp: "0.5rem",
-  Medium: "1rem",
-  Soft: "1.5rem",
-};
-
-const FONT_STACK: Record<DesignFont, string> = {
-  Geist: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
-  Manrope: '"Manrope", ui-sans-serif, system-ui, sans-serif',
-  "DM Sans": '"DM Sans", ui-sans-serif, system-ui, sans-serif',
-  "Source Serif": '"Source Serif 4", Georgia, "Times New Roman", serif',
-  Inter: '"Inter", ui-sans-serif, system-ui, sans-serif',
-};
+const PALETTE_NAMES: DesignPaletteName[] = [
+  "Dark Blue",
+  "Teal",
+  "Clinical Mint",
+  "Warm Burgundy",
+  "Slate",
+  "Forest",
+  "Amber Trade",
+  "Electric Orange",
+];
 
 /** Google Fonts URL for non-Geist stacks (Geist is already in root layout). */
 export function googleFontsHrefFor(font: DesignFont): string | null {
@@ -99,15 +88,6 @@ export function googleFontsHrefFor(font: DesignFont): string | null {
       return null;
   }
 }
-
-export function colorsForPalette(palette: DesignPaletteName): {
-  primary: string;
-  accent: string;
-} {
-  return PALETTE_COLORS[palette] ?? PALETTE_COLORS["Dark Blue"];
-}
-
-const PALETTE_NAMES = Object.keys(PALETTE_COLORS) as DesignPaletteName[];
 
 /** Map planner colorDirection string → known Crestis palette, if possible */
 export function resolvePaletteDirection(
@@ -210,9 +190,9 @@ export function designSystemToCssVars(
   design: DesignSystem,
   theme: SiteTheme,
 ): Record<string, string> {
-  const spacing = SPACING_PX[design.spacing] ?? SPACING_PX.Large;
-  const radius = RADIUS_PX[design.borderRadius] ?? RADIUS_PX.Medium;
-  const font = FONT_STACK[design.font] ?? FONT_STACK.Geist;
+  const spacing = spacingPxFor(design.spacing);
+  const radius = radiusPxFor(design.borderRadius);
+  const font = fontStackFor(design.font);
   return {
     "--site-primary": theme.primary,
     "--site-accent": theme.accent,
@@ -220,12 +200,7 @@ export function designSystemToCssVars(
     "--site-gap": spacing.gap,
     "--site-radius": radius,
     "--site-font": font,
-    "--site-anim":
-      design.animation === "None"
-        ? "0ms"
-        : design.animation === "Bold"
-          ? "400ms"
-          : "250ms",
+    "--site-anim": animationDurationFor(design.animation),
   };
 }
 

@@ -1,4 +1,4 @@
-import { inset, radius } from "./tokens";
+import { css, inset, radius } from "./tokens";
 
 export type InputProps = {
   name?: string;
@@ -27,7 +27,7 @@ export function Input({
       value={value}
       defaultValue={defaultValue}
       disabled={disabled}
-      className={`w-full border border-zinc-200 bg-white text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200 disabled:cursor-not-allowed disabled:opacity-60 ${radius.sm} ${inset.input} ${className}`.trim()}
+      className={`w-full ${css.borderAll} ${css.surface} text-sm ${css.text} outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-60 ${radius.sm} ${inset.input} ${className}`.trim()}
       data-component="Input"
     />
   );

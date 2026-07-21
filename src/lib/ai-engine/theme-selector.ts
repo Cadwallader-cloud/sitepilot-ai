@@ -7,12 +7,12 @@
  */
 
 import type { BusinessFormInput } from "../business-form";
-import { colorsForPalette } from "../design-system";
 import {
   designSystemFromTemplate,
   type TemplateId,
 } from "../template-library";
 import { attachTradeAssets, detectTrade } from "../trade-images";
+import { resolveThemePreset } from "@/theme";
 import type { BusinessBrief, ContentDraft, DesignPlan, WebsitePlan } from "./types";
 
 /**
@@ -37,7 +37,8 @@ export async function selectTheme(params: {
   const detectedTrade = detectTrade(hint);
 
   const design = designSystemFromTemplate(templateId);
-  const paletteColors = colorsForPalette(design.palette);
+  const preset = resolveThemePreset(templateId);
+  const paletteColors = preset.palette;
   const assets = await attachTradeAssets(hint, undefined, runId);
   const themeStyle = assets.theme?.style ?? "professional";
 

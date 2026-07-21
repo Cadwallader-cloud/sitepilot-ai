@@ -6,5 +6,5 @@ export {
   ThemeProvider,
   useTheme,
   useThemeStyle,
-  uiButtonRadius as heroButtonRadius,
+  buttonRadiusClass as heroButtonRadius,
 } from "@/components/ui";

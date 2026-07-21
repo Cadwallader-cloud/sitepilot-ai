@@ -265,12 +265,7 @@ export function seedWebsiteShell(params: {
       twitter: null,
     },
     theme: {
-      template: "Modern Premium",
-      palette: "navy",
-      font: "Inter",
-      radius: "soft",
-      spacing: "comfortable",
-      buttonStyle: "rounded",
+      id: "local-service-standard",
       blocks: DEFAULT_TEMPLATE_BLOCKS,
     },
     settings: {

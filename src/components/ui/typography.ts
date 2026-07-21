@@ -1,38 +1,52 @@
 import type { UiTone } from "./theme";
-import { responsiveTypography } from "./responsive";
+import {
+  bodyScaleClass,
+  headingScaleClass,
+  typographyRoleClass,
+} from "@/theme/tokens/typography";
+import { css } from "./semantic-css";
 
 export type TextSize = "xs" | "sm" | "base" | "lg" | "xl";
 export type HeadingSize = "sm" | "md" | "lg" | "xl";
 
 export const toneHeadingClass: Record<UiTone, string> = {
-  light: "text-white",
-  dark: "text-zinc-900",
-  brand: "",
-  muted: "text-zinc-800",
+  light: css.invertedText,
+  dark: css.text,
+  brand: css.primary,
+  muted: css.muted,
 };
 
 export const toneTextClass: Record<UiTone, string> = {
-  light: "text-white/90",
-  dark: "text-zinc-600",
-  brand: "text-zinc-600",
-  muted: "text-zinc-500",
+  light: `${css.invertedText}/90`,
+  dark: css.muted,
+  brand: css.muted,
+  muted: css.muted,
 };
 
+/** Heading sizes → typography.heading / typography.hero tokens */
 export const headingSizeClass: Record<HeadingSize, string> = {
-  sm: responsiveTypography.headingSm,
-  md: responsiveTypography.headingMd,
-  lg: responsiveTypography.headingLg,
-  xl: responsiveTypography.headingXl,
+  sm: headingScaleClass.sm,
+  md: headingScaleClass.md,
+  lg: headingScaleClass.lg,
+  xl: headingScaleClass.xl,
 };
 
+/** Text sizes → typography.body / typography.small tokens */
 export const textSizeClass: Record<TextSize, string> = {
-  xs: "text-xs",
-  sm: "text-sm",
-  base: "text-base",
-  lg: "text-lg",
-  xl: "text-xl",
+  xs: typographyRoleClass("small"),
+  sm: typographyRoleClass("button"),
+  base: typographyRoleClass("body"),
+  lg: typographyRoleClass("body"),
+  xl: typographyRoleClass("heading"),
 };
 
 export const typographyScale = {
-  subheadline: responsiveTypography.subheadline,
+  subheadline: bodyScaleClass.subheadline,
+  hero: typographyRoleClass("hero"),
+  heading: typographyRoleClass("heading"),
+  body: typographyRoleClass("body"),
+  button: typographyRoleClass("button"),
+  small: typographyRoleClass("small"),
 } as const;
+
+export { typographyRoleClass };

@@ -1,3 +1,5 @@
+import { css, marginTop } from "@/components/ui/tokens";
+import { responsiveTypography } from "@/components/ui/responsive";
 import type { EngineTone } from "../types";
 
 export type SubheadlineProps = {
@@ -7,10 +9,10 @@ export type SubheadlineProps = {
 };
 
 const toneClass: Record<EngineTone, string> = {
-  light: "text-white/90",
-  dark: "text-zinc-600",
-  brand: "text-zinc-600",
-  muted: "text-zinc-500",
+  light: `${css.invertedText}/90`,
+  dark: css.muted,
+  brand: css.muted,
+  muted: css.muted,
 };
 
 export function Subheadline({
@@ -20,7 +22,7 @@ export function Subheadline({
 }: SubheadlineProps) {
   return (
     <p
-      className={`mt-4 text-base sm:text-lg ${toneClass[tone]} ${className}`.trim()}
+      className={`${marginTop.sm} ${responsiveTypography.subheadline} ${toneClass[tone]} ${className}`.trim()}
       data-component="Subheadline"
     >
       {children}

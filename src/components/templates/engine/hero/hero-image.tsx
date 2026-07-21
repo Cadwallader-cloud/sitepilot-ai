@@ -35,7 +35,7 @@ export function HeroImage({
   return (
     <div
       className="absolute inset-0"
-      style={{ backgroundColor: fallbackColor ?? "#0f172a" }}
+      style={{ backgroundColor: fallbackColor ?? "var(--text)" }}
       data-component="HeroImage"
       aria-hidden
     />

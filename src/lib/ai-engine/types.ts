@@ -209,6 +209,7 @@ export type EngineStageName =
   | "faq_retry"
   | "content_generator"
   | "theme_selector"
+  | "theme_selector_ai"
   | "copywriting_engine"
   | "seo_generator"
   | "seo_ai"

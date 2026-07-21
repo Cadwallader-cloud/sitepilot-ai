@@ -8,10 +8,12 @@
 
 import { validateWebsiteJson } from "./validation/validate";
 import { normalizeTemplateBlocks } from "./template-engine";
+import { isThemePresetId } from "@/theme";
 import {
   ensureWebsite,
   type BrandingStyle,
   type Website,
+  type WebsiteTheme,
 } from "./website";
 
 export type WebsiteValidationIssue = {
@@ -298,12 +300,14 @@ export function repairWebsite(raw: unknown): Website {
           : null,
     },
     theme: {
-      template: site.theme?.template?.trim() || "Modern Premium",
-      palette: site.theme?.palette?.trim() || "Dark Blue",
-      font: site.theme?.font?.trim() || "Geist",
-      radius: site.theme?.radius?.trim() || "Medium",
-      spacing: site.theme?.spacing?.trim() || "Large",
-      buttonStyle: site.theme?.buttonStyle?.trim() || "rounded",
+      id: (() => {
+        const legacy = site.theme as WebsiteTheme & { template?: string };
+        const raw =
+          legacy.id?.trim() ||
+          legacy.template?.trim() ||
+          "local-service-standard";
+        return isThemePresetId(raw) ? raw : "local-service-standard";
+      })(),
       blocks: normalizeTemplateBlocks(site.theme?.blocks),
     },
     settings: {

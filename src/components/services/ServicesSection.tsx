@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { ServicesTemplateId } from "@/lib/template-engine";
 import {
+  css,
   Container,
   Grid,
   Heading,
@@ -51,7 +52,7 @@ function ServicesFeaturedGrid({
   const variant = serviceCardVariant(template);
 
   return (
-    <Section id="services" template={template} spacing="md" className="border-t border-zinc-100">
+    <Section id="services" template={template} spacing="md" className={`border-t ${css.border}`}>
       <Container>
         <ServicesHeader label={label ?? "Services"} locationLink={locationLink} />
         {featured ? (
@@ -95,10 +96,10 @@ function ServicesAccentList({ items, label, template }: ServicesSectionProps) {
   const variant = serviceCardVariant(template);
 
   return (
-    <Section id="services" template={template} spacing="md" className="bg-zinc-950 text-white">
+    <Section id="services" template={template} spacing="md" className={`${css.invertedBg} ${css.invertedText}`}>
       <Container>
         <ServicesHeader label={label ?? "Services"} tone="light" />
-        <ul className={`divide-y divide-white/10 ${marginTop.lg}`}>
+        <ul className={`divide-y divide-[color-mix(in_srgb,var(--background)_10%,transparent)] ${marginTop.lg}`}>
           {items.map((service) => (
             <li key={service.title}>
               <ServiceCard service={service} variant={variant} />

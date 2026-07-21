@@ -37,6 +37,11 @@ import type {
 import type { WebsiteJson, WebsiteProject } from "./website-json";
 import { isWebsiteJson, toGeneratedSite, toWebsiteJson } from "./website-json";
 import {
+  isThemePresetId,
+  resolveThemePresetOrNull,
+  themeBuildMeta,
+} from "@/theme";
+import {
   DEFAULT_TEMPLATE_BLOCKS,
   normalizeTemplateBlocks,
   type TemplateBlocks,
@@ -51,7 +56,7 @@ export interface Website {
   navigation: Navigation;
   pages: Page[];
   seo: SEO;
-  theme: Theme;
+  theme: WebsiteTheme;
   settings: Settings;
   /** Crestis engine bridge (images, layout, SEO memory, diagnostics) */
   crestis?: CrestisRuntime;
@@ -579,38 +584,24 @@ export interface SEO {
 
 // ── Theme ────────────────────────────────────────────────────────────
 
-export interface Theme {
-  template: string;
-  palette: string;
-  font: string;
-  radius: string;
-  spacing: string;
-  buttonStyle: string;
+/** Persisted theme reference — full tokens resolved via Theme Engine at render. */
+export interface WebsiteTheme {
+  id: string;
   /** React template block picks — Theme Engine only (no HTML). */
   blocks: TemplateBlocks;
 }
 
-function buttonStyleFromDesign(design: {
-  borderRadius?: string;
-}): string {
-  const radius = String(design.borderRadius ?? "").toLowerCase();
-  if (radius === "sharp") return "sharp";
-  if (radius === "soft") return "pill";
-  return "rounded";
-}
+function themeFromFlat(flat: WebsiteJson): WebsiteTheme {
+  const layoutPreset = flat.layout?.strategy?.template?.trim();
+  if (layoutPreset && isThemePresetId(layoutPreset)) {
+    return {
+      id: layoutPreset,
+      blocks: DEFAULT_TEMPLATE_BLOCKS,
+    };
+  }
 
-function themeFromFlat(flat: WebsiteJson): Theme {
-  const design = normalizeDesignSystem(flat.theme);
   return {
-    template:
-      flat.layout?.strategy?.template?.trim() ||
-      design.theme ||
-      "Modern Premium",
-    palette: design.palette,
-    font: design.font,
-    radius: design.borderRadius,
-    spacing: design.spacing,
-    buttonStyle: buttonStyleFromDesign(design),
+    id: "local-service-standard",
     blocks: DEFAULT_TEMPLATE_BLOCKS,
   };
 }
@@ -1087,13 +1078,17 @@ export function flatFromWebsite(site: Website): WebsiteJson {
           ? "professional"
           : "clean";
 
-  const design = normalizeDesignSystem({
-    theme: site.theme.template as never,
-    palette: site.theme.palette as never,
-    font: (site.branding.fonts[0] || site.theme.font) as never,
-    borderRadius: site.theme.radius as never,
-    spacing: site.theme.spacing as never,
-  });
+  const resolved = resolveThemePresetOrNull(site.theme.id);
+  const meta = resolved ? themeBuildMeta(resolved) : undefined;
+  const design = meta
+    ? meta.design
+    : normalizeDesignSystem({
+        theme: "Modern Premium",
+        palette: "Dark Blue",
+        font: (site.branding.fonts[0] || "Geist") as never,
+        borderRadius: "Medium",
+        spacing: "Medium",
+      });
 
   return {
     business: {
@@ -1107,8 +1102,8 @@ export function flatFromWebsite(site: Website): WebsiteJson {
       competitors: site.business.competitors,
     },
     theme: {
-      primary: site.branding.colors[0] || "#0f172a",
-      accent: site.branding.colors[1] || "#2563eb",
+      primary: resolved?.palette.primary ?? site.branding.colors[0] ?? "#0f172a",
+      accent: resolved?.palette.accent ?? site.branding.colors[1] ?? "#2563eb",
       style: siteStyle,
       ...design,
       images,

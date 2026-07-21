@@ -75,6 +75,14 @@ export {
   type TemplateSelectorOutput,
 } from "./template-selector-ai";
 export { selectTheme } from "./theme-selector";
+export {
+  runThemeSelector,
+  selectThemePresetWithAi,
+  themeSelectorInputFromPipeline,
+  resolveThemeSelectorOutput,
+  type ThemeSelectorInput,
+  type ThemeSelectorOutput,
+} from "./theme-selector-ai";
 export { runHeroPipeline } from "./hero-pipeline";
 export { runAboutPipeline } from "./about-pipeline";
 export { runBrandPersonalityEngine } from "./brand-personality-engine";

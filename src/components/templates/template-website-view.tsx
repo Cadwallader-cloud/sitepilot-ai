@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ThemeProvider } from "@/components/ui";
+import { ThemeProvider, css } from "@/components/ui";
 import type { Website } from "@/lib/website";
 import {
   AboutBlock,
@@ -70,7 +70,7 @@ export function TemplateWebsiteView({
 
   return (
     <ThemeProvider theme={website.theme}>
-      <div className="min-h-screen bg-white text-zinc-900" data-template-engine="v1">
+      <div className={`min-h-screen ${css.bg} ${css.text}`} data-template-engine="v1">
         <NavbarBlock
           data={data}
           website={website}

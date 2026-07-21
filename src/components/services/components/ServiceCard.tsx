@@ -3,6 +3,7 @@
 import { ServiceIcon } from "@/components/service-icon";
 import {
   Card,
+  css,
   Heading,
   Stack,
   Text,
@@ -151,7 +152,7 @@ function ServiceCardVariant3({
         <Heading level={3} size="sm" tone="light">
           {service.title}
         </Heading>
-        <Text size="sm" className={`${marginTop.tight} text-zinc-400`}>
+        <Text size="sm" className={`${marginTop.tight} ${css.muted}`}>
           {service.description}
         </Text>
       </div>

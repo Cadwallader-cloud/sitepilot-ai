@@ -1,5 +1,5 @@
-import type { Theme } from "@/lib/website";
-import { colorsForPalette, type DesignPaletteName } from "@/lib/design-system";
+import type { Theme } from "@/theme";
+import { buttonRadiusClass, radiusClass } from "@/theme/tokens/radius";
 
 export type EngineTone = "light" | "dark" | "brand" | "muted";
 export type EngineAlign = "left" | "center" | "right";
@@ -9,18 +9,18 @@ export type EngineThemeSlice = {
 };
 
 export function enginePrimary(theme: Theme): string {
-  return colorsForPalette(theme.palette as DesignPaletteName).primary;
+  return theme.palette.primary;
 }
 
 export function engineAccent(theme: Theme): string {
-  return colorsForPalette(theme.palette as DesignPaletteName).accent;
+  return theme.palette.accent;
 }
 
 export function engineButtonRadius(theme: Theme): string {
-  if (theme.buttonStyle === "sharp") return "rounded-none";
-  if (theme.buttonStyle === "pill") return "rounded-full";
-  return "rounded-lg";
+  return buttonRadiusClass(theme.button.style);
 }
+
+export { radiusClass, buttonRadiusClass };
 
 export function alignClass(align: EngineAlign): string {
   if (align === "center") return "justify-center";

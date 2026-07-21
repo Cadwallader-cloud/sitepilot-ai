@@ -56,24 +56,13 @@ export function selectQA(
 }
 
 export type QAThemePatch = {
-  template: string;
-  palette: string;
-  font: string;
-  radius: string;
-  spacing: string;
-  buttonStyle: string;
+  id: string;
   blocks: TemplateBlocks;
 };
 
 export function applyQATheme(website: Website, patch: QAThemePatch): Website {
   return applyThemePatch(website, {
-    ...website.theme,
-    template: patch.template,
-    palette: patch.palette,
-    font: patch.font,
-    radius: patch.radius,
-    spacing: patch.spacing,
-    buttonStyle: patch.buttonStyle,
+    id: patch.id,
     blocks: patch.blocks,
   });
 }

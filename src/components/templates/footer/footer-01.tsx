@@ -1,4 +1,4 @@
-import { Footer, Logo, paddingX, paddingY, Stack, Text } from "@/components/ui";
+import { css, Footer, Logo, paddingX, paddingY, Stack, Text } from "@/components/ui";
 import type { ReactNode } from "react";
 import type { FooterTemplateProps } from "../types";
 
@@ -12,7 +12,7 @@ export function Footer01({
 }: FooterTemplateProps) {
   return (
     <Footer
-      className={`border-t border-zinc-200 bg-white ${paddingX.site} ${paddingY.xl} text-center`}
+      className={`border-t ${css.border} ${css.surface} ${paddingX.site} ${paddingY.xl} text-center`}
       brand={<Logo name={businessName} tone="brand" />}
     >
       <Stack gap="sm" align="center" className="mt-3">

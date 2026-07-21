@@ -1,27 +1,23 @@
-import { inset, marginTop, radius, spacing } from "./tokens";
+import { css, inset, radius, spacing } from "./tokens";
 
 export type TrustBarProps = {
   items: string[];
-  align?: "left" | "center";
   className?: string;
 };
 
-export function TrustBar({
-  items,
-  align = "center",
-  className = "",
-}: TrustBarProps) {
-  if (!items.length) return null;
+export function TrustBar({ items, className = "" }: TrustBarProps) {
+  const visible = items.filter(Boolean);
+  if (visible.length === 0) return null;
 
   return (
     <ul
-      className={`flex flex-wrap ${spacing.md} ${marginTop["2xl"]} ${align === "center" ? "justify-center" : ""} ${className}`.trim()}
+      className={`flex flex-wrap ${spacing.md} ${className}`.trim()}
       data-component="TrustBar"
     >
-      {items.map((item) => (
+      {visible.map((item) => (
         <li
           key={item}
-          className={`border border-zinc-200 text-sm font-medium text-zinc-700 ${radius.full} ${inset.badge}`}
+          className={`${css.borderAll} text-sm font-medium ${css.text} ${radius.full} ${inset.badge}`}
         >
           {item}
         </li>

@@ -180,7 +180,8 @@ describe("Website schema serialize/deserialize", () => {
     assert.equal(typeof site.metadata.version, "number");
     assert.ok(site.pages.length >= 1);
     assert.equal(site.seo.canonical, "/");
-    assert.equal(typeof site.theme.palette, "string");
+    assert.equal(typeof site.theme.id, "string");
+    assert.ok(site.theme.blocks);
     assert.equal(site.settings.analytics, true);
     assert.ok(site.crestis?.seoMemory);
   });
@@ -200,7 +201,7 @@ describe("Website schema serialize/deserialize", () => {
     assert.equal(restored.business.category, original.business.category);
     assert.equal(restored.seo.title, original.seo.title);
     assert.equal(restored.seo.canonical, original.seo.canonical);
-    assert.equal(restored.theme.font, original.theme.font);
+    assert.equal(restored.theme.id, original.theme.id);
     assert.equal(restored.navigation.logo, original.navigation.logo);
     assert.equal(restored.settings.lazyLoad, original.settings.lazyLoad);
     assert.equal(restored.pages[0]?.id, "home");

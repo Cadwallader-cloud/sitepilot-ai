@@ -1,18 +1,19 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** Cleaning layout — recurring trust and reviews before booking. */
+export const cleaning = {
+  id: "cleaning-modern",
+  name: "Cleaning",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "cleaning",
+    "cleaner",
+    "janitor",
+    "maid",
+    "house cleaning",
+    "office cleaning",
+    "commercial cleaning",
+    "janitorial",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -52,10 +53,10 @@ export const dentist = {
     }),
   ],
   stickyCTA: true,
-  floatingPhone: false,
+  floatingPhone: true,
   heroVariant: "B",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "Cleaning sites lead with reliability and recurring schedule clarity.",
+    "Reviews reinforce trust before quote or booking contact.",
   ],
 } as const satisfies LayoutPreset;

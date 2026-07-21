@@ -11,6 +11,10 @@ import {
   mergeSeoMemory,
   type SeoMemory,
 } from "../seo-memory";
+import {
+  applyDynamicSiteSectionIds,
+  layoutContentSignalsFromContent,
+} from "@/layout/dynamic-sections";
 import type { UxPlan } from "../ux-plan";
 import type { WebsiteJson } from "../website-json";
 import type { AiQualityScores } from "./ai-quality-scorer";
@@ -136,8 +140,15 @@ export function assembleWebsiteJson(params: {
     },
     seoMemory,
     layout: {
-      // Layer 3 UX Planner owns section order
-      sections: plan.sections,
+      sections: applyDynamicSiteSectionIds(
+        plan.sections,
+        layoutContentSignalsFromContent({
+          testimonials: content.testimonials,
+          galleryImages: design.images.gallery,
+          projects,
+          mode: "preview",
+        }),
+      ),
       ux: ux
         ? {
             nicheKey: ux.nicheKey,

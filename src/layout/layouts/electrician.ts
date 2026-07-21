@@ -1,18 +1,20 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** Electrical layout — safety credentials and proof of work. */
+export const electrician = {
+  id: "electrician-modern",
+  name: "Electrician",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "electrician",
+    "electrical",
+    "wiring",
+    "consumer unit",
+    "ev charger",
+    "socket",
+    "lighting",
+    "fusebox",
+    "panel upgrade",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -35,10 +37,10 @@ export const dentist = {
       priority: 40,
       variants: ["About01", "About02"],
     }),
-    layoutSection("testimonials", "About02", {
+    layoutSection("projects", "Services03", {
       required: false,
       priority: 50,
-      variants: ["About01", "About02"],
+      variants: ["Services01", "Services02", "Services03"],
     }),
     layoutSection("faq", "FAQAccordion01", {
       required: false,
@@ -52,10 +54,10 @@ export const dentist = {
     }),
   ],
   stickyCTA: true,
-  floatingPhone: false,
-  heroVariant: "B",
+  floatingPhone: true,
+  heroVariant: "A",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "Electricians need safety proof and panel/EV project credibility.",
+    "Projects band supports compliance-heavy work before contact.",
   ],
 } as const satisfies LayoutPreset;

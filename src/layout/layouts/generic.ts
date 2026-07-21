@@ -1,18 +1,47 @@
-import type { LayoutDefinition } from "../types";
+import { layoutSection } from "../sections";
+import type { LayoutPreset } from "../types";
 
 /** Default local-service skeleton. */
-export const genericLayout = {
-  id: "generic",
+export const generic = {
+  id: "generic-standard",
   name: "Local Service",
-  industries: ["general", "local", "service", "business"],
+  industry: ["general", "local", "service", "business"],
   sections: [
-    { id: "hero", label: "Hero" },
-    { id: "trust", label: "Trust" },
-    { id: "services", label: "Services" },
-    { id: "about", label: "About" },
-    { id: "testimonials", label: "Testimonials" },
-    { id: "faq", label: "FAQ" },
-    { id: "contact", label: "Contact" },
+    layoutSection("hero", "Hero03", {
+      required: true,
+      priority: 10,
+      variants: ["Hero01", "Hero02", "Hero03", "Hero04", "Hero05"],
+    }),
+    layoutSection("trust", "About01", {
+      required: true,
+      priority: 20,
+      variants: ["About01", "About02"],
+    }),
+    layoutSection("services", "Services02", {
+      required: true,
+      priority: 30,
+      variants: ["Services01", "Services02", "Services03"],
+    }),
+    layoutSection("about", "About01", {
+      required: false,
+      priority: 40,
+      variants: ["About01", "About02"],
+    }),
+    layoutSection("testimonials", "About02", {
+      required: false,
+      priority: 50,
+      variants: ["About01", "About02"],
+    }),
+    layoutSection("faq", "FAQAccordion01", {
+      required: false,
+      priority: 60,
+      variants: ["FAQAccordion01", "FAQGrid01"],
+    }),
+    layoutSection("contact", "Footer01", {
+      required: true,
+      priority: 70,
+      variants: ["Footer01", "Footer02"],
+    }),
   ],
   stickyCTA: true,
   floatingPhone: false,
@@ -20,4 +49,4 @@ export const genericLayout = {
   rationale: [
     "Balanced local-service flow: trust, offers, proof, then contact.",
   ],
-} as const satisfies LayoutDefinition;
+} as const satisfies LayoutPreset;

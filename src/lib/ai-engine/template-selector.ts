@@ -40,6 +40,8 @@ export type TemplateSelectorHints = {
   style?: unknown;
   sections?: unknown;
   layout?: unknown;
+  sectionRules?: unknown;
+  sectionOrder?: unknown;
 };
 
 /**
@@ -73,6 +75,8 @@ export function selectTemplate(params: {
     hints: {
       layout: hints?.layout,
       sections: hints?.sections ?? template.allowedSections,
+      sectionRules: hints?.sectionRules,
+      sectionOrder: hints?.sectionOrder,
       variant: hints?.variant,
     },
   });
@@ -83,7 +87,7 @@ export function selectTemplate(params: {
     variant,
     template,
     layoutId: layoutPlan.layoutId,
-    sections: layoutPlan.sections,
+    sections: layoutPlan.siteSections,
     stickyCTA: layoutPlan.stickyCTA,
     floatingPhone: layoutPlan.floatingPhone,
     copyBrief: templateCopyBrief(templateId, variant),

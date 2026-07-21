@@ -191,6 +191,7 @@ export type EngineStageName =
   | "competitor_intelligence"
   | "ux_planner"
   | "website_planner"
+  | "layout_selector_ai"
   | "template_selector"
   | "template_selector_ai"
   | "brand_personality"

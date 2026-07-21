@@ -1,18 +1,19 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** Landscaping layout — outdoor proof and gallery before contact. */
+export const landscaping = {
+  id: "landscaping-modern",
+  name: "Landscaping",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "landscaping",
+    "landscape",
+    "lawn care",
+    "garden",
+    "outdoor living",
+    "yard",
+    "hardscape",
+    "irrigation",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -30,24 +31,34 @@ export const dentist = {
       priority: 30,
       variants: ["Services01", "Services02", "Services03"],
     }),
-    layoutSection("about", "About01", {
+    layoutSection("gallery", "Services03", {
       required: false,
       priority: 40,
+      variants: ["Services02", "Services03"],
+    }),
+    layoutSection("projects", "Services03", {
+      required: false,
+      priority: 50,
+      variants: ["Services01", "Services02", "Services03"],
+    }),
+    layoutSection("about", "About01", {
+      required: false,
+      priority: 60,
       variants: ["About01", "About02"],
     }),
     layoutSection("testimonials", "About02", {
       required: false,
-      priority: 50,
+      priority: 70,
       variants: ["About01", "About02"],
     }),
     layoutSection("faq", "FAQAccordion01", {
       required: false,
-      priority: 60,
+      priority: 80,
       variants: ["FAQAccordion01", "FAQGrid01"],
     }),
     layoutSection("contact", "Footer01", {
       required: true,
-      priority: 70,
+      priority: 90,
       variants: ["Footer01", "Footer02"],
     }),
   ],
@@ -55,7 +66,7 @@ export const dentist = {
   floatingPhone: false,
   heroVariant: "B",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "Landscaping sells through outdoor visuals and project proof.",
+    "Gallery and portfolio bands reinforce design credibility.",
   ],
 } as const satisfies LayoutPreset;

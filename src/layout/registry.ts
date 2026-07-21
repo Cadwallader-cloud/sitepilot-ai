@@ -1,24 +1,66 @@
-import { dentistLayout } from "./layouts/dentist";
-import { genericLayout } from "./layouts/generic";
-import { restaurantLayout } from "./layouts/restaurant";
-import { roofingLayout } from "./layouts/roofing";
-import type { LayoutDefinition, LayoutId } from "./types";
+import { cleaning } from "./layouts/cleaning";
+import { dentist } from "./layouts/dentist";
+import { electrician } from "./layouts/electrician";
+import { generic } from "./layouts/generic";
+import { hvac } from "./layouts/hvac";
+import { landscaping } from "./layouts/landscaping";
+import { lawyer } from "./layouts/lawyer";
+import { plumber } from "./layouts/plumber";
+import { realEstate } from "./layouts/real-estate";
+import { restaurant } from "./layouts/restaurant";
+import { roofing } from "./layouts/roofing";
+import type { LayoutId, LayoutPreset } from "./types";
 
-/** Hand-authored layouts — preset id → section order + UX rules. */
+/** Hand-authored industry layouts — preset id → section order + UX rules. */
 export const LayoutRegistry = {
-  roofing: roofingLayout,
-  restaurant: restaurantLayout,
-  dentist: dentistLayout,
-  generic: genericLayout,
-} as const satisfies Record<LayoutId, LayoutDefinition>;
+  "roofing-modern": roofing,
+  "plumber-modern": plumber,
+  "hvac-modern": hvac,
+  "electrician-modern": electrician,
+  "landscaping-modern": landscaping,
+  "cleaning-modern": cleaning,
+  "dentist-modern": dentist,
+  "restaurant-modern": restaurant,
+  "lawyer-modern": lawyer,
+  "real-estate-modern": realEstate,
+  "generic-standard": generic,
+} as const satisfies Record<LayoutId, LayoutPreset>;
+
+export const INDUSTRY_LAYOUT_IDS = [
+  "roofing-modern",
+  "plumber-modern",
+  "hvac-modern",
+  "electrician-modern",
+  "landscaping-modern",
+  "cleaning-modern",
+  "dentist-modern",
+  "restaurant-modern",
+  "lawyer-modern",
+  "real-estate-modern",
+] as const satisfies readonly LayoutId[];
 
 export const LAYOUT_IDS = Object.keys(LayoutRegistry) as LayoutId[];
 
 const LEGACY_LAYOUT_ALIASES = {
-  trade: "roofing",
-  food: "restaurant",
-  medical: "dentist",
-  default: "generic",
+  roofing: "roofing-modern",
+  plumbing: "plumber-modern",
+  plumber: "plumber-modern",
+  hvac: "hvac-modern",
+  electrician: "electrician-modern",
+  landscaping: "landscaping-modern",
+  cleaning: "cleaning-modern",
+  restaurant: "restaurant-modern",
+  dentist: "dentist-modern",
+  lawyer: "lawyer-modern",
+  legal: "lawyer-modern",
+  "real estate": "real-estate-modern",
+  realtor: "real-estate-modern",
+  real_estate: "real-estate-modern",
+  generic: "generic-standard",
+  trade: "roofing-modern",
+  food: "restaurant-modern",
+  medical: "dentist-modern",
+  default: "generic-standard",
 } as const satisfies Record<string, LayoutId>;
 
 export function isLayoutId(value: unknown): value is LayoutId {
@@ -34,17 +76,24 @@ export function normalizeLayoutId(value: string): LayoutId | null {
   return null;
 }
 
-export function getLayout(id: LayoutId): LayoutDefinition {
+export function getLayout(id: LayoutId): LayoutPreset {
   return LayoutRegistry[id];
 }
 
-export function listRegisteredLayouts(): LayoutDefinition[] {
+export function listRegisteredLayouts(): LayoutPreset[] {
   return LAYOUT_IDS.map((id) => getLayout(id));
 }
 
 export {
-  roofingLayout as RoofingLayout,
-  restaurantLayout as RestaurantLayout,
-  dentistLayout as DentistLayout,
-  genericLayout as GenericLayout,
+  cleaning,
+  dentist,
+  electrician,
+  generic,
+  hvac,
+  landscaping,
+  lawyer,
+  plumber,
+  realEstate,
+  restaurant,
+  roofing,
 };

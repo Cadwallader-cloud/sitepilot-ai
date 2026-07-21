@@ -1,18 +1,20 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** HVAC layout — comfort, seasonal service, and credentials first. */
+export const hvac = {
+  id: "hvac-modern",
+  name: "HVAC",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "hvac",
+    "heating",
+    "cooling",
+    "air conditioning",
+    "furnace",
+    "heat pump",
+    "air con",
+    "ac repair",
+    "ventilation",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -35,27 +37,32 @@ export const dentist = {
       priority: 40,
       variants: ["About01", "About02"],
     }),
-    layoutSection("testimonials", "About02", {
+    layoutSection("why_us", "About02", {
       required: false,
       priority: 50,
       variants: ["About01", "About02"],
     }),
-    layoutSection("faq", "FAQAccordion01", {
+    layoutSection("testimonials", "About02", {
       required: false,
       priority: 60,
+      variants: ["About01", "About02"],
+    }),
+    layoutSection("faq", "FAQAccordion01", {
+      required: false,
+      priority: 70,
       variants: ["FAQAccordion01", "FAQGrid01"],
     }),
     layoutSection("contact", "Footer01", {
       required: true,
-      priority: 70,
+      priority: 80,
       variants: ["Footer01", "Footer02"],
     }),
   ],
   stickyCTA: true,
-  floatingPhone: false,
+  floatingPhone: true,
   heroVariant: "B",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "HVAC sites prioritize licensed comfort checks before seasonal upsells.",
+    "Process band answers maintenance vs emergency paths early.",
   ],
 } as const satisfies LayoutPreset;

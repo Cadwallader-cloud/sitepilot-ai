@@ -11,6 +11,10 @@ import {
   applyTemplateSelection,
   selectTemplate,
 } from "../../../ai-engine/template-selector";
+import {
+  layoutSelectorInputFromPipeline,
+  runLayoutSelector,
+} from "../../../ai-engine/layout-selector-ai";
 import { runSeoPlanner, seoPlanBrief } from "../../../ai-engine/seo-planner";
 import { seoMemoryBrief } from "../../../seo-memory";
 import type { SiteLayoutSection } from "../../../site-types";
@@ -147,6 +151,18 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
     );
 
     meta.onProgress?.({
+      stage: "layout_selector_ai",
+      label: "Layout Selector",
+    });
+    const layoutSelectorInput = layoutSelectorInputFromPipeline({
+      brief: meta.brief,
+      brandingTone: meta.personalityBrief,
+    });
+    const layoutSelection = await runLayoutSelector(layoutSelectorInput, {
+      userEmail: meta.options.userEmail,
+    });
+
+    meta.onProgress?.({
       stage: "template_selector",
       label: "Template Selector",
     });
@@ -154,6 +170,9 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
       dna: meta.liveDna,
       tradeKey: meta.industryId !== "general" ? meta.industryId : meta.tradeKey,
       hints: {
+        layout: layoutSelection.layout,
+        sectionRules: layoutSelection.sectionRules,
+        sectionOrder: layoutSelection.sectionOrder,
         template:
           planRaw.template ||
           meta.industryPack.preferredTemplate ||

@@ -1,14 +1,17 @@
 import type { TemplateDefinition } from "@/lib/template-library";
-import type { SiteLayoutSection } from "@/lib/site-types";
 import { normalizeUxSections } from "@/lib/ux-plan";
 import {
   buildLayoutPlan,
   parseAiLayoutSelection,
+  resolveLayout,
   resolveLayoutVariant,
   suggestLayoutId,
 } from "./engine";
 import { getLayout, isLayoutId, normalizeLayoutId } from "./registry";
-import type { LayoutId, LayoutPlan, LayoutPlannerInput } from "./types";
+import { layoutSection, sortLayoutSections } from "./sections";
+import { parseSectionOrder } from "./reorder";
+import { parseAiSectionRules } from "./section-rules";
+import type { LayoutId, LayoutPlan, LayoutPlannerInput, LayoutSection, SectionRule } from "./types";
 
 export type PlannedLayout = LayoutPlan & {
   /** UX niche key used when normalizing free-form section hints */
@@ -24,13 +27,17 @@ export function planLayout(input: LayoutPlannerInput & {
 }): PlannedLayout {
   const nicheKey = resolveNicheKey(input);
   const hintedLayout = parseLayoutHint(input.hints?.layout);
-  const layoutId = hintedLayout ?? suggestLayoutId({
+  const layoutId = hintedLayout.layoutId ?? suggestLayoutId({
     industry: input.industry,
     industryId: input.industryId,
     tradeKey: input.tradeKey,
   });
 
-  const layout = getLayout(layoutId);
+  const layout = resolveLayout({ layout: layoutId });
+  const sectionRules =
+    parseSectionRules(input.hints?.sectionRules) ?? hintedLayout.sectionRules;
+  const sectionOrder =
+    parseSectionOrderHint(input.hints?.sectionOrder) ?? hintedLayout.sectionOrder;
   const hintedSections = normalizeSectionHints(
     input.hints?.sections,
     nicheKey,
@@ -39,6 +46,8 @@ export function planLayout(input: LayoutPlannerInput & {
 
   const plan = buildLayoutPlan(layoutId, {
     sections: hintedSections,
+    sectionRules,
+    sectionOrder,
     stickyCTA: layout.stickyCTA,
     floatingPhone: layout.floatingPhone,
     heroVariant: input.template
@@ -61,22 +70,56 @@ function resolveNicheKey(input: LayoutPlannerInput): string {
   return suggestLayoutId(input);
 }
 
-function parseLayoutHint(raw: unknown): LayoutId | null {
+function parseSectionRules(raw: unknown): SectionRule[] | undefined {
+  const rules = parseAiSectionRules(raw);
+  return rules.length > 0 ? rules : undefined;
+}
+
+function parseSectionOrderHint(raw: unknown): string[] | undefined {
+  const order = parseSectionOrder(raw);
+  return order.length > 0 ? order : undefined;
+}
+
+function parseLayoutHint(raw: unknown): {
+  layoutId: LayoutId | null;
+  sectionRules?: SectionRule[];
+  sectionOrder?: string[];
+} {
   if (typeof raw === "string") {
-    return normalizeLayoutId(raw);
+    return { layoutId: normalizeLayoutId(raw) };
   }
   const parsed = parseAiLayoutSelection(raw);
-  return parsed?.layout ?? null;
+  return {
+    layoutId: parsed?.layout ?? null,
+    sectionRules: parsed?.sectionRules,
+    sectionOrder: parsed?.sectionOrder,
+  };
 }
 
 function normalizeSectionHints(
   raw: unknown,
   nicheKey: string,
-  fallback: readonly SiteLayoutSection[],
-): SiteLayoutSection[] {
+  fallback: readonly LayoutSection[],
+): LayoutSection[] {
   if (raw == null) return [...fallback];
   const normalized = normalizeUxSections(raw, nicheKey);
-  return normalized.length >= 4 ? normalized : [...fallback];
+  if (normalized.length < 4) return [...fallback];
+
+  const fallbackById = new Map(fallback.map((section) => [section.id, section]));
+  let priority = 10;
+  const merged = normalized.map((section) => {
+    const base = fallbackById.get(section.id);
+    const next = base
+      ? { ...base, priority }
+      : layoutSection(section.id, undefined, {
+          required: section.id === "hero" || section.id === "contact",
+          priority,
+        });
+    priority += 10;
+    return next;
+  });
+
+  return sortLayoutSections(merged);
 }
 
 export { planLayout as resolveLayoutPlan };

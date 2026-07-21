@@ -1,4 +1,8 @@
 import type { GeneratedSite, SiteLayoutSection } from "./site-types";
+import {
+  applyDynamicSiteSectionIds,
+  layoutContentSignalsFromSite,
+} from "@/layout/dynamic-sections";
 
 const DEFAULT_SECTIONS: SiteLayoutSection[] = [
   { id: "hero", label: "Hero" },
@@ -9,9 +13,13 @@ const DEFAULT_SECTIONS: SiteLayoutSection[] = [
 ];
 
 /** Resolve planner sections for the renderer (legacy sites → default). */
-export function getSiteSections(site: GeneratedSite): SiteLayoutSection[] {
-  if (site.layout?.sections?.length) return site.layout.sections;
-  return DEFAULT_SECTIONS;
+export function getSiteSections(
+  site: GeneratedSite,
+  mode: "preview" | "live" = "live",
+): SiteLayoutSection[] {
+  const base = site.layout?.sections?.length ? site.layout.sections : DEFAULT_SECTIONS;
+  const signals = layoutContentSignalsFromSite(site, mode);
+  return applyDynamicSiteSectionIds(base, signals);
 }
 
 export function sectionLabel(

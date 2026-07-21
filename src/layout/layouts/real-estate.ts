@@ -1,18 +1,19 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** Real estate layout — market trust and listings before agent contact. */
+export const realEstate = {
+  id: "real-estate-modern",
+  name: "Real Estate",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "real estate",
+    "realtor",
+    "estate agent",
+    "property agent",
+    "homes for sale",
+    "listing agent",
+    "broker",
+    "property",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -35,27 +36,32 @@ export const dentist = {
       priority: 40,
       variants: ["About01", "About02"],
     }),
-    layoutSection("testimonials", "About02", {
+    layoutSection("projects", "Services03", {
       required: false,
       priority: 50,
+      variants: ["Services01", "Services02", "Services03"],
+    }),
+    layoutSection("testimonials", "About02", {
+      required: false,
+      priority: 60,
       variants: ["About01", "About02"],
     }),
     layoutSection("faq", "FAQAccordion01", {
       required: false,
-      priority: 60,
+      priority: 70,
       variants: ["FAQAccordion01", "FAQGrid01"],
     }),
     layoutSection("contact", "Footer01", {
       required: true,
-      priority: 70,
+      priority: 80,
       variants: ["Footer01", "Footer02"],
     }),
   ],
   stickyCTA: true,
   floatingPhone: false,
-  heroVariant: "B",
+  heroVariant: "A",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "Real estate sites separate buy, sell, and valuation paths early.",
+    "Listings and local market proof build agent credibility.",
   ],
 } as const satisfies LayoutPreset;

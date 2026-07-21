@@ -178,6 +178,7 @@ export type SiteLayoutSection = {
     | "menu"
     | "testimonials"
     | "faq"
+    | "cta"
     | "contact";
   label: string;
 };

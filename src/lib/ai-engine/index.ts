@@ -74,6 +74,14 @@ export {
   type TemplateSelectorInput,
   type TemplateSelectorOutput,
 } from "./template-selector-ai";
+export {
+  layoutFromSelectorOutput,
+  runLayoutSelector,
+  layoutSelectorInputFromPipeline,
+  resolveLayoutSelectorOutput,
+  type LayoutSelectorInput,
+  type LayoutSelectorOutput,
+} from "./layout-selector-ai";
 export { selectTheme } from "./theme-selector";
 export {
   runThemeSelector,

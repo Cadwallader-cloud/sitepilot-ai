@@ -1064,6 +1064,7 @@ export function flatFromWebsite(site: Website): WebsiteJson {
             "menu",
             "testimonials",
             "faq",
+            "cta",
             "contact",
           ] as const
         ).includes(s.id as SiteLayoutSection["id"]),

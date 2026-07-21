@@ -1,18 +1,19 @@
 import { layoutSection } from "../sections";
 import type { LayoutPreset } from "../types";
 
-/** Medical layout — calm trust before booking. */
-export const dentist = {
-  id: "dentist-modern",
-  name: "Dentist",
+/** Legal layout — credentials and practice areas before consult. */
+export const lawyer = {
+  id: "lawyer-modern",
+  name: "Law Firm",
   industry: [
-    "dentist",
-    "dental",
-    "orthodont",
-    "teeth",
-    "tooth",
-    "smile clinic",
-    "oral care",
+    "lawyer",
+    "attorney",
+    "legal",
+    "law firm",
+    "solicitor",
+    "barrister",
+    "litigation",
+    "law office",
   ],
   sections: [
     layoutSection("hero", "Hero03", {
@@ -55,7 +56,7 @@ export const dentist = {
   floatingPhone: false,
   heroVariant: "B",
   rationale: [
-    "Healthcare sites prioritize reassurance and clear services.",
-    "FAQ answers insurance and first-visit anxiety early.",
+    "Law firms prioritize calm credibility and clear practice areas.",
+    "FAQ handles fees and consult fit before confidential contact.",
   ],
 } as const satisfies LayoutPreset;

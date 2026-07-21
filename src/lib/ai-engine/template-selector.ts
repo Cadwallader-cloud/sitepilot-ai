@@ -12,12 +12,13 @@ import {
   getTemplate,
   resolveTemplateId,
   resolveVariant,
-  sectionsFromTemplateLabels,
   templateCopyBrief,
   type TemplateDefinition,
   type TemplateId,
   type TemplateVariant,
 } from "../template-library";
+import { planLayout } from "@/layout/planner";
+import type { LayoutId } from "@/layout/types";
 import type { SiteLayoutSection } from "../site-types";
 import type { WebsitePlan } from "./types";
 
@@ -25,7 +26,10 @@ export type TemplateSelection = {
   templateId: TemplateId;
   variant: TemplateVariant;
   template: TemplateDefinition;
+  layoutId: LayoutId;
   sections: SiteLayoutSection[];
+  stickyCTA: boolean;
+  floatingPhone: boolean;
   /** Injected into Content Generator */
   copyBrief: string;
 };
@@ -35,6 +39,7 @@ export type TemplateSelectorHints = {
   variant?: unknown;
   style?: unknown;
   sections?: unknown;
+  layout?: unknown;
 };
 
 /**
@@ -60,17 +65,27 @@ export function selectTemplate(params: {
   );
 
   const template = getTemplate(templateId);
-  const variant = resolveVariant(hints?.variant, template);
-  const sections = sectionsFromTemplateLabels(
-    hints?.sections ?? template.allowedSections,
+  const layoutPlan = planLayout({
+    industry: dna.industry,
+    industryId: tradeKey || dna.industry,
+    tradeKey: tradeKey || `${dna.industry} ${dna.subcategory}`,
     template,
-  );
+    hints: {
+      layout: hints?.layout,
+      sections: hints?.sections ?? template.allowedSections,
+      variant: hints?.variant,
+    },
+  });
+  const variant = resolveVariant(hints?.variant ?? layoutPlan.heroVariant, template);
 
   return {
     templateId,
     variant,
     template,
-    sections,
+    layoutId: layoutPlan.layoutId,
+    sections: layoutPlan.sections,
+    stickyCTA: layoutPlan.stickyCTA,
+    floatingPhone: layoutPlan.floatingPhone,
     copyBrief: templateCopyBrief(templateId, variant),
   };
 }
@@ -87,6 +102,8 @@ export function applyTemplateSelection(
     style: selection.template.styleBucket,
     colorDirection: selection.template.visual.palette,
     sections: selection.sections,
-    heroApproach: `Template ${selection.templateId} variant ${selection.variant}. ${plan.heroApproach}`,
+    stickyCTA: selection.stickyCTA,
+    floatingPhone: selection.floatingPhone,
+    heroApproach: `Layout ${selection.layoutId} · Template ${selection.templateId} variant ${selection.variant}. ${plan.heroApproach}`,
   };
 }

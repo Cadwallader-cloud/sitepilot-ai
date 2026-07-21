@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx --yes tsx --test src/lib/website.roundtrip.test.ts src/lib/website-ownership.test.ts src/lib/website-validator.test.ts src/lib/website-acceptance.test.ts src/lib/ai/retry/retry.test.ts src/lib/ai/retry/retry-acceptance.test.ts src/lib/ai/orchestrator/orchestrator-acceptance.test.ts src/lib/ai/context/context-acceptance.test.ts src/lib/ai/context/context-manager-acceptance.test.ts src/lib/ai/context/estimate-tokens.test.ts src/lib/ai/context/context-cache.test.ts src/lib/template-engine/template-engine.test.ts src/lib/template-engine/template-engine-acceptance.test.ts src/lib/component-engine/component-engine-acceptance.test.ts src/theme/theme-acceptance.test.ts",
+    "test": "npx --yes tsx --test src/lib/website.roundtrip.test.ts src/lib/website-ownership.test.ts src/lib/website-validator.test.ts src/lib/website-acceptance.test.ts src/lib/ai/retry/retry.test.ts src/lib/ai/retry/retry-acceptance.test.ts src/lib/ai/orchestrator/orchestrator-acceptance.test.ts src/lib/ai/context/context-acceptance.test.ts src/lib/ai/context/context-manager-acceptance.test.ts src/lib/ai/context/estimate-tokens.test.ts src/lib/ai/context/context-cache.test.ts src/lib/template-engine/template-engine.test.ts src/lib/template-engine/template-engine-acceptance.test.ts src/lib/component-engine/component-engine-acceptance.test.ts src/theme/theme-acceptance.test.ts src/layout/layout-acceptance.test.ts",
     "typecheck": "tsc --noEmit",
     "ai:quality:batch": "node --env-file=.env.local scripts/ai-quality/run-batch.mjs",
     "ai:quality:analyze": "node scripts/ai-quality/analyze.mjs",

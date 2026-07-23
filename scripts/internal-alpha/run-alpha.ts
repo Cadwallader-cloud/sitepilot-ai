@@ -151,17 +151,8 @@ async function main() {
         niche: row.niche,
         input: row,
         site,
-        usage:
-          site.usage ??
-          site.crestis?.usage ??
-          site.website?.crestis?.usage,
-        telemetry:
-          site.usage?.telemetry ??
-          site.crestis?.usage?.telemetry ??
-          site.crestis?.telemetry ??
-          site.website?.crestis?.usage?.telemetry ??
-          site.website?.crestis?.telemetry ??
-          [],
+        usage: site.usage,
+        telemetry: site.usage?.telemetry ?? [],
         qa: {
           score: qa.score,
           summary: qa.summary,

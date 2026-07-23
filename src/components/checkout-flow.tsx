@@ -3,6 +3,7 @@
 import { CryptoCheckout } from "@/components/crypto-checkout";
 import { PRO_UNLOCK_FEATURES } from "@/lib/plans";
 import type { PlanId } from "@/lib/billing/types";
+import Link from "next/link";
 
 const CHECKOUT_STEPS = ["Free", "Pro", "Crypto Checkout"] as const;
 
@@ -120,6 +121,14 @@ export function CheckoutFlow({
         planId={planId}
         embedded
       />
+
+      <p className="text-center text-xs text-muted">
+        Subscription fees are generally non-refundable. See our{" "}
+        <Link href="/refund" className="text-brand-light hover:underline">
+          Refund Policy
+        </Link>
+        .
+      </p>
     </div>
   );
 }

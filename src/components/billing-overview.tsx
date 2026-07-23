@@ -74,6 +74,19 @@ export function BillingOverview({ current }: BillingOverviewProps) {
         </ul>
       </div>
 
+      <div className="rounded-2xl border border-surface-border bg-surface/40 p-6 sm:p-8">
+        <h3 className="text-lg font-bold">Refund policy</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          Unless required by applicable law, subscription fees are non-refundable.
+          Refund requests may be considered at Crestis&apos; sole discretion in
+          cases of duplicate charges, billing errors, or technical issues
+          preventing use of the Service.{" "}
+          <Link href="/refund" className="text-brand-light hover:underline">
+            Full policy
+          </Link>
+        </p>
+      </div>
+
       {(showUpgradePro || showUpgradeBusiness) && (
         <div className="flex flex-col gap-3 sm:flex-row">
           {showUpgradePro && (

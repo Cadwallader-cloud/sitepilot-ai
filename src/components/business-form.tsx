@@ -1,6 +1,7 @@
 "use client";
 
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
+import Link from "next/link";
 import { useState } from "react";
 
 type BusinessFormProps = {
@@ -128,6 +129,18 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
           Try Apex Roofing
         </button>
       </div>
+      <p className="text-xs text-muted">
+        By generating, you agree to our{" "}
+        <Link href="/privacy" className="text-brand-light hover:underline">
+          Privacy Policy
+        </Link>{" "}
+        and{" "}
+        <Link href="/terms" className="text-brand-light hover:underline">
+          Terms of Service
+        </Link>
+        . Business details you enter may be processed by AI providers to create
+        your website.
+      </p>
     </form>
   );
 }

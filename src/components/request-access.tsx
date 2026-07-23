@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 type RequestAccessProps = {
@@ -96,6 +97,17 @@ export function RequestAccess({
           >
             {busy ? "Sending…" : "Request Access"}
           </button>
+          <p className="text-center text-xs text-muted">
+            By submitting, you agree to our{" "}
+            <Link href="/privacy" className="text-brand-light hover:underline">
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href="/terms" className="text-brand-light hover:underline">
+              Terms of Service
+            </Link>
+            .
+          </p>
           {error && (
             <p className="text-center text-sm text-red-300" role="alert">
               {error}

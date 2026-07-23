@@ -7,13 +7,15 @@ import { getProject, saveProject, updateProjectSite } from "@/lib/projects";
 import { resolveSeoMemoryFromSite } from "@/lib/seo-memory";
 import type { GenerateResult } from "@/lib/site-types";
 import { logApiUsage } from "@/lib/usage";
+import { buildGenerateUsageMeta } from "@/lib/admin-cost-stats";
 import type { PipelineEvent } from "@/lib/ai/orchestrator/events";
+import { resolveGenerationMode } from "@/lib/ai/generation-mode";
 import { NextResponse } from "next/server";
 
-/** Fast path should finish well under this; hard-fail so the client never spins forever. */
-export const maxDuration = 120;
+/** Allow full pipeline (~3 min baseline) plus retries before hard-failing the client. */
+export const maxDuration = 300;
 
-const GENERATE_HARD_TIMEOUT_MS = 90_000;
+const GENERATE_HARD_TIMEOUT_MS = 240_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -161,6 +163,9 @@ export async function POST(request: Request) {
 
     const email = session.user.email?.trim();
     const regenerate = body.regenerate === true;
+    const generationMode = resolveGenerationMode(
+      typeof body.generationMode === "string" ? body.generationMode : undefined,
+    );
     const projectId =
       typeof body.projectId === "string" ? body.projectId.trim() : "";
     const previous = parsePrevious(body);
@@ -172,6 +177,7 @@ export async function POST(request: Request) {
       onEvent?: (event: PipelineEvent) => void,
       onProgress?: (payload: { stage: string; label: string }) => void,
     ) => {
+      const generationStarted = Date.now();
       let seoMemory = undefined;
       if (regenerate && projectId && email) {
         try {
@@ -190,6 +196,7 @@ export async function POST(request: Request) {
           regenerate,
           previous,
           seoMemory,
+          generationMode,
           onEvent,
           onProgress: (payload) =>
             onProgress?.({
@@ -200,7 +207,13 @@ export async function POST(request: Request) {
         GENERATE_HARD_TIMEOUT_MS,
         "Crestis generate",
       );
-      const result: GenerateResult = { site, source: "ai" };
+      const result: GenerateResult = {
+        site,
+        source: "ai",
+        usage: site.usage,
+      };
+      (result as GenerateResult & { durationMs?: number }).durationMs =
+        Date.now() - generationStarted;
 
       if (email) {
         try {
@@ -259,6 +272,11 @@ export async function POST(request: Request) {
               route: "/api/generate",
               userEmail: email,
               status: 200,
+              meta: buildGenerateUsageMeta({
+                usage: result.usage,
+                durationMs: (result as GenerateResult & { durationMs?: number })
+                  .durationMs,
+              }),
             });
             send("result", result);
             controller.close();
@@ -299,6 +317,10 @@ export async function POST(request: Request) {
         route: "/api/generate",
         userEmail: email,
         status: 200,
+        meta: buildGenerateUsageMeta({
+          usage: result.usage,
+          durationMs: (result as GenerateResult & { durationMs?: number }).durationMs,
+        }),
       });
       return NextResponse.json(result);
     } catch (openaiError) {

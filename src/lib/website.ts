@@ -36,6 +36,7 @@ import type {
 } from "./site-types";
 import type { WebsiteJson, WebsiteProject } from "./website-json";
 import { isWebsiteJson, toGeneratedSite, toWebsiteJson } from "./website-json";
+import type { GenerationUsage } from "./usage";
 import {
   isThemePresetId,
   resolveThemePresetOrNull,
@@ -637,6 +638,9 @@ export type CrestisRuntime = {
   qa?: WebsiteJson["qa"];
   human?: WebsiteJson["human"];
   scores?: WebsiteJson["scores"];
+  usage?: GenerationUsage;
+  generationMode?: import("./ai/generation-mode").GenerationMode;
+  telemetry?: import("./ai/telemetry/stage-telemetry").StageTelemetryRecord[];
 };
 
 function settingsFromFlat(flat: WebsiteJson): Settings {
@@ -1162,6 +1166,7 @@ export function flatFromWebsite(site: Website): WebsiteJson {
     qa: crestis.qa,
     human: crestis.human,
     scores: crestis.scores,
+    usage: crestis.usage,
   };
 }
 

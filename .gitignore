@@ -13,6 +13,8 @@
 # testing
 /coverage
 /scripts/ai-quality/output/
+/scripts/internal-alpha/output/
+/runs/
 
 # next.js
 /.next/

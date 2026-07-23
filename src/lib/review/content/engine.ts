@@ -166,6 +166,7 @@ export {
 } from "./types";
 
 export {
+  contentReviewInputFromGeneratedSite,
   contentReviewInputFromWebsite,
   defineContentReviewer,
   reviewResultToSection,
@@ -203,6 +204,10 @@ export {
   healingReasonFromCheck,
   healingReasonsFromSection,
   planContentReviewHealingTasks,
+  shouldRunContentReviewSelfHealing,
+  contentReviewHasCriticalIssues,
+  sectionHasCriticalIssues,
+  CONTENT_REVIEW_SELF_HEALING_SKIP_SCORE,
   HEALABLE_CONTENT_SECTIONS,
 } from "./self-healing";
 

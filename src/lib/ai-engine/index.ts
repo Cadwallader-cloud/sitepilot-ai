@@ -69,6 +69,7 @@ export { runSimplePipeline } from "./simple-pipeline";
 export { selectTemplate, applyTemplateSelection } from "./template-selector";
 export {
   runTemplateSelector,
+  selectTemplateBlocksWithRules,
   selectTemplateBlocksWithAi,
   templateSelectorInputFromPipeline,
   type TemplateSelectorInput,
@@ -85,6 +86,8 @@ export {
 export { selectTheme } from "./theme-selector";
 export {
   runThemeSelector,
+  selectThemeWithRules,
+  qaSelectorsUseAi,
   selectThemePresetWithAi,
   themeSelectorInputFromPipeline,
   resolveThemeSelectorOutput,
@@ -94,8 +97,14 @@ export {
 export { runHeroPipeline } from "./hero-pipeline";
 export { runAboutPipeline } from "./about-pipeline";
 export { runBrandPersonalityEngine } from "./brand-personality-engine";
-export { runServicePrioritizer } from "./service-prioritizer";
+export {
+  runServicePrioritizer,
+  shouldSkipServicePrioritizer,
+  servicePriorityFromPlanner,
+  SERVICE_PRIORITIZER_SKIP_MAX,
+} from "./service-prioritizer";
 export { runSeoPlanner } from "./seo-planner";
+export { finalizeSeoFromPlan, canFinalizeSeoFromPlan } from "./finalize-seo-from-plan";
 export { runFinalSeoReview, runSeoAi } from "./seo-ai";
 
 export type EngineProgress = {

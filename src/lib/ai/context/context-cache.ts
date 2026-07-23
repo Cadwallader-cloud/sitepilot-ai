@@ -9,6 +9,10 @@
 
 import type { PipelineContext } from "../orchestrator/context";
 import { selectShared, type SharedContext } from "./shared";
+import {
+  buildPromptContextCache,
+  type PromptContextCache,
+} from "./prompt-context-cache";
 import { selectAbout, type AboutContext } from "./selectors/about.selector";
 import { selectFAQ, type FAQContext } from "./selectors/faq.selector";
 import { selectHero, type HeroContext } from "./selectors/hero.selector";
@@ -46,6 +50,11 @@ export class ContextCache {
   /** Core bag: business, planner, branding — built once. */
   get shared(): SharedContext {
     return this.memoize("shared", () => selectShared(this.ctx));
+  }
+
+  /** Prompt fields — shared reference from meta when built upstream. */
+  get promptCache(): PromptContextCache {
+    return this.ctx.meta.promptCache ?? buildPromptContextCache(this.ctx);
   }
 
   get hero(): HeroContext {

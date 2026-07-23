@@ -31,6 +31,7 @@ import {
   buildSEOContext,
   buildServicesContext,
   createContextCache,
+  ensurePromptCache,
   FAQ_CONTEXT_KEYS,
   HERO_CONTEXT_KEYS,
   logSectionTokenEstimate,
@@ -142,6 +143,7 @@ function stubCtx(): PipelineContext {
     branding,
     website,
     logs: [],
+    telemetry: [],
     meta: {
       input: {
         businessName: "Apex Roofing",
@@ -340,13 +342,16 @@ describe("Context Manager Acceptance Criteria", () => {
   });
 
   it("✅ context caching reuses shared business across sections", () => {
-    const cache = createContextCache(stubCtx());
-    const run = prepareHeroRun(stubCtx());
+    const ctx = ensurePromptCache(stubCtx());
+    const cache = createContextCache(ctx);
+    const run = prepareHeroRun(ctx);
 
     assert.equal(cache.hero.business, cache.about.business);
     assert.equal(cache.services.business, cache.shared.business);
     assert.equal(run.hero.business, run.cache.shared.business);
     assert.equal(run.cache.hero, run.cache.hero);
+    assert.equal(run.pipeline.meta.promptCache, ctx.meta.promptCache);
+    assert.equal(run.cache.promptCache, ctx.meta.promptCache);
   });
 
   it("✅ prompt orchestrator content steps use only Context Manager", () => {

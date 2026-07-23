@@ -83,3 +83,10 @@ export {
   type SEOSectionRun,
   type QASectionRun,
 } from "./section-run";
+export {
+  buildPromptContextCache,
+  ensurePromptCache,
+  formatPromptContextBlock,
+  type PromptContextCache,
+  type PromptContextFields,
+} from "./prompt-context-cache";

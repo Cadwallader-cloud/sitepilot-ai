@@ -10,6 +10,7 @@ import {
   splitSentences,
   wordCount,
   type ContentReviewInput,
+  type ReviewCheck,
   type SectionReview,
 } from "../types";
 
@@ -54,24 +55,48 @@ function reviewParagraphLines(input: ContentReviewInput) {
     return check("paragraph_lines", "warn", "About section needs short paragraphs");
   }
 
-  const lineCounts = blocks.map((block) => paragraphLineCount(block));
-  const maxLines = Math.max(...lineCounts);
+  const maxLines = maxParagraphLines(input);
+  return check(
+    "paragraph_lines",
+    paragraphLineCheckStatus(maxLines),
+    paragraphLineMessage(maxLines),
+  );
+}
 
-  if (maxLines > 4) {
-    return check(
-      "paragraph_lines",
-      "fail",
-      "Paragraphs are too long — keep blocks to three lines or fewer",
-    );
+/** Longest rendered paragraph line count across about blocks. */
+export function maxParagraphLines(input: ContentReviewInput): number {
+  const blocks = paragraphBlocks(input);
+  if (!blocks.length) return 0;
+  return Math.max(...blocks.map((block) => paragraphLineCount(block)));
+}
+
+/** QA audit tier: ≤4 → 0, 5–6 → 2, 7–8 → 5, >8 → 10. */
+export function paragraphLineQaPenalty(maxLines: number): number {
+  if (maxLines <= 4) return 0;
+  if (maxLines <= 6) return 2;
+  if (maxLines <= 8) return 5;
+  return 10;
+}
+
+export function paragraphLineCheckStatus(
+  maxLines: number,
+): ReviewCheck["status"] {
+  if (maxLines <= 4) return "pass";
+  if (maxLines <= 6) return "warn";
+  return "fail";
+}
+
+export function paragraphLineMessage(maxLines: number): string {
+  if (maxLines <= 4) {
+    return "Paragraphs stay within four lines";
   }
-  if (maxLines > 3) {
-    return check(
-      "paragraph_lines",
-      "warn",
-      "Some paragraphs exceed three lines — break them up for mobile reading",
-    );
+  if (maxLines <= 6) {
+    return `Some paragraphs run ${maxLines} lines — aim for four or fewer on mobile`;
   }
-  return check("paragraph_lines", "pass", "Paragraphs stay within three lines");
+  if (maxLines <= 8) {
+    return `Paragraphs up to ${maxLines} lines are hard to scan — break them into shorter blocks`;
+  }
+  return `Paragraphs exceed eight lines — split copy into short mobile-friendly blocks`;
 }
 
 function reviewPassiveVoice(blob: string) {

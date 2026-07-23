@@ -17,6 +17,8 @@ import {
   type GenerationStepState,
 } from "@/lib/generation-progress";
 import type { GeneratedSite, GenerateSource } from "@/lib/site-types";
+import type { GenerationMode } from "@/lib/ai/generation-mode";
+import { GENERATION_MODE_DEFAULT } from "@/lib/ai/generation-mode";
 import { getHero } from "@/lib/site-types";
 import { websiteToGeneratedSite } from "@/lib/website";
 import { usePublishSite } from "@/lib/use-publish-site";
@@ -76,6 +78,8 @@ export function FormBuilder({
   const [genSteps, setGenSteps] = useState<GenerationStepState>(() =>
     initialGenerationSteps(),
   );
+  const [generationMode, setGenerationMode] =
+    useState<GenerationMode>(GENERATION_MODE_DEFAULT);
   const [editorTab, setEditorTab] = useState<"preview" | "improve">("preview");
   const [editorSection, setEditorSection] = useState<
     "hero" | "about" | "cta" | "colors" | "template"
@@ -190,6 +194,7 @@ export function FormBuilder({
           ...input,
           stream: true,
           regenerate,
+          generationMode,
           projectId: regenerate ? projectId : undefined,
           previous,
         }),
@@ -519,6 +524,23 @@ export function FormBuilder({
               </h2>
               <AuthButton compact />
             </div>
+            <label className="mb-4 block">
+              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted">
+                Generation mode
+              </span>
+              <select
+                value={generationMode}
+                onChange={(e) =>
+                  setGenerationMode(e.target.value as GenerationMode)
+                }
+                disabled={loading}
+                className="w-full rounded-xl border border-surface-border bg-surface px-3 py-2.5 text-sm text-foreground"
+              >
+                <option value="fast">Fast — minimum AI, target &lt;30s</option>
+                <option value="balanced">Balanced — default quality</option>
+                <option value="premium">Premium — full QA + scoring</option>
+              </select>
+            </label>
             <BusinessForm
               key={projectId ?? (loadExample ? "example" : "new")}
               onSubmit={runGeneration}

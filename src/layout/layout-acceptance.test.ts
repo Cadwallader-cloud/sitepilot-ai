@@ -591,5 +591,7 @@ describe("Layout Engine Acceptance", () => {
     assert.match(src, /selectTemplate/);
     assert.match(src, /applyTemplateSelection/);
     assert.match(src, /sectionOrder/);
+    assert.match(src, /Promise\.all/);
+    assert.match(src, /runSeoPlanner/);
   });
 });

@@ -45,7 +45,7 @@ import {
   spacingRem,
 } from "@/theme/tokens/spacing";
 import {
-  runThemeSelector,
+  selectThemeWithRules,
   themeSelectorInputFromPipeline,
 } from "@/lib/ai-engine/theme-selector-ai";
 import type { BusinessBrief } from "@/lib/ai-engine/types";
@@ -301,7 +301,7 @@ describe("Theme Engine Acceptance", () => {
     assert.match(input.brandPersonality, /Bold/i);
     assert.match(input.targetAudience, /Homeowners/i);
 
-    const selected = await runThemeSelector(input);
+    const selected = selectThemeWithRules(input);
     assert.ok(isThemePresetId(selected.theme));
     assert.equal(
       parseAiThemeSelection({ theme: selected.theme })?.theme,
@@ -317,6 +317,7 @@ describe("Theme Engine Acceptance", () => {
     const qaStep = readFileSync(qaStepPath, "utf8");
     assert.match(qaStep, /runThemeSelector/);
     assert.match(qaStep, /themeSelectorInputFromPipeline/);
+    assert.match(qaStep, /Theme Engine/);
   });
 
   it("✅ Dark Mode — every preset supports light and dark palettes", () => {

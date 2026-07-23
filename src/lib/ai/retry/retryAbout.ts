@@ -2,13 +2,16 @@
  * About — await retryAbout(ctx) | await retry(generateAbout, validateAbout, …)
  */
 
+import { finalizeAboutCopy } from "../../ai-engine/prompts/about";
 import { generateAboutSection } from "../../ai-engine/content-generator";
 import { runAboutPipeline } from "../../ai-engine/about-pipeline";
 import type { About } from "../../website";
 import { validateAbout } from "../../validation/validate";
 import type { AboutInput } from "../../validation/about";
 import type { PipelineContext } from "../orchestrator/context";
+import { getGenerationProfile } from "../orchestrator/context";
 import { prepareAboutRun, type AboutSectionRun } from "../context";
+import { buildEngineAgentCtx } from "../context/engine-agent";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -52,13 +55,13 @@ export async function retryAbout(
 
 export async function retryAbout(
   arg: (() => Promise<unknown>) | AboutSectionRun | PipelineContext,
-  maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
+  maxAttemptsArg = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<AboutInput> | RetryAboutFromContext> {
   if (typeof arg === "function") {
     return retry<AboutInput>(
       async () => aboutForValidation(await arg()),
       validateAbout,
-      { module: "About", maxAttempts },
+      { module: "About", maxAttempts: maxAttemptsArg },
     );
   }
 
@@ -66,9 +69,13 @@ export async function retryAbout(
   const ctx = run.pipeline;
   void run.about;
   const { meta } = ctx;
-  if (!meta.plan || !meta.selection || !meta.agentCtx) {
-    throw new Error("ORCHESTRATOR:about requires plan + agentCtx");
+  const maxAttempts = getGenerationProfile(ctx).maxSectionAttempts;
+  if (!meta.plan || !meta.selection) {
+    throw new Error("ORCHESTRATOR:about requires plan + selection");
   }
+
+  const { agentCtx } = buildEngineAgentCtx(ctx);
+  meta.agentCtx = meta.agentCtx ?? agentCtx;
 
   let aboutResult = await runAboutPipeline({
     businessName: meta.input.businessName,
@@ -81,6 +88,7 @@ export async function retryAbout(
     templateBrief: meta.selection.copyBrief,
     personalityBrief: meta.personalityBrief,
     industryBrief: meta.copySeedBrief,
+    promptCache: meta.promptCache,
     userEmail: meta.options.userEmail,
     regenerate: meta.options.regenerate,
     onProgress: (p) =>
@@ -121,28 +129,34 @@ export async function retryAbout(
     ),
   ).data;
 
-  aboutResult = {
-    ...aboutResult,
-    about: {
-      ...aboutResult.about,
-      ...aboutInput,
+  const aboutNormalized = finalizeAboutCopy(
+    {
+      title: aboutResult.about.title,
       text: Array.isArray(aboutInput.paragraphs)
         ? aboutInput.paragraphs.join("\n\n")
         : aboutResult.about.text,
+      paragraphs:
+        aboutInput.paragraphs ??
+        (aboutResult.about.text
+          ? aboutResult.about.text
+              .split(/\n\n+/)
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : []),
+      highlights: aboutResult.about.highlights ?? [],
     },
+    meta.input.location,
+  );
+
+  aboutResult = {
+    ...aboutResult,
+    about: aboutNormalized,
   };
 
   const about: About = {
-    title: aboutResult.about.title,
-    paragraphs:
-      aboutResult.about.paragraphs ??
-      (aboutResult.about.text
-        ? aboutResult.about.text
-            .split(/\n\n+/)
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : []),
-    highlights: aboutResult.about.highlights ?? [],
+    title: aboutNormalized.title,
+    paragraphs: aboutNormalized.paragraphs,
+    highlights: aboutNormalized.highlights,
   };
 
   return {

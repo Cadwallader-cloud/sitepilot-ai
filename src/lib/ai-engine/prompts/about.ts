@@ -3,6 +3,8 @@
  * Explain trust and value — never fake company history.
  */
 
+import { splitLongSentencesInParagraphs } from "../text/sentence-length";
+import { mentionsCity, parseLocationParts } from "@/lib/review/content/types";
 import { CRESTIS_SYSTEM } from "./system";
 import { ABOUT_ETALONS } from "./etalons";
 
@@ -33,6 +35,7 @@ Never exceed 140.
 
 ## Structure
 Paragraph 1 — Explain: what the company does, who they help, what problems they solve.
+Paragraph 1 MUST include the city name once, naturally (e.g. "Based in {city}, we..." or "We proudly serve homeowners across {city}...").
 Paragraph 2 — Explain: their approach, their values, why customers return.
 
 ---
@@ -46,6 +49,9 @@ Never invent facts. Prefer Brand Profile trustSignals / advantages when availabl
 
 ## Writing Rules
 Write naturally. Use active voice. Prefer short sentences.
+Average sentence length: 12–18 words.
+Maximum sentence length: 25 words.
+Never write a sentence longer than 25 words.
 Avoid filler, buzzwords, and generic company descriptions.
 
 ---
@@ -133,6 +139,8 @@ export function aboutUser(params: {
     "Generate the About section for THIS business.",
     "Explain value and trust — do NOT invent history, years, awards, or stats.",
     "Return title, exactly 2 paragraphs (80–140 words total), exactly 3 highlights.",
+    "Average sentence length: 12–18 words. Maximum 25 words per sentence.",
+    "Paragraph 1 MUST mention the city by name once.",
     "Do NOT copy the etalon examples.",
     "",
     `Business Name: ${params.businessName}`,
@@ -165,6 +173,80 @@ export function aboutUser(params: {
     .join("\n");
 }
 
+function formatCityLabel(place: string): string {
+  return place
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function cityLabelFromLocation(location: string): string {
+  const segments = location
+    .split(/[,|/]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const parts = parseLocationParts(location);
+  const provinceLike = (value: string) => /^[a-z]{2}$/i.test(value.trim());
+
+  if (segments.length >= 3 && provinceLike(segments[1] ?? "")) {
+    return formatCityLabel(segments[0]!);
+  }
+
+  if (parts.city && parts.city.length >= 3 && !provinceLike(parts.city)) {
+    return formatCityLabel(parts.city);
+  }
+
+  if (parts.district && parts.district.length >= 3 && !provinceLike(parts.district)) {
+    return formatCityLabel(parts.district);
+  }
+
+  return formatCityLabel(segments[0] ?? location.trim());
+}
+
+function injectCityIntoFirstParagraph(first: string, cityLabel: string): string {
+  const trimmed = first.trim();
+  if (!trimmed) {
+    return `We proudly serve homeowners across ${cityLabel} with dependable local service.`;
+  }
+  if (/^we\b/i.test(trimmed)) {
+    return `Based in ${cityLabel}, ${trimmed.charAt(0).toLowerCase()}${trimmed.slice(1)}`;
+  }
+  return `We proudly serve homeowners across ${cityLabel}. ${trimmed}`;
+}
+
+/** Guarantee about body text mentions the city (QA + local SEO). */
+export function ensureAboutMentionsCity<T extends {
+  title: string;
+  text: string;
+  paragraphs: string[];
+  highlights: string[];
+}>(about: T, location: string): T {
+  const trimmedLocation = location.trim();
+  if (!trimmedLocation || mentionsCity(about.text, trimmedLocation)) {
+    return about;
+  }
+
+  const cityLabel = cityLabelFromLocation(trimmedLocation);
+  const paragraphs = about.paragraphs.length
+    ? [...about.paragraphs]
+    : about.text
+        .split(/\n\n+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+  if (!paragraphs.length) {
+    paragraphs.push(
+      `We proudly serve homeowners across ${cityLabel} with clear communication and dependable local service.`,
+    );
+  } else {
+    paragraphs[0] = injectCityIntoFirstParagraph(paragraphs[0]!, cityLabel);
+  }
+
+  const text = paragraphs.join("\n\n");
+  return { ...about, paragraphs, text };
+}
+
 /** Normalize About Generator JSON → Crestis about block */
 export function normalizeAboutFromAi(
   raw: {
@@ -174,6 +256,7 @@ export function normalizeAboutFromAi(
     highlights?: unknown;
   },
   fallbackTitle = "About Us",
+  options?: { location?: string },
 ): {
   title: string;
   text: string;
@@ -212,12 +295,36 @@ export function normalizeAboutFromAi(
     else break;
   }
 
-  return {
-    title: String(raw.title ?? "").trim() || fallbackTitle,
-    text,
-    paragraphs: paragraphs.length
-      ? paragraphs
-      : text.split(/\n\n+/).map((s) => s.trim()).filter(Boolean).slice(0, 2),
-    highlights: highlights.slice(0, 3),
-  };
+  return finalizeAboutCopy(
+    {
+      title: String(raw.title ?? "").trim() || fallbackTitle,
+      text,
+      paragraphs: paragraphs.length
+        ? paragraphs
+        : text.split(/\n\n+/).map((s) => s.trim()).filter(Boolean).slice(0, 2),
+      highlights: highlights.slice(0, 3),
+    },
+    options?.location ?? "",
+  );
+}
+
+function enforceAboutSentenceLength<T extends {
+  title: string;
+  text: string;
+  paragraphs: string[];
+  highlights: string[];
+}>(about: T): T {
+  const paragraphs = splitLongSentencesInParagraphs(about.paragraphs, 25);
+  const text = paragraphs.join("\n\n");
+  return { ...about, paragraphs, text };
+}
+
+/** Post-process About copy: sentence length + city mention guarantee. */
+export function finalizeAboutCopy<T extends {
+  title: string;
+  text: string;
+  paragraphs: string[];
+  highlights: string[];
+}>(about: T, location: string): T {
+  return ensureAboutMentionsCity(enforceAboutSentenceLength(about), location);
 }

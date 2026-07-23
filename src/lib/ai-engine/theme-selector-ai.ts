@@ -76,6 +76,19 @@ function deterministicFallback(
   return { theme };
 }
 
+/** Rule-based theme pick — no LLM (Sprint C / QA fast path). */
+export function selectThemeWithRules(
+  input: ThemeSelectorInput,
+  fallbackTemplateId?: ThemePresetId,
+): ThemeSelectorOutput {
+  return deterministicFallback(input, fallbackTemplateId);
+}
+
+export function qaSelectorsUseAi(): boolean {
+  const raw = process.env.CRESTIS_QA_AI_SELECTORS?.trim().toLowerCase();
+  return raw === "true" || raw === "1";
+}
+
 /**
  * AI Theme Selector — picks Theme Engine preset id only.
  * Falls back to deterministic hints when OpenAI is unavailable or fails.
@@ -85,9 +98,15 @@ export async function runThemeSelector(
   options?: {
     userEmail?: string | null;
     fallbackTemplateId?: ThemePresetId;
+    /** When false, skip OpenAI and use rules only (default). */
+    useAi?: boolean;
   },
 ): Promise<ThemeSelectorOutput> {
   const fallback = deterministicFallback(input, options?.fallbackTemplateId);
+
+  if (options?.useAi === false || !qaSelectorsUseAi()) {
+    return fallback;
+  }
 
   if (!getEngineOpenAI()) {
     return fallback;

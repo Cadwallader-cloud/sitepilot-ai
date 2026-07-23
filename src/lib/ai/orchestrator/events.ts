@@ -28,6 +28,8 @@ export type PipelineEvent = {
   attempt?: number;
   duration?: number;
   tokens?: number;
+  promptTokens?: number;
+  completionTokens?: number;
   cost?: number;
   reason?: string;
 };

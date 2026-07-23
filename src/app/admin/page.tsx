@@ -64,6 +64,7 @@ export default async function AdminPage() {
   const stats = await getAdminStats();
 
   const nav = [
+    { href: "/admin/costs", label: "Cost dashboard" },
     { href: "#wallets", label: "Payment wallets" },
     { href: "#crypto", label: "Crypto orders" },
     { href: "#billing", label: "Billing / Plans" },

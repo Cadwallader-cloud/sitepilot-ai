@@ -23,6 +23,9 @@ export const HEALABLE_CONTENT_SECTIONS = [
   "cta",
 ] as const satisfies readonly ContentReviewSectionId[];
 
+/** Overall score at or above this — skip content-review self-healing (Sprint D.1). */
+export const CONTENT_REVIEW_SELF_HEALING_SKIP_SCORE = 95;
+
 export type HealableContentSection = (typeof HEALABLE_CONTENT_SECTIONS)[number];
 
 const HEALING_PRIORITY: HealableContentSection[] = [
@@ -86,6 +89,35 @@ export function healingReasonsFromSection(section: SectionReview): string[] {
   return reasons;
 }
 
+export function sectionHasCriticalIssues(section: SectionReview): boolean {
+  return section.checks.some((check) => check.status === "fail");
+}
+
+export function contentReviewHasCriticalIssues(
+  report: ContentReviewReportBody,
+): boolean {
+  return HEALABLE_CONTENT_SECTIONS.some((sectionId) => {
+    const section = report.sections[sectionId];
+    return sectionHasCriticalIssues(section);
+  });
+}
+
+/**
+ * Self-healing runs only when overall score is below 95 AND at least one
+ * healable section has a critical (fail) check.
+ */
+export function shouldRunContentReviewSelfHealing(
+  report: ContentReviewReportBody,
+): boolean {
+  if (report.final.score >= CONTENT_REVIEW_SELF_HEALING_SKIP_SCORE) {
+    return false;
+  }
+  if (!contentReviewHasCriticalIssues(report)) {
+    return false;
+  }
+  return planContentReviewHealingTasks(report, 1).length > 0;
+}
+
 export function planContentReviewHealingTasks(
   report: ContentReviewReportBody,
   maxTasks = 2,
@@ -95,6 +127,7 @@ export function planContentReviewHealingTasks(
   for (const sectionId of HEALABLE_CONTENT_SECTIONS) {
     const section = report.sections[sectionId];
     if (section.score >= CONTENT_REVIEW_THRESHOLD) continue;
+    if (!sectionHasCriticalIssues(section)) continue;
 
     tasks.push({
       action: healingActionForSection(section),

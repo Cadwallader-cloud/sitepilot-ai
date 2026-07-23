@@ -177,7 +177,7 @@ export async function runSeoPlanner(params: {
 
   try {
     const ai = await completeJsonObject<Partial<SeoPlan>>({
-      stage: "seo_ai",
+      stage: "seo_planner",
       userEmail: params.userEmail,
       temperature: 0.35,
       maxCompletionTokens: 2048,

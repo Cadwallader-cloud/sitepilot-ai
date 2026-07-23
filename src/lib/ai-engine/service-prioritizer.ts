@@ -19,6 +19,32 @@ export type ServicePriorityPlan = {
   orderedTitles: string[];
 };
 
+/** Fallback skip when only raw services exist (no planner serviceFocus). */
+export const SERVICE_PRIORITIZER_SKIP_MAX = 3;
+
+/** Skip AI prioritizer when planner brief already lists services (any count). */
+export function shouldSkipServicePrioritizer(
+  servicesList: string[],
+  plannerServiceFocus?: string[],
+): boolean {
+  const plannerTitles = (plannerServiceFocus ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (plannerTitles.length >= 1) return true;
+  return (
+    servicesList.length >= 1 &&
+    servicesList.length <= SERVICE_PRIORITIZER_SKIP_MAX
+  );
+}
+
+/** Deterministic hierarchy from Planner / brief serviceFocus — no OpenAI call. */
+export function servicePriorityFromPlanner(
+  serviceFocus: string[],
+): ServicePriorityPlan {
+  const titles = serviceFocus.map(clampTitle).filter(Boolean);
+  return fallbackServicePriority(titles);
+}
+
 function parseServiceList(raw: string): string[] {
   return raw
     .split(/[,;•\n|/]+/)
@@ -160,14 +186,21 @@ export async function runServicePrioritizer(params: {
   location: string;
   description: string;
   servicesRaw: string;
+  /** Planner brief serviceFocus — when set, skip AI prioritizer (any count) */
+  serviceFocus?: string[];
   userEmail?: string | null;
   industryBrief?: string;
   brandPosition?: string;
   primaryGoal?: string;
 }): Promise<ServicePriorityPlan> {
   const servicesList = parseServiceList(params.servicesRaw);
-  if (servicesList.length <= 1) {
-    return fallbackServicePriority(servicesList);
+  const plannerTitles = (params.serviceFocus ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (shouldSkipServicePrioritizer(servicesList, plannerTitles)) {
+    const source = plannerTitles.length ? plannerTitles : servicesList;
+    return servicePriorityFromPlanner(source);
   }
 
   try {

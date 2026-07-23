@@ -5,7 +5,8 @@
 import { assembleWebsiteJson } from "../../../ai-engine/assemble";
 import { commitWebsiteViaOwnership } from "../../../ai-engine/commit-website";
 import { runContentReviewSelfHealing } from "../../../ai-engine/content-review-self-healing";
-import { computeFinalScoreBaseline } from "../../../ai-engine/final-score";
+import { shouldRunContentReviewSelfHealing } from "@/lib/review/content/self-healing";
+import { computeFinalScoreBaseline, runFinalScore } from "../../../ai-engine/final-score";
 import { detectHumanCrestis } from "../../../ai-engine/human-crestis";
 import { synthesizeQaReport } from "../../../ai-engine/qa-synthesize";
 import {
@@ -27,6 +28,7 @@ import {
 import { reviewContent } from "@/lib/review/content/engine";
 import { themeFieldsFromPreset } from "@/theme";
 import type { PipelineContext, PipelineStep } from "../context";
+import { getGenerationProfile } from "../context";
 
 export class QAStep implements PipelineStep<PipelineContext> {
   id = "qa";
@@ -35,10 +37,11 @@ export class QAStep implements PipelineStep<PipelineContext> {
     const run = prepareQARun(ctx);
     void run.qa; // only QA agent sees full website
     const { meta } = run.pipeline;
+    const generationProfile = getGenerationProfile(run.pipeline);
 
     meta.onProgress?.({
-      stage: "theme_selector_ai",
-      label: "Theme Selector",
+      stage: "theme_selector",
+      label: "Theme Engine",
     });
     const themeSelectorInput = themeSelectorInputFromPipeline({
       brief: meta.brief,
@@ -50,10 +53,6 @@ export class QAStep implements PipelineStep<PipelineContext> {
     });
     const presetId = themeSelection.theme;
 
-    meta.onProgress?.({
-      stage: "theme_selector",
-      label: "Theme Engine",
-    });
     const design = await selectTheme({
       input: meta.input,
       brief: meta.brief,
@@ -64,8 +63,8 @@ export class QAStep implements PipelineStep<PipelineContext> {
     });
 
     meta.onProgress?.({
-      stage: "template_selector_ai",
-      label: "Template Selector",
+      stage: "template_selector",
+      label: "Template Engine",
     });
     const templateInput = templateSelectorInputFromPipeline({
       brief: meta.brief,
@@ -111,19 +110,27 @@ export class QAStep implements PipelineStep<PipelineContext> {
       plan: meta.plan!,
     };
 
-    const healed = await runContentReviewSelfHealing({
-      agentCtx,
-      input: reviewInput,
-      content: meta.content!,
-      report: contentReview,
-      onProgress: (payload) =>
-        meta.onProgress?.({
-          stage: payload.stage,
-          label: payload.label,
-        }),
-    });
-    meta.content = healed.content;
-    contentReview = healed.report;
+    let healedContent = meta.content!;
+    if (
+      !generationProfile.skipContentReviewSelfHealing &&
+      shouldRunContentReviewSelfHealing(contentReview)
+    ) {
+      const healed = await runContentReviewSelfHealing({
+        agentCtx,
+        input: reviewInput,
+        content: meta.content!,
+        report: contentReview,
+        maxTasks: generationProfile.maxContentReviewHealingTasks,
+        onProgress: (payload) =>
+          meta.onProgress?.({
+            stage: payload.stage,
+            label: payload.label,
+          }),
+      });
+      healedContent = healed.content;
+      contentReview = healed.report;
+    }
+    meta.content = healedContent;
 
     meta.onProgress?.({
       stage: "quality_reviewer",
@@ -145,7 +152,18 @@ export class QAStep implements PipelineStep<PipelineContext> {
       design: design.design,
     });
     const human = detectHumanCrestis(meta.content!);
-    const scores = computeFinalScoreBaseline({ qa: qaReport, cro, human });
+    const scores = generationProfile.runBenchmarkScoring
+      ? await runFinalScore({
+          ctx: engineCtx,
+          brief: meta.brief,
+          content: meta.content!,
+          seo: meta.seo!,
+          design: design.design,
+          qa: qaReport,
+          cro,
+          human,
+        })
+      : computeFinalScoreBaseline({ qa: qaReport, cro, human });
 
     meta.onProgress?.({ stage: "assemble", label: "Website JSON" });
     const websiteJson = assembleWebsiteJson({
@@ -183,7 +201,9 @@ export class QAStep implements PipelineStep<PipelineContext> {
     website = commitWebsiteViaOwnership(website);
 
     meta.onProgress?.({ stage: "json_validator", label: "JSON Validator" });
-    const gated = runJsonValidatorGate(website, { maxRetries: 1 });
+    const gated = runJsonValidatorGate(website, {
+      maxRetries: generationProfile.jsonValidatorMaxRetries,
+    });
     if (gated.status === "pass_after_retry") {
       meta.onProgress?.({
         stage: "json_validator",

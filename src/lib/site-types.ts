@@ -291,6 +291,8 @@ export type GeneratedSite = WebsiteContent & {
   };
   /** Per-site SEO Memory — used keywords/entities/locations/headlines/CTAs */
   seoMemory?: import("./seo-memory").SeoMemory;
+  /** OpenAI usage for this generation — input/output tokens + estimated USD */
+  usage?: import("./usage").GenerationUsage;
   /** Canonical Website Schema v2 (preferred for persistence) */
   website?: import("./website").Website;
 };
@@ -300,6 +302,8 @@ export type GenerateSource = "ai";
 export type GenerateResult = {
   site: GeneratedSite;
   source: GenerateSource;
+  /** OpenAI tokens + estimated cost for this generation */
+  usage?: import("./usage").GenerationUsage;
   /** Supabase project id when save succeeds */
   projectId?: string;
 };

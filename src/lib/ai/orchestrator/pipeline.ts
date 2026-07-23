@@ -1,5 +1,5 @@
 /**
- * Crestis orchestrator pipeline
+ * Crestis orchestrator pipeline (V2)
  *
  *   User
  *    ↓
@@ -9,14 +9,14 @@
  *    ↓
  *   Website Planner
  *    ↓
- *   Hero → About → Services → FAQ → SEO
- *    ↓
- *   QA
+ *   Hero ─┬─ About ─┬─ Services ─┬─ FAQ   (parallel)
+ *         └─────────┴─────────────┘
+ *                    ↓ merge
+ *                  SEO
+ *                    ↓
+ *                   QA
  *    ↓
  *   Website JSON
- *
- * Events:
- *   pipeline:start → step:start → step:retry* → step:success|step:error → pipeline:complete
  */
 
 import type { BusinessFormInput } from "../../business-form";
@@ -35,7 +35,9 @@ import {
   seedBranding,
   seedBusinessFromInput,
   seedWebsiteShell,
+  resolveGenerationProfile,
   type PipelineContext,
+  type PipelineLog,
   type PipelineProgress,
   type PipelineStep,
 } from "./context";
@@ -47,7 +49,19 @@ import {
   type PipelineEventType,
 } from "./events";
 import { runWithAttemptUsage } from "../retry/attempt-log";
+import {
+  recordStageTelemetry,
+  runWithStageRetryScope,
+  runWithStageTelemetryCollector,
+  stageRetryCount,
+  StageTelemetryCollector,
+} from "../telemetry/stage-telemetry";
+import { summarizePipelineUsage } from "../../usage";
 import { PipelineError } from "./pipeline-error";
+import {
+  cloneForParallelStep,
+  mergeParallelContentResults,
+} from "./merge-context";
 import { BusinessStep } from "./steps/business.step";
 import { BrandStep } from "./steps/brand.step";
 import { PlannerStep } from "./steps/planner.step";
@@ -66,6 +80,33 @@ const RESILIENT_STEP_IDS = new Set([
   "faq",
   "seo",
 ]);
+
+const SEQUENTIAL_PREFIX: PipelineStep<PipelineContext>[] = [
+  new BusinessStep(),
+  new BrandStep(),
+  new PlannerStep(),
+];
+
+/** Run in parallel after planner — independent inputs, merged before SEO. */
+const PARALLEL_CONTENT: PipelineStep<PipelineContext>[] = [
+  new HeroStep(),
+  new AboutStep(),
+  new ServicesStep(),
+  new FAQStep(),
+];
+
+const SEQUENTIAL_SUFFIX: PipelineStep<PipelineContext>[] = [
+  new SEOStep(),
+  new QAStep(),
+];
+
+/** Product diagram order (legacy flat list) */
+export const pipeline: PipelineStep<PipelineContext>[] = [
+  ...SEQUENTIAL_PREFIX,
+  ...PARALLEL_CONTENT,
+  ...SEQUENTIAL_SUFFIX,
+];
+
 export { PipelineError } from "./pipeline-error";
 export {
   emitPipelineEvent,
@@ -76,21 +117,12 @@ export {
   type PipelineEventType,
 } from "./events";
 
-/** Product diagram order */
-export const pipeline: PipelineStep<PipelineContext>[] = [
-  new BusinessStep(),
-  new BrandStep(),
-  new PlannerStep(),
-  new HeroStep(),
-  new AboutStep(),
-  new ServicesStep(),
-  new FAQStep(),
-  new SEOStep(),
-  new QAStep(),
-];
-
 /** @deprecated Prefer `pipeline` */
 export const PIPELINE_STEPS = pipeline;
+
+type StepRunResult =
+  | { ok: true; context: PipelineContext; log: PipelineLog }
+  | { ok: false; err: unknown; log: PipelineLog };
 
 function createInitialContext(
   input: BusinessFormInput,
@@ -137,15 +169,17 @@ function createInitialContext(
   );
   const branding = seedBranding(dna);
   const website = seedWebsiteShell({ runId, business, branding });
+  const generationProfile = resolveGenerationProfile(options);
 
   return {
     business,
     branding,
     website,
     logs: [],
+    telemetry: [],
     meta: {
       input,
-      options: { ...options, runId },
+      options: { ...options, runId, generationMode: generationProfile.mode },
       runId,
       onProgress,
       onEvent,
@@ -161,6 +195,7 @@ function createInitialContext(
       brief: briefFromDna(input, dna, tradeHint, industryId),
       personalityBrief: "",
       copySeedBrief: industryBrief,
+      generationProfile,
     },
   };
 }
@@ -173,6 +208,208 @@ function emit(
   emitPipelineEvent(type, { runId: ctx.meta.runId, ...payload });
 }
 
+async function runSingleStep(
+  context: PipelineContext,
+  step: PipelineStep<PipelineContext>,
+): Promise<StepRunResult> {
+  emit(context, "step:start", { step: step.id });
+
+  const startedMs = Date.now();
+  const startedIso = new Date(startedMs).toISOString();
+
+  const tracked = await runWithStageRetryScope(step.id, () =>
+    runWithAttemptUsage(async () => {
+      try {
+        return {
+          ok: true as const,
+          context: await step.run(context),
+        };
+      } catch (err) {
+        return { ok: false as const, err };
+      }
+    }),
+  );
+
+  const finishedMs = Date.now();
+  const finishedIso = new Date(finishedMs).toISOString();
+  const duration = finishedMs - startedMs;
+  const { tokens, promptTokens, completionTokens, cost } = tracked;
+  const retries = stageRetryCount(step.id);
+
+  if (!tracked.value.ok) {
+    const err = tracked.value.err;
+    const reason =
+      err instanceof PipelineError
+        ? err.failure.reason
+        : err instanceof Error
+          ? err.message
+          : String(err ?? "Unknown error");
+
+    const log: PipelineLog = {
+      step: step.id,
+      started: startedIso,
+      finished: finishedIso,
+      duration,
+      tokens,
+      promptTokens,
+      completionTokens,
+      cost,
+      retries,
+      cacheHit: false,
+      status: "error",
+    };
+
+    recordStageTelemetry({
+      stage: step.id,
+      started: startedIso,
+      finished: finishedIso,
+      durationMs: duration,
+      inputTokens: promptTokens,
+      outputTokens: completionTokens,
+      costUsd: cost,
+      retries,
+      cacheHit: false,
+      status: "error",
+    });
+
+    emit(context, "step:error", {
+      step: step.id,
+      duration,
+      tokens,
+      promptTokens,
+      completionTokens,
+      cost,
+      reason,
+    });
+
+    return { ok: false, err, log };
+  }
+
+  const log: PipelineLog = {
+    step: step.id,
+    started: startedIso,
+    finished: finishedIso,
+    duration,
+    tokens,
+    promptTokens,
+    completionTokens,
+    cost,
+    retries,
+    cacheHit: false,
+    status: "success",
+  };
+
+  recordStageTelemetry({
+    stage: step.id,
+    started: startedIso,
+    finished: finishedIso,
+    durationMs: duration,
+    inputTokens: promptTokens,
+    outputTokens: completionTokens,
+    costUsd: cost,
+    retries,
+    cacheHit: false,
+    status: "success",
+  });
+
+  const nextContext = appendLog(tracked.value.context, log);
+  emit(context, "step:success", {
+    step: step.id,
+    duration,
+    tokens,
+    promptTokens,
+    completionTokens,
+    cost,
+  });
+
+  return {
+    ok: true,
+    context: {
+      ...nextContext,
+      meta: {
+        ...nextContext.meta,
+        events: context.meta.events,
+        onEvent: context.meta.onEvent,
+      },
+    },
+    log,
+  };
+}
+
+function handleStepFailure(
+  context: PipelineContext,
+  step: PipelineStep<PipelineContext>,
+  result: Extract<StepRunResult, { ok: false }>,
+): PipelineContext {
+  context = appendLog(context, result.log);
+
+  if (RESILIENT_STEP_IDS.has(step.id)) {
+    console.warn(
+      `[pipeline-soft-continue] ${step.id} failed — continuing`,
+      result.err instanceof Error ? result.err.message : result.err,
+    );
+    return context;
+  }
+
+  throw result.err instanceof PipelineError
+    ? result.err
+    : PipelineError.fromUnknown(step.id, result.err);
+}
+
+async function runParallelContentSteps(
+  context: PipelineContext,
+  steps: PipelineStep<PipelineContext>[],
+): Promise<PipelineContext> {
+  console.info(
+    "[pipeline-v2] parallel content wave:",
+    steps.map((s) => s.id).join(", "),
+  );
+
+  const outcomes = await Promise.all(
+    steps.map(async (step) => {
+      const fork = cloneForParallelStep(context);
+      fork.meta.events = context.meta.events;
+      fork.meta.onEvent = context.meta.onEvent;
+      fork.meta.onProgress = context.meta.onProgress;
+      const result = await runSingleStep(fork, step);
+      return { step, result };
+    }),
+  );
+
+  const mergedResults: Array<{
+    stepId: string;
+    ctx: PipelineContext;
+    log: PipelineLog;
+  }> = [];
+
+  for (const { step, result } of outcomes) {
+    if (result.ok) {
+      mergedResults.push({
+        stepId: step.id,
+        ctx: result.context,
+        log: result.log,
+      });
+      continue;
+    }
+
+    context = handleStepFailure(context, step, result);
+  }
+
+  if (mergedResults.length) {
+    context = mergeParallelContentResults(context, mergedResults);
+    context = {
+      ...context,
+      meta: {
+        ...context.meta,
+        events: context.meta.events,
+        onEvent: context.meta.onEvent,
+      },
+    };
+  }
+
+  return context;
+}
+
 export async function runPipeline(
   input: BusinessFormInput,
   options: EngineRunOptions = {},
@@ -180,8 +417,10 @@ export async function runPipeline(
   onEvent?: PipelineEventHandler,
 ): Promise<Website> {
   const events: PipelineEvent[] = [];
+  const telemetryCollector = new StageTelemetryCollector();
 
-  return runWithPipelineEventSink(
+  return runWithStageTelemetryCollector(telemetryCollector, () =>
+    runWithPipelineEventSink(
     (event) => {
       events.push(event);
       onEvent?.(event);
@@ -197,83 +436,44 @@ export async function runPipeline(
 
       emit(context, "pipeline:start");
 
-      for (const step of pipeline) {
-        emit(context, "step:start", { step: step.id });
-
-        const started = Date.now();
-        const tracked = await runWithAttemptUsage(async () => {
-          try {
-            return {
-              ok: true as const,
-              context: await step.run(context),
-            };
-          } catch (err) {
-            return { ok: false as const, err };
-          }
-        });
-
-        const duration = Date.now() - started;
-        const { tokens, cost } = tracked;
-
-        if (!tracked.value.ok) {
-          const err = tracked.value.err;
-          const reason =
-            err instanceof PipelineError
-              ? err.failure.reason
-              : err instanceof Error
-                ? err.message
-                : String(err ?? "Unknown error");
-
-          context = appendLog(context, {
-            step: step.id,
-            duration,
-            tokens,
-            cost,
-            status: "error",
-          });
-          emit(context, "step:error", {
-            step: step.id,
-            duration,
-            tokens,
-            cost,
-            reason,
-          });
-
-          if (RESILIENT_STEP_IDS.has(step.id)) {
-            console.warn(
-              `[pipeline-soft-continue] ${step.id} failed — continuing`,
-              reason,
-            );
-            continue;
-          }
-
-          throw PipelineError.fromUnknown(step.id, err);
+      for (const step of SEQUENTIAL_PREFIX) {
+        const result = await runSingleStep(context, step);
+        if (!result.ok) {
+          context = handleStepFailure(context, step, result);
+          continue;
         }
+        context = result.context;
+      }
 
-        context = appendLog(tracked.value.context, {
-          step: step.id,
-          duration,
-          tokens,
-          cost,
-          status: "success",
-        });
-        // Keep the shared events array reference on meta
-        context = {
-          ...context,
-          meta: { ...context.meta, events, onEvent },
-        };
-        emit(context, "step:success", {
-          step: step.id,
-          duration,
-          tokens,
-          cost,
-        });
+      context = await runParallelContentSteps(context, PARALLEL_CONTENT);
+
+      for (const step of SEQUENTIAL_SUFFIX) {
+        const result = await runSingleStep(context, step);
+        if (!result.ok) {
+          context = handleStepFailure(context, step, result);
+          continue;
+        }
+        context = result.context;
       }
 
       emit(context, "pipeline:complete");
 
-      // Schema v2 Website — fully assembled by QA step
-      const website = context.website;
+      const telemetry = telemetryCollector.records;
+      context = { ...context, telemetry };
+
+      const usage = summarizePipelineUsage(context.logs, telemetry);
+      console.info("[pipeline-usage]", JSON.stringify(usage));
+
+      const website = {
+        ...context.website,
+        crestis: {
+          ...context.website.crestis,
+          usage,
+          telemetry,
+          generationMode: context.meta.generationProfile?.mode,
+        },
+      };
+
       if (
         !website.business?.name ||
         !website.branding ||
@@ -291,5 +491,6 @@ export async function runPipeline(
 
       return website;
     },
+  ),
   );
 }

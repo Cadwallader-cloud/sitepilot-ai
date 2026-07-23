@@ -3,127 +3,45 @@
  * Concise service cards — not articles. JSON only.
  */
 
-import { CRESTIS_SYSTEM } from "./system";
+import type { BusinessDna } from "../../business-dna";
+import type { WebsitePlan } from "../types";
 import { servicesContext } from "./isolation";
 
-export const SERVICES_GENERATOR_BODY = `## Mission
-Each service should answer:
-What is this service?
-Who is it for?
-Why does it matter?
-What outcome does the customer get?
+/** Slim engine preamble — avoids full CRESTIS_SYSTEM (~1k tokens) for this stage. */
+const SERVICES_CORE = `You are Crestis AI — professional website generation engine.
+Return valid JSON only. No markdown, explanations, HTML, or code.
+Write naturally like an experienced UX copywriter. Never sound robotic.
+Prefer Brand Personality over category labels. Quality beats speed.`;
 
----
+export const SERVICES_GENERATOR_BODY = `## Role
+Senior UX copywriter for service cards — concise, not articles. JSON only. No Hero/FAQ/SEO/About copy.
 
-## Number of Services
-Follow the Service Prioritizer plan when provided.
-Write FULL cards for: featured + secondary (typically 3–4).
-For optional services: shortDescription max 18 words, still exactly 3 benefits, priority optional.
-Total services in JSON: every title from the prioritizer plan (max 6 full-detail; if more optional, still include up to 6 total preferring featured+secondary first).
-Never invent services outside the prioritizer titles.
+## Cards
+Follow the Service Prioritizer plan. Full cards for featured + secondary (typically 3–4).
+Optional titles: shortDescription max 18 words, still exactly 3 benefits.
+Max 6 services total. Never invent titles outside the plan.
 
----
+## Fields
+- title: max 4 words (e.g. "Roof Repair" — not "Professional Roofing Repair Services")
+- shortDescription: max 35 words — what it is, who needs it, problem solved. Never describe the company.
+- benefits: exactly 3 outcome-focused items (not features)
+- icon: name only (hammer, shield, bolt, home, wrench, droplets, calendar, phone, tooth, utensils, scale, sparkles, sun, dumbbell, key)
+- featured + priority: match plan (featured | secondary | optional)
 
-## Title Rules
-Maximum: 4 words.
-
-Good:
-Roof Repair
-Flat Roofing
-Emergency Roofing
-Roof Replacement
-
-Bad:
-Professional Roofing Repair Services
-Complete Residential Roofing Solutions
-
----
-
-## Description Rules
-Field name: shortDescription
-Maximum: 35 words.
-Explain: What the service is. Who needs it. What problem it solves.
-Never explain the company. Explain the service.
-
----
-
-## Benefits
-Return exactly 3.
-Benefits must be outcomes — not features.
-
-Bad: Professional team · Experienced staff · Quality materials
-Good: Stops leaks quickly · Protects your property · Reduces future repairs
-
----
-
-## Icons
-Return icon names only (never SVG).
-Examples: hammer, shield, bolt, home, wrench, droplets, calendar, phone, tooth, utensils, scale, sparkles, sun, dumbbell, key
-
----
-
-## Featured Service
-Mark the prioritizer featured title as featured = true.
-Also set "priority": "featured" | "secondary" | "optional" on each item to match the plan.
-
----
-
-## Writing Rules
-Use active voice.
-Short sentences.
-Simple English.
-No buzzwords.
-No filler.
-Every service must start differently.
-Never: We provide… / We offer… / We specialize…
-
+## Voice
+Active voice. Short sentences. Grade 7–9. No buzzwords or filler.
+Each service must start differently. Never: We provide/offer/specialize…
 Avoid: Professional service, High quality, Trusted, Reliable, Leading, Innovative, Solution, Commitment, Excellence
+Never invent warranty, years, certifications, emergency availability, materials, brands unless provided.
 
-Never invent: warranty, years, certifications, emergency availability, materials, brands — unless provided.
+## Self-check
+Unique per service? Would this fit another business? Shorter? Clearer benefits?`;
 
-Reading level: Grade 7–9
-
----
-
-## Industry Awareness
-Roofing → leaks, storm damage, weather, protection
-Dentist → comfort, health, prevention, confidence
-Electrician → safety, reliability, compliance
-Restaurant → freshness, taste, experience
-Law → protection, guidance, results
-Plumbing → leaks, drains, hot water, response
-Cleaning → clean, fresh, reliable schedule
-Real estate → home, market, guide, value
-Gym → train, progress, energy, coach
-Solar → panels, savings, roof, assess
-
----
-
-## Self Review
-Does every service sound unique?
-Would this description fit another business? If yes, rewrite.
-Can any sentence be shorter?
-Can the benefit be clearer?`;
-
-export const SERVICES_SYSTEM = `${CRESTIS_SYSTEM}
+export const SERVICES_SYSTEM = `${SERVICES_CORE}
 
 # Crestis Services Generator v1
 
-## Role
-You are a senior UX copywriter specializing in service-based businesses.
-
-Your task is to create service cards that help customers quickly understand what the company offers and why it matters.
-
-You are NOT writing long articles.
-You are writing concise, persuasive service descriptions.
-You do NOT see Hero, FAQ, SEO, or About section copy.
-Return JSON only.
-
----
-
 ${SERVICES_GENERATOR_BODY}
-
----
 
 ## JSON Output
 {
@@ -139,7 +57,48 @@ ${SERVICES_GENERATOR_BODY}
   ]
 }
 
-Return valid JSON only — final answer after self-review.`;
+Return valid JSON only.`;
+
+/** DNA fields referenced by services rules — omit SEO, design, sections, keywords, etc. */
+export function servicesBrandProfileSlice(
+  dna: Pick<
+    BusinessDna,
+    "industry" | "brandPosition" | "tone" | "trustSignals" | "cta"
+  >,
+): Record<string, unknown> {
+  return {
+    industry: dna.industry,
+    brandPosition: dna.brandPosition,
+    tone: dna.tone,
+    trustSignals: dna.trustSignals,
+    cta: dna.cta,
+  };
+}
+
+export function servicesBrandProfileJson(
+  dna: Pick<
+    BusinessDna,
+    "industry" | "brandPosition" | "tone" | "trustSignals" | "cta"
+  >,
+): string {
+  return JSON.stringify(servicesBrandProfileSlice(dna));
+}
+
+/** Planner fields used by services card count / positioning — omit template, variant, goal. */
+export function servicesPlanSlice(
+  plan: Pick<WebsitePlan, "serviceCount" | "positioning">,
+): Record<string, unknown> {
+  return {
+    serviceCount: plan.serviceCount,
+    positioning: plan.positioning,
+  };
+}
+
+export function servicesPlanJson(
+  plan: Pick<WebsitePlan, "serviceCount" | "positioning">,
+): string {
+  return JSON.stringify(servicesPlanSlice(plan));
+}
 
 export function servicesSystem(params?: { isMenu?: boolean }): string {
   if (params?.isMenu) {
@@ -164,33 +123,27 @@ export function servicesUser(params: {
   planJson?: string;
   priorityJson?: string;
 }): string {
+  const hasPriority = Boolean(params.priorityJson?.trim());
   return [
     servicesContext({
       businessName: params.businessName,
       city: params.city,
       niche: params.niche,
       tone: params.tone,
-      serviceFocus: params.serviceFocus,
+      serviceFocus: hasPriority ? [] : params.serviceFocus,
       personalityBrief: params.personalityBrief,
     }),
     params.industryBrief || "",
     params.description
-      ? `Business description: ${params.description}`
+      ? `Business description: ${params.description.slice(0, 280)}`
       : "",
     params.brandProfileJson
-      ? `Business Profile (JSON):\n${params.brandProfileJson}`
+      ? `Brand Profile (JSON):\n${params.brandProfileJson}`
       : "",
-    params.planJson ? `Website Planner (JSON):\n${params.planJson}` : "",
+    params.planJson ? `Planner (JSON):\n${params.planJson}` : "",
     params.priorityJson
-      ? `Service Prioritizer plan (OBEY titles + hierarchy):\n${params.priorityJson}`
+      ? `Service Prioritizer (OBEY titles + hierarchy):\n${params.priorityJson}`
       : "",
-    "",
-    "Write service cards for the prioritizer titles.",
-    "featured title → featured:true + priority:featured",
-    "secondary titles → priority:secondary",
-    "optional titles → priority:optional (shorter copy)",
-    "Use shortDescription (not description).",
-    "Exactly 3 outcome benefits per service.",
   ]
     .filter(Boolean)
     .join("\n");

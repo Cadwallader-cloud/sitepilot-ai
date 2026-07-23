@@ -164,6 +164,19 @@ export function industryToTradeKey(id: IndustryId): TradeKey {
   return map[id] ?? "general";
 }
 
+/** Services-stage industry slice — voice + service hints only (no SEO/hero/FAQ/image). */
+export function industryServicesBrief(pack: IndustryPack, city?: string): string {
+  const cityNote = city?.trim() ? ` (${city.trim()})` : "";
+  return [
+    `Industry: ${pack.label}${cityNote}`,
+    `Services: ${pack.sectionHints.services}`,
+    `Voice: ${pack.textStyle.voice} · ${pack.textStyle.writingStyle}`,
+    `Do: ${pack.textStyle.do.join("; ")}`,
+    `Don't: ${pack.textStyle.dont.join("; ")}`,
+    `Words: ${pack.preferredWords.slice(0, 8).join(", ")}`,
+  ].join("\n");
+}
+
 /** Compact JSON brief for AI prompts (Planner / Hero / FAQ / SEO) */
 export function industryPackBrief(pack: IndustryPack, city?: string): string {
   const cityNote = city?.trim() ? ` City context: ${city.trim()}.` : "";

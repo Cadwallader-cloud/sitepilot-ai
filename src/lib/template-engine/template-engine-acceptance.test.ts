@@ -111,7 +111,7 @@ describe("Template Engine Acceptance Criteria", () => {
     const qaStep = readFileSync(qaStepPath, "utf8");
     assert.match(qaStep, /runTemplateSelector/);
     assert.match(qaStep, /templateSelectorInputFromPipeline/);
-    assert.match(qaStep, /Template Selector/);
+    assert.match(qaStep, /Template Engine/);
   });
 
   it("✅ AI може вибрати лише існуючі шаблони — hero-92 відхилено", () => {

@@ -48,11 +48,14 @@ Messages should be short and actionable (e.g. "Hero could be more specific").`;
 export async function runQualityAudit(options: {
   site: GeneratedSite;
   location: string;
+  category?: string;
   services?: string;
   userEmail?: string | null;
 }): Promise<QualityAuditResult> {
   const location = options.location.trim();
-  const rules = auditWebsiteWithRules(options.site, location);
+  const rules = auditWebsiteWithRules(options.site, location, {
+    category: options.category,
+  });
 
   const openai = getOpenAIClient();
   if (!openai) {

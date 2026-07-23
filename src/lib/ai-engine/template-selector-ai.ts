@@ -20,6 +20,7 @@ import {
   type TemplateBlocks,
 } from "@/lib/template-engine";
 import { completeJsonObject, getEngineOpenAI } from "./openai-json";
+import { qaSelectorsUseAi } from "./theme-selector-ai";
 import {
   TEMPLATE_SELECTOR_AI_SYSTEM,
   templateSelectorAiUser,
@@ -83,6 +84,13 @@ function deterministicFallback(input: TemplateSelectorInput): TemplateBlocks {
   });
 }
 
+/** Rule-based block picks — no LLM (Sprint C / QA fast path). */
+export function selectTemplateBlocksWithRules(
+  input: TemplateSelectorInput,
+): TemplateBlocks {
+  return deterministicFallback(input);
+}
+
 /**
  * AI Template Selector — picks React block ids from catalog.
  * Falls back to deterministic picks when OpenAI is unavailable or fails.
@@ -92,9 +100,15 @@ export async function runTemplateSelector(
   options?: {
     userEmail?: string | null;
     fallback?: TemplateBlocks;
+    /** When false, skip OpenAI and use rules only (default). */
+    useAi?: boolean;
   },
 ): Promise<TemplateBlocks> {
   const fallback = options?.fallback ?? deterministicFallback(input);
+
+  if (options?.useAi === false || !qaSelectorsUseAi()) {
+    return fallback;
+  }
 
   if (!getEngineOpenAI()) {
     return fallback;

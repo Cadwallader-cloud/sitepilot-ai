@@ -45,6 +45,32 @@ import {
   type Website,
 } from "../../website";
 import { DEFAULT_TEMPLATE_BLOCKS } from "../../template-engine";
+import type { PromptContextCache } from "../context/prompt-context-cache";
+import type { GenerationModeProfile } from "../generation-mode";
+import type { StageTelemetryRecord } from "../telemetry/stage-telemetry";
+export {
+  buildPromptContextCache,
+  ensurePromptCache,
+  formatPromptContextBlock,
+  type PromptContextCache,
+  type PromptContextFields,
+} from "../context/prompt-context-cache";
+export {
+  resolveGenerationMode,
+  resolveGenerationProfile,
+  profileForMode,
+  GENERATION_MODE_DEFAULT,
+  type GenerationMode,
+  type GenerationModeProfile,
+} from "../generation-mode";
+
+/** Profile for this bag — falls back to options.generationMode or Balanced. */
+export function getGenerationProfile(ctx: PipelineContext): GenerationModeProfile {
+  return (
+    ctx.meta.generationProfile ??
+    resolveGenerationProfile(ctx.meta.options)
+  );
+}
 
 export type PipelineProgress = {
   stage: EngineStageName;
@@ -68,11 +94,19 @@ export type SimplePlanAi = {
 
 export interface PipelineLog {
   step: string;
+  /** ISO timestamp when the step started */
+  started: string;
+  /** ISO timestamp when the step finished */
+  finished: string;
   /** Wall-clock ms for the step */
   duration: number;
   tokens: number;
+  promptTokens: number;
+  completionTokens: number;
   /** Estimated USD */
   cost: number;
+  retries: number;
+  cacheHit: boolean;
   status: "success" | "error";
 }
 
@@ -113,6 +147,12 @@ export type PipelineMeta = {
   seoPlan?: SeoPlan;
   copySeedBrief: string;
 
+  /** Core prompt fields — built once after brand, shared across parallel steps */
+  promptCache?: PromptContextCache;
+
+  /** Resolved Fast / Balanced / Premium profile for this run */
+  generationProfile?: GenerationModeProfile;
+
   engineCtx?: EngineContext;
   agentCtx?: { ctx: EngineContext; brief: BusinessBrief; plan: WebsitePlan };
 
@@ -131,6 +171,7 @@ export interface PipelineContext {
   branding: Branding;
   website: Website;
   logs: PipelineLog[];
+  telemetry: StageTelemetryRecord[];
   meta: PipelineMeta;
 }
 

@@ -3,6 +3,10 @@ import { formatBrandPersonalityBrief } from "../brand-personality";
 import { getIndustryPack } from "../industries";
 import { seoMemoryBrief } from "../seo-memory";
 import { completeJsonObject } from "./openai-json";
+import {
+  canFinalizeSeoFromPlan,
+  finalizeSeoFromPlan,
+} from "./finalize-seo-from-plan";
 import { SEO_AI_SYSTEM, seoAiUser } from "./prompts/seo-ai";
 import { seoPlanBrief, type SeoPlan } from "./seo-planner";
 import type {
@@ -12,6 +16,12 @@ import type {
   SeoDraft,
   WebsitePlan,
 } from "./types";
+
+export type RunFinalSeoReviewOptions = {
+  /** Force full LLM generation (retries / improve flow) */
+  forceLlm?: boolean;
+  reviewFeedback?: string;
+};
 
 /**
  * Crestis Final SEO Review v1
@@ -33,12 +43,15 @@ export async function runFinalSeoReview(
   plan?: WebsitePlan,
   seoPlan?: SeoPlan,
   reviewFeedback?: string,
+  options?: RunFinalSeoReviewOptions,
 ): Promise<SeoDraft> {
-  const { input, options } = ctx;
+  const { input, options: engineOptions } = ctx;
   const city = brief.city;
   const niche = brief.niche;
   const pack = getIndustryPack(brief.industryId);
   const activePlan = seoPlan ?? brief.seoPlan;
+  const forceLlm = options?.forceLlm === true;
+  const feedback = reviewFeedback?.trim() || options?.reviewFeedback?.trim();
 
   const fallbackInputs = {
     businessName: input.businessName,
@@ -69,6 +82,10 @@ export async function runFinalSeoReview(
     };
   };
 
+  if (canFinalizeSeoFromPlan(activePlan) && !forceLlm && !feedback) {
+    return finalizeSeoFromPlan(activePlan, fallbackInputs, content, plan);
+  }
+
   const industrySeoBrief =
     pack.id === "general"
       ? undefined
@@ -88,7 +105,7 @@ export async function runFinalSeoReview(
   try {
     const ai = await completeJsonObject<Partial<SeoAiPackage>>({
       stage: "seo_ai",
-      userEmail: options.userEmail,
+      userEmail: engineOptions.userEmail,
       temperature: 0.35,
       maxCompletionTokens: 4096,
       system: SEO_AI_SYSTEM,
@@ -122,8 +139,8 @@ export async function runFinalSeoReview(
             )
           : undefined,
         seoPlanBrief: activePlan ? seoPlanBrief(activePlan) : undefined,
-        seoMemoryBrief: seoMemoryBrief(options.seoMemory),
-      }) + (reviewFeedback?.trim() ? `\n\n${reviewFeedback.trim()}` : ""),
+        seoMemoryBrief: seoMemoryBrief(engineOptions.seoMemory),
+      }) + (feedback ? `\n\n${feedback}` : ""),
     });
 
     const packNormalized = normalizeSeoAiPackage(ai, fallbackInputs);
@@ -146,6 +163,10 @@ export async function runFinalSeoReview(
     }
   } catch (error) {
     console.warn("Final SEO Review failed, using Crestis fallback:", error);
+  }
+
+  if (canFinalizeSeoFromPlan(activePlan)) {
+    return finalizeSeoFromPlan(activePlan, fallbackInputs, content, plan);
   }
 
   return fallback();

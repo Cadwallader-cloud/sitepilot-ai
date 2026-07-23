@@ -5,6 +5,7 @@ import {
   getIndustryPack,
   industryFaqBrief,
   industryPackBrief,
+  industryServicesBrief,
 } from "../industries";
 import {
   ABOUT_SYSTEM,
@@ -19,6 +20,8 @@ import {
   heroUser,
   servicesSystem,
   servicesUser,
+  servicesBrandProfileJson,
+  servicesPlanJson,
   normalizeServicesFromAi,
   TESTIMONIALS_SYSTEM,
   testimonialsUser,
@@ -29,13 +32,19 @@ import type {
   EngineContext,
   WebsitePlan,
 } from "./types";
+import type { PromptContextCache } from "../ai/context/prompt-context-cache";
 
 type Ctx = {
   ctx: EngineContext;
   brief: BusinessBrief;
   plan: WebsitePlan;
   contentReviewFeedback?: string;
+  promptCache?: PromptContextCache;
 };
+
+function brandProfileJson(c: Ctx): string {
+  return c.promptCache?.dnaJson ?? JSON.stringify(c.brief.dna, null, 2);
+}
 
 function withContentReviewFeedback(user: string, c: Ctx): string {
   if (!c.contentReviewFeedback?.trim()) return user;
@@ -129,7 +138,7 @@ export async function generateHeroSection(c: Ctx): Promise<ContentDraft["hero"]>
       services: c.ctx.input.services.trim().slice(0, 280) || undefined,
       ownerNotes: c.ctx.input.description.trim().slice(0, 280) || undefined,
       forbiddenHeadline: avoid?.headline || avoid?.heroTitle || undefined,
-      brandProfileJson: JSON.stringify(c.brief.dna, null, 2),
+      brandProfileJson: brandProfileJson(c),
       planJson: JSON.stringify(
         {
           template: c.plan.template,
@@ -205,7 +214,7 @@ export async function generateAboutSection(
       forbiddenOpening: c.ctx.options.previous?.aboutText
         ? c.ctx.options.previous.aboutText.slice(0, 160)
         : undefined,
-      brandProfileJson: JSON.stringify(c.brief.dna, null, 2),
+      brandProfileJson: brandProfileJson(c),
       planJson: JSON.stringify(
         {
           template: c.plan.template,
@@ -223,7 +232,9 @@ export async function generateAboutSection(
     ),
   });
 
-  const about = normalizeAboutFromAi(ai, "About Us");
+  const about = normalizeAboutFromAi(ai, "About Us", {
+    location: c.brief.city || c.ctx.input.location,
+  });
   if (about.text.length < 40) throw new Error("ENGINE_CONTENT:about");
   return about;
 }
@@ -236,7 +247,7 @@ export async function generateServicesSection(
   const industryBrief =
     pack.id === "general"
       ? undefined
-      : industryPackBrief(pack, c.brief.city);
+      : industryServicesBrief(pack, c.brief.city);
   const priority = c.brief.servicePriority;
 
   const ai = await completeJsonObject<{
@@ -261,19 +272,8 @@ export async function generateServicesSection(
       description: c.ctx.input.description || undefined,
       personalityBrief: personalityBriefOf(c),
       industryBrief,
-      brandProfileJson: JSON.stringify(c.brief.dna, null, 2),
-      planJson: JSON.stringify(
-        {
-          template: c.plan.template,
-          variant: c.plan.variant,
-          goal: c.plan.goal,
-          ctaStrategy: c.plan.ctaStrategy,
-          serviceCount: c.plan.serviceCount,
-          positioning: c.plan.positioning,
-        },
-        null,
-        2,
-      ),
+      brandProfileJson: servicesBrandProfileJson(c.brief.dna),
+      planJson: servicesPlanJson(c.plan),
       priorityJson: priority
         ? JSON.stringify(
             {
@@ -398,7 +398,7 @@ export async function generateFaqSection(
       faqBankBrief,
       description: c.ctx.input.description || undefined,
       servicesList,
-      brandProfileJson: JSON.stringify(c.brief.dna, null, 2),
+      brandProfileJson: brandProfileJson(c),
       planJson: JSON.stringify(
         {
           template: c.plan.template,

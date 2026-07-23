@@ -21,6 +21,7 @@ import type { SiteLayoutSection } from "../../../site-types";
 import type { Page, Section } from "../../../website";
 import { applyPagesPatch } from "../../../website-ownership";
 import {
+  ensurePromptCache,
   planFromAi,
   type PipelineContext,
   type PipelineStep,
@@ -121,27 +122,72 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
 
   async run(ctx: PipelineContext): Promise<PipelineContext> {
     const { meta } = ctx;
+
     meta.onProgress?.({
       stage: "website_planner",
       label: "Website Planner",
     });
-
-    const planRaw = await completeJsonObject<SimplePlanAi>({
-      stage: "website_planner",
-      userEmail: meta.options.userEmail,
-      maxCompletionTokens: 3072,
-      system: SIMPLE_PLAN_SYSTEM,
-      user:
-        simplePlanUser({
-          businessName: meta.input.businessName,
-          category: meta.category || meta.industryPack.label || meta.tradeKey,
-          location: meta.input.location,
-          services: meta.input.services,
-          description: meta.input.description || "",
-          dnaJson: JSON.stringify(meta.liveDna, null, 2),
-          regenerate: meta.options.regenerate,
-        }) + `\n\n${meta.industryBrief}\n\n${meta.personalityBrief}`,
+    meta.onProgress?.({
+      stage: "layout_selector_ai",
+      label: "Layout Selector",
     });
+    meta.onProgress?.({
+      stage: "seo_planner",
+      label: "SEO Planner",
+    });
+
+    const pipeline = ensurePromptCache(ctx);
+    const { meta: pipelineMeta } = pipeline;
+    const dnaJson =
+      pipelineMeta.promptCache?.dnaJson ??
+      JSON.stringify(pipelineMeta.liveDna, null, 2);
+
+    const layoutSelectorInput = layoutSelectorInputFromPipeline({
+      brief: pipelineMeta.brief,
+      brandingTone: pipelineMeta.personalityBrief,
+    });
+
+    const [planRaw, layoutSelection, seoPlan] = await Promise.all([
+      completeJsonObject<SimplePlanAi>({
+        stage: "website_planner",
+        userEmail: pipelineMeta.options.userEmail,
+        maxCompletionTokens: 3072,
+        system: SIMPLE_PLAN_SYSTEM,
+        user:
+          simplePlanUser({
+            businessName: pipelineMeta.input.businessName,
+            category:
+              pipelineMeta.category ||
+              pipelineMeta.industryPack.label ||
+              pipelineMeta.tradeKey,
+            location: pipelineMeta.input.location,
+            services: pipelineMeta.input.services,
+            description: pipelineMeta.input.description || "",
+            dnaJson,
+            regenerate: pipelineMeta.options.regenerate,
+          }) + `\n\n${pipelineMeta.industryBrief}\n\n${pipelineMeta.personalityBrief}`,
+      }),
+      runLayoutSelector(layoutSelectorInput, {
+        userEmail: pipelineMeta.options.userEmail,
+      }),
+      runSeoPlanner({
+        businessName: pipelineMeta.input.businessName,
+        industry:
+          pipelineMeta.category ||
+          pipelineMeta.industryPack.label ||
+          pipelineMeta.tradeKey,
+        location: pipelineMeta.input.location,
+        description: pipelineMeta.input.description || "",
+        services: pipelineMeta.input.services,
+        dnaJson,
+        city: meta.brief.city,
+        niche: meta.brief.niche,
+        serviceFocus: meta.brief.serviceFocus,
+        industryId: meta.industryId,
+        userEmail: meta.options.userEmail,
+        seoMemory: meta.options.seoMemory,
+      }),
+    ]);
 
     const draftPlan = planFromAi(
       meta.liveDna,
@@ -149,18 +195,6 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
       meta.industryPack,
       meta.input.location.trim(),
     );
-
-    meta.onProgress?.({
-      stage: "layout_selector_ai",
-      label: "Layout Selector",
-    });
-    const layoutSelectorInput = layoutSelectorInputFromPipeline({
-      brief: meta.brief,
-      brandingTone: meta.personalityBrief,
-    });
-    const layoutSelection = await runLayoutSelector(layoutSelectorInput, {
-      userEmail: meta.options.userEmail,
-    });
 
     meta.onProgress?.({
       stage: "template_selector",
@@ -183,25 +217,6 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
       },
     });
     const plan = applyTemplateSelection(draftPlan, selection);
-
-    meta.onProgress?.({
-      stage: "seo_planner",
-      label: "SEO Planner",
-    });
-    const seoPlan = await runSeoPlanner({
-      businessName: meta.input.businessName,
-      industry: meta.category || meta.industryPack.label || meta.tradeKey,
-      location: meta.input.location,
-      description: meta.input.description || "",
-      services: meta.input.services,
-      dnaJson: JSON.stringify(meta.liveDna, null, 2),
-      city: meta.brief.city,
-      niche: meta.brief.niche,
-      serviceFocus: meta.brief.serviceFocus,
-      industryId: meta.industryId,
-      userEmail: meta.options.userEmail,
-      seoMemory: meta.options.seoMemory,
-    });
 
     const seoStrategyBrief = seoPlanBrief(seoPlan);
     const memoryBrief = seoMemoryBrief(meta.options.seoMemory);
@@ -243,16 +258,16 @@ export class PlannerStep implements PipelineStep<PipelineContext> {
     );
 
     return {
-      ...ctx,
+      ...pipeline,
       website,
       meta: {
-        ...meta,
+        ...pipelineMeta,
         plan,
         selection,
         templateId: selection.templateId,
         seoPlan,
         copySeedBrief,
-        brief: { ...meta.brief, seoPlan },
+        brief: { ...pipelineMeta.brief, seoPlan },
       },
     };
   }

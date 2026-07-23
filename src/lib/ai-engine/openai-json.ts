@@ -1,6 +1,10 @@
 import OpenAI from "openai";
-import { logOpenAiUsage } from "../usage";
+import { estimateOpenAiCostUsd, logOpenAiUsage } from "../usage";
 import { resolveModelForStage } from "./model-router";
+import {
+  currentPipelineStep,
+  recordStageTelemetry,
+} from "../ai/telemetry/stage-telemetry";
 
 let client: OpenAI | null = null;
 
@@ -56,6 +60,14 @@ export async function completeJsonObject<T>(options: {
   const gpt5 = isGpt5Family(model);
   const tokenBudget = options.maxCompletionTokens ?? (gpt5 ? 4096 : 4096);
 
+  const startedMs = Date.now();
+  const startedIso = new Date(startedMs).toISOString();
+  let promptTokens = 0;
+  let completionTokens = 0;
+  let costUsd = 0;
+  let status: "success" | "error" = "success";
+
+  try {
   const response = await openai.chat.completions.create({
     model,
     ...(lockedTemp ? {} : { temperature: options.temperature ?? 0.7 }),
@@ -73,11 +85,19 @@ export async function completeJsonObject<T>(options: {
     ],
   });
 
+  promptTokens = response.usage?.prompt_tokens ?? 0;
+  completionTokens = response.usage?.completion_tokens ?? 0;
+  costUsd = estimateOpenAiCostUsd({
+    model,
+    promptTokens,
+    completionTokens,
+  });
+
   void logOpenAiUsage({
     userEmail: options.userEmail,
     model,
-    promptTokens: response.usage?.prompt_tokens ?? 0,
-    completionTokens: response.usage?.completion_tokens ?? 0,
+    promptTokens,
+    completionTokens,
     totalTokens: response.usage?.total_tokens ?? 0,
   });
 
@@ -88,5 +108,23 @@ export async function completeJsonObject<T>(options: {
     return JSON.parse(raw) as T;
   } catch {
     throw new Error(`ENGINE_INVALID_JSON:${options.stage}`);
+  }
+  } catch (error) {
+    status = "error";
+    throw error;
+  } finally {
+    recordStageTelemetry({
+      stage: options.stage,
+      started: startedIso,
+      finished: new Date().toISOString(),
+      durationMs: Date.now() - startedMs,
+      inputTokens: promptTokens,
+      outputTokens: completionTokens,
+      costUsd,
+      retries: 0,
+      cacheHit: false,
+      parentStep: currentPipelineStep(),
+      status,
+    });
   }
 }

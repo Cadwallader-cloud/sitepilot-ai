@@ -7,7 +7,11 @@ import {
   generateServicesSection,
   generateTestimonialsSection,
 } from "../../ai-engine/content-generator";
-import { runServicePrioritizer } from "../../ai-engine/service-prioritizer";
+import {
+  parseServiceList,
+  runServicePrioritizer,
+  shouldSkipServicePrioritizer,
+} from "../../ai-engine/service-prioritizer";
 import type {
   BusinessBrief,
   ContentDraft,
@@ -18,7 +22,9 @@ import type { Service } from "../../website";
 import { validateServices } from "../../validation/validate";
 import type { ServicesSectionInput } from "../../validation/services";
 import type { PipelineContext } from "../orchestrator/context";
+import { getGenerationProfile } from "../orchestrator/context";
 import { prepareServicesRun, type ServicesSectionRun } from "../context";
+import { buildEngineAgentCtx } from "../context/engine-agent";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -76,13 +82,13 @@ export async function retryServices(
 
 export async function retryServices(
   arg: (() => Promise<unknown>) | ServicesSectionRun | PipelineContext,
-  maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
+  maxAttemptsArg = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<ServicesSectionInput> | RetryServicesFromContext> {
   if (typeof arg === "function") {
     return retry<ServicesSectionInput>(
       async () => servicesForValidation(await arg()),
       validateServices,
-      { module: "Services", maxAttempts },
+      { module: "Services", maxAttempts: maxAttemptsArg },
     );
   }
 
@@ -90,26 +96,62 @@ export async function retryServices(
   const ctx = run.pipeline;
   void run.services;
   const { meta } = ctx;
-  if (
-    !meta.plan ||
-    !meta.engineCtx ||
-    !meta.agentCtx ||
-    !meta.heroResult ||
-    !meta.aboutResult
-  ) {
-    throw new Error("ORCHESTRATOR:services requires plan + hero + about");
+  const generationProfile = getGenerationProfile(ctx);
+  const maxAttempts = generationProfile.maxSectionAttempts;
+  if (!meta.plan || !meta.selection) {
+    throw new Error("ORCHESTRATOR:services requires plan + selection");
   }
 
-  meta.onProgress?.({
-    stage: "service_prioritizer",
-    label: "Service Prioritizer",
+  const built = buildEngineAgentCtx(ctx);
+  meta.engineCtx = meta.engineCtx ?? built.engineCtx;
+  meta.agentCtx = meta.agentCtx ?? built.agentCtx;
+
+  const stubHero = (): ContentDraft["hero"] => ({
+    headline: meta.heroResult?.hero.headline ?? meta.input.businessName,
+    subheadline:
+      meta.heroResult?.hero.subheadline ??
+      meta.input.description.slice(0, 160),
+    primaryCTA:
+      meta.heroResult?.hero.primaryCTA ??
+      meta.plan?.ctaStyle ??
+      "Get a free quote",
+    secondaryCTA: meta.heroResult?.hero.secondaryCTA ?? "",
+    trustBar: meta.heroResult?.hero.trustBar ?? [],
   });
+
+  const stubAbout = (): ContentDraft["about"] => ({
+    title:
+      meta.aboutResult?.about.title ?? `About ${meta.input.businessName}`,
+    text:
+      meta.aboutResult?.about.text ??
+      meta.aboutResult?.about.paragraphs?.join("\n\n") ??
+      meta.input.description,
+    paragraphs:
+      meta.aboutResult?.about.paragraphs ?? [meta.input.description],
+    highlights: meta.aboutResult?.about.highlights ?? [],
+  });
+
+  const servicesList = parseServiceList(meta.input.services);
+  const plannerServices = meta.brief.serviceFocus.filter(Boolean);
+  const skipPrioritizer = shouldSkipServicePrioritizer(
+    servicesList,
+    plannerServices,
+  );
+
+  if (!skipPrioritizer) {
+    meta.onProgress?.({
+      stage: "service_prioritizer",
+      label: "Service Prioritizer",
+    });
+  }
+
   const servicePriority = await runServicePrioritizer({
     businessName: meta.input.businessName,
     industry: meta.category || meta.industryPack.label || meta.tradeKey,
     location: meta.input.location,
     description: meta.input.description || "",
     servicesRaw: meta.input.services,
+    serviceFocus: meta.brief.serviceFocus,
     userEmail: meta.options.userEmail,
     industryBrief: meta.industryBrief,
     brandPosition: meta.liveDna.brandPosition,
@@ -117,12 +159,18 @@ export async function retryServices(
   });
 
   const brief = { ...meta.brief, servicePriority };
-  const engineCtx = { ...meta.engineCtx, brief };
-  const agentCtx = { ctx: engineCtx, brief, plan: meta.plan };
+  const engineCtx = { ...(meta.engineCtx ?? built.engineCtx), brief };
+  const agentCtx = { ctx: engineCtx, brief, plan: meta.plan! };
 
   meta.onProgress?.({
     stage: "services_generator",
     label: "Services",
+  });
+
+  const stubCta = (): ContentDraft["cta"] => ({
+    headline: meta.input.businessName,
+    primaryCTA: meta.plan?.ctaStyle ?? meta.liveDna.cta ?? "Get a quote",
+    secondaryCTA: meta.input.phone ? `Call ${meta.input.phone}` : "",
   });
 
   let servicesAttempt = 0;
@@ -137,16 +185,23 @@ export async function retryServices(
     return servicesForValidation(await generateServicesSection(agentCtx));
   };
 
-  const servicesRetry = await retry<ServicesSectionInput>(
-    generateServices,
-    validateServices,
-    {
+  const skipAux = generationProfile.skipTestimonialsAndCta;
+
+  const [servicesRetry, testimonials, cta] = await Promise.all([
+    retry<ServicesSectionInput>(generateServices, validateServices, {
       module: "Services",
       userEmail: meta.options.userEmail,
       runId: meta.runId,
       maxAttempts,
-    },
-  );
+    }),
+    skipAux
+      ? Promise.resolve([] as ContentDraft["testimonials"])
+      : generateTestimonialsSection(agentCtx),
+    skipAux
+      ? Promise.resolve(stubCta())
+      : generateCtaSection(agentCtx, stubHero()),
+  ]);
+
   const validated = softRetryResult(
     servicesRetry,
     servicesInputFallback({
@@ -161,14 +216,9 @@ export async function retryServices(
   const draftItems = Array.isArray(validated.items) ? validated.items : [];
   const services = toWebsiteServices(draftItems);
 
-  const [testimonials, cta] = await Promise.all([
-    generateTestimonialsSection(agentCtx),
-    generateCtaSection(agentCtx, meta.heroResult.hero),
-  ]);
-
   const content: ContentDraft = {
-    hero: meta.heroResult.hero,
-    about: meta.aboutResult.about,
+    hero: stubHero(),
+    about: stubAbout(),
     services: draftItems,
     testimonials,
     faq: [],

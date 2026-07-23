@@ -14,6 +14,7 @@ import {
   type RetryAttemptLog,
 } from "./attempt-log";
 import { emitPipelineEvent } from "../orchestrator/events";
+import { incrementStageRetries } from "../telemetry/stage-telemetry";
 
 export type RetryIssue = {
   path: string;
@@ -193,6 +194,7 @@ export async function retry<T>(
 
     // Failed attempt with retries left → step:retry then continue
     if (attempt < maxAttempts) {
+      incrementStageRetries(module.toLowerCase());
       emitPipelineEvent("step:retry", {
         runId: runId ?? undefined,
         step: module.toLowerCase(),

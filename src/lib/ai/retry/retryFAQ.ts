@@ -7,7 +7,9 @@ import type { FAQ } from "../../website";
 import { validateFAQ } from "../../validation/validate";
 import type { FaqSectionInput } from "../../validation/faq";
 import type { PipelineContext } from "../orchestrator/context";
+import { getGenerationProfile } from "../orchestrator/context";
 import { prepareFAQRun, type FAQSectionRun } from "../context";
+import { buildEngineAgentCtx } from "../context/engine-agent";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
   retry,
@@ -45,13 +47,13 @@ export async function retryFAQ(
 
 export async function retryFAQ(
   arg: (() => Promise<unknown>) | FAQSectionRun | PipelineContext,
-  maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
+  maxAttemptsArg = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<FaqSectionInput> | RetryFAQFromContext> {
   if (typeof arg === "function") {
     return retry<FaqSectionInput>(
       async () => faqForValidation(await arg()),
       validateFAQ,
-      { module: "FAQ", maxAttempts },
+      { module: "FAQ", maxAttempts: maxAttemptsArg },
     );
   }
 
@@ -59,9 +61,9 @@ export async function retryFAQ(
   const ctx = run.pipeline;
   void run.faq;
   const { meta } = ctx;
-  if (!meta.agentCtx || !meta.content) {
-    throw new Error("ORCHESTRATOR:faq requires content");
-  }
+  const maxAttempts = getGenerationProfile(ctx).maxSectionAttempts;
+  const { agentCtx } = buildEngineAgentCtx(ctx);
+  meta.agentCtx = meta.agentCtx ?? agentCtx;
 
   meta.onProgress?.({
     stage: "faq_generator",
@@ -77,7 +79,7 @@ export async function retryFAQ(
         label: `FAQ retry #${faqAttempt}`,
       });
     }
-    return faqForValidation(await generateFaqSection(meta.agentCtx!));
+    return faqForValidation(await generateFaqSection(agentCtx));
   };
 
   const faqRetry = await retry<FaqSectionInput>(generateFAQ, validateFAQ, {

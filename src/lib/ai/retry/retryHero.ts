@@ -9,6 +9,7 @@ import type { Hero } from "../../website";
 import { validateHero } from "../../validation/validate";
 import type { HeroInput } from "../../validation/hero";
 import type { PipelineContext } from "../orchestrator/context";
+import { getGenerationProfile } from "../orchestrator/context";
 import { prepareHeroRun, type HeroSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
@@ -48,12 +49,12 @@ export async function retryHero(
 
 export async function retryHero(
   arg: (() => Promise<unknown>) | HeroSectionRun | PipelineContext,
-  maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
+  maxAttemptsArg = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<HeroInput> | RetryHeroFromContext> {
   if (typeof arg === "function") {
     return retry<HeroInput>(arg, validateHero, {
       module: "Hero",
-      maxAttempts,
+      maxAttempts: maxAttemptsArg,
     });
   }
 
@@ -61,6 +62,7 @@ export async function retryHero(
   const ctx = run.pipeline;
   void run.hero;
   const { meta } = ctx;
+  const maxAttempts = getGenerationProfile(ctx).maxSectionAttempts;
   if (!meta.plan || !meta.selection) {
     throw new Error("ORCHESTRATOR:hero requires plan");
   }
@@ -78,6 +80,7 @@ export async function retryHero(
     templateBrief: meta.selection.copyBrief,
     personalityBrief: meta.personalityBrief,
     industryBrief: meta.copySeedBrief,
+    promptCache: meta.promptCache,
     userEmail: meta.options.userEmail,
     forbiddenHeadline: avoid?.headline || avoid?.heroTitle || undefined,
     regenerate: meta.options.regenerate,
@@ -95,7 +98,12 @@ export async function retryHero(
     brief: meta.brief,
     plan: meta.plan,
   };
-  const agentCtx = { ctx: engineCtx, brief: meta.brief, plan: meta.plan };
+  const agentCtx = {
+    ctx: engineCtx,
+    brief: meta.brief,
+    plan: meta.plan,
+    promptCache: meta.promptCache,
+  };
 
   let heroAttempt = 0;
   const generateHero = async () => {

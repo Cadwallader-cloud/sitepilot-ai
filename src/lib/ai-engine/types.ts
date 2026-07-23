@@ -40,6 +40,8 @@ export type EngineRunOptions = {
   customerTestimonials?: { name: string; text: string }[];
   /** Prior SEO Memory for this site (regenerate / iterate) */
   seoMemory?: import("../seo-memory").SeoMemory;
+  /** Smart generation mode — Fast | Balanced (default) | Premium */
+  generationMode?: import("../ai/generation-mode").GenerationMode;
 };
 
 /**
@@ -199,9 +201,11 @@ export type EngineStageName =
   | "hero_headlines"
   | "hero_select"
   | "hero_refine"
+  | "hero_single"
   | "hero_retry"
   | "about_variants"
   | "about_select"
+  | "about_single"
   | "about_retry"
   | "service_prioritizer"
   | "services_generator"

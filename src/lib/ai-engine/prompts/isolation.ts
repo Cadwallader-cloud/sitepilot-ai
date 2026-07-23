@@ -97,7 +97,9 @@ export function servicesContext(params: {
     `City: ${params.city}`,
     `Niche: ${params.niche}`,
     `Tone: ${params.tone}`,
-    `Service focus: ${params.serviceFocus.join("; ")}`,
+    params.serviceFocus.length
+      ? `Service focus: ${params.serviceFocus.join("; ")}`
+      : "",
     params.personalityBrief || "",
   ]
     .filter(Boolean)

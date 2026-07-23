@@ -165,6 +165,7 @@ function stubCtx(): PipelineContext {
     branding,
     website,
     logs: [],
+    telemetry: [],
     meta: {
       input: {
         businessName: "Apex Roofing",

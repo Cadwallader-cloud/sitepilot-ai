@@ -66,6 +66,7 @@ describe("Acceptance — Orchestrator", () => {
       "branding",
       "website",
       "logs",
+      "telemetry",
       "meta",
     ];
     assert.deepEqual(shape, [
@@ -73,6 +74,7 @@ describe("Acceptance — Orchestrator", () => {
       "branding",
       "website",
       "logs",
+      "telemetry",
       "meta",
     ]);
   });
@@ -80,13 +82,20 @@ describe("Acceptance — Orchestrator", () => {
   it("defines per-step PipelineLog metrics shape", () => {
     const log: PipelineLog = {
       step: "hero",
+      started: "2026-01-01T00:00:00.000Z",
+      finished: "2026-01-01T00:00:01.000Z",
       duration: 820,
       tokens: 1300,
+      promptTokens: 900,
+      completionTokens: 400,
       cost: 0.018,
+      retries: 1,
+      cacheHit: false,
       status: "success",
     };
     assert.equal(log.step, "hero");
     assert.equal(log.status, "success");
+    assert.equal(log.retries, 1);
   });
 
   it("exposes required lifecycle event types", () => {

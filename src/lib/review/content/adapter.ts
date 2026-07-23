@@ -1,4 +1,6 @@
 import type { Issue, ReviewResult, Reviewer } from "@/lib/review/types";
+import type { GeneratedSite } from "@/lib/site-types";
+import { getHero } from "@/lib/site-types";
 import { flatFromWebsite, type Website } from "@/lib/website";
 import {
   CONTENT_REVIEW_THRESHOLD,
@@ -23,12 +25,31 @@ export function contentReviewInputFromWebsite(website: Website): ContentReviewIn
   return {
     location: flat.business.location || website.business.location,
     category: flat.business.category || website.business.category,
+    businessName: flat.business.name || website.business.name,
     hero: flat.hero,
     about: flat.about,
     services: flat.services,
     faq: flat.faq,
     cta: flat.cta,
     contact: flat.contact,
+  };
+}
+
+export function contentReviewInputFromGeneratedSite(
+  site: GeneratedSite,
+  location: string,
+  category?: string,
+): ContentReviewInput {
+  return {
+    location,
+    category,
+    businessName: site.businessName,
+    hero: getHero(site),
+    about: site.about,
+    services: site.services,
+    faq: site.faq,
+    cta: site.cta,
+    contact: site.contact,
   };
 }
 

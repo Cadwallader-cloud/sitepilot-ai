@@ -1,13 +1,11 @@
 /**
- * Crestis About Pipeline
+ * Crestis About Pipeline — single-pass (1 OpenAI call)
  *
- *   1) Generate 3 style variants: Story · Professional · Customer-first
- *   2) QA Agent picks the best + reason
- *
- * Only the winning About is returned to the engine / user.
+ * Picks the best style angle and writes the full About section in one response.
  */
 
 import type { BusinessDna } from "../business-dna";
+import type { PromptContextCache } from "../ai/context/prompt-context-cache";
 import { completeJsonObject } from "./openai-json";
 import { CRESTIS_SYSTEM } from "./prompts/system";
 import {
@@ -27,7 +25,7 @@ export type AboutVariant = {
 };
 
 export type AboutPipelineProgress = {
-  stage: "about_variants" | "about_select";
+  stage: "about_single" | "about_retry";
   label: string;
 };
 
@@ -38,75 +36,34 @@ export type AboutPipelineResult = {
   about: ContentDraft["about"];
 };
 
-const VARIANTS_SYSTEM = `${CRESTIS_SYSTEM}
+const SINGLE_PASS_SYSTEM = `${CRESTIS_SYSTEM}
 
-You write THREE different About sections for the SAME business.
-Each must follow About Generator v1 rules (trust/value, 80–140 words, no invented history).
+You write ONE About section for a local business in a single pass.
+First choose the best angle for this brand, then write the About.
 
 ${ABOUT_GENERATOR_BODY}
 
-## Styles (required — one of each)
-
-1) story
-Why the business exists. Warm, human. Best for family / owner-led brands.
-Focus on purpose and people — still NO fake years/history unless provided.
-
-2) professional
-Focus on expertise and clear process. Best for lawyers, dentists, architects, clinics.
-Calm authority. No arrogance. No invented credentials.
-
-3) customer_first
-Focus on customer problems and outcomes. Best for most local service businesses.
-Problem → approach → why they come back.
-
-Return JSON only:
-{
-  "variants": [
-    {
-      "style": "story",
-      "title": "",
-      "paragraphs": ["", ""],
-      "highlights": ["", "", ""]
-    },
-    {
-      "style": "professional",
-      "title": "",
-      "paragraphs": ["", ""],
-      "highlights": ["", "", ""]
-    },
-    {
-      "style": "customer_first",
-      "title": "",
-      "paragraphs": ["", ""],
-      "highlights": ["", "", ""]
-    }
-  ]
-}
-
-Rules:
-- All three must be clearly different in angle — not paraphrase clones
-- Never invent years, awards, certifications, employee counts, or stats
-- highlights: exactly 3 per variant; only plausible from inputs`;
-
-const SELECT_SYSTEM = `${CRESTIS_SYSTEM}
-
-You are Crestis About QA Agent.
-Pick the single best About variant for THIS business.
-
-Score silently on:
-- Fit to industry / Brand Personality / brandPosition
-- Trust and honesty (no fluff)
-- Specificity (would NOT work for any random business)
-- Conversion (makes contacting feel natural)
-- Readability (Grade 7–9)
+## Style options (pick one internally — output only the winner)
+- story: warm, purpose-led — family / owner-led brands
+- professional: expertise and process — legal, dental, clinical
+- customer_first: problem → outcome — most local service businesses
 
 Return JSON only:
 {
   "selectedStyle": "customer_first",
-  "reason": "Best fit for local service buyers — problem-first and specific."
+  "reason": "Why this angle fits (max 25 words)",
+  "title": "",
+  "paragraphs": ["", ""],
+  "highlights": ["", "", ""]
 }
 
-selectedStyle must be one of: story | professional | customer_first`;
+Rules:
+- 80–140 words across paragraphs; Grade 7–9 readability
+- Average sentence length: 12–18 words; maximum 25 words per sentence
+- Paragraph 1 MUST mention the city from Location once (e.g. "Based in {city}, we..." or "We proudly serve homeowners across {city}...")
+- Never invent years, awards, certifications, employee counts, or stats
+- highlights: exactly 3; only plausible from inputs
+- selectedStyle: story | professional | customer_first`;
 
 function suggestStyleHint(dna: BusinessDna): AboutStyle {
   const blob = [
@@ -136,6 +93,19 @@ function suggestStyleHint(dna: BusinessDna): AboutStyle {
   return "customer_first";
 }
 
+function parseStyle(raw: string, fallback: AboutStyle): AboutStyle {
+  const normalized = raw.trim().toLowerCase().replace(/-/g, "_");
+  if (normalized === "story" || normalized === "professional") return normalized;
+  if (
+    normalized === "customer_first" ||
+    normalized === "customerfirst" ||
+    normalized === "customer first"
+  ) {
+    return "customer_first";
+  }
+  return fallback;
+}
+
 function contextBlock(params: {
   businessName: string;
   location: string;
@@ -147,9 +117,14 @@ function contextBlock(params: {
   templateBrief: string;
   personalityBrief: string;
   industryBrief?: string;
+  promptCache?: PromptContextCache;
 }): string {
+  const personalityBrief = params.promptCache?.brand ?? params.personalityBrief;
+  const dnaJson =
+    params.promptCache?.dnaJson ?? JSON.stringify(params.dna, null, 2);
+
   return [
-    params.personalityBrief,
+    personalityBrief,
     "",
     params.industryBrief || "",
     "",
@@ -163,7 +138,7 @@ function contextBlock(params: {
     `Suggested style hint (not binding): ${suggestStyleHint(params.dna)}`,
     "",
     "Brand Profile:",
-    JSON.stringify(params.dna, null, 2),
+    dnaJson,
     "",
     "Planner Profile:",
     JSON.stringify(
@@ -183,48 +158,7 @@ function contextBlock(params: {
     .join("\n");
 }
 
-function toVariant(raw: unknown): AboutVariant | null {
-  if (!raw || typeof raw !== "object") return null;
-  const row = raw as Record<string, unknown>;
-  const styleRaw = String(row.style ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/-/g, "_");
-  const style: AboutStyle =
-    styleRaw === "story" || styleRaw === "professional"
-      ? styleRaw
-      : styleRaw === "customer_first" || styleRaw === "customerfirst"
-        ? "customer_first"
-        : "customer_first";
-
-  const normalized = normalizeAboutFromAi(
-    {
-      title: row.title,
-      paragraphs: row.paragraphs,
-      highlights: row.highlights,
-      text: row.text,
-    },
-    style === "story"
-      ? "Our Story"
-      : style === "professional"
-        ? "Our Approach"
-        : "Why Customers Choose Us",
-  );
-
-  if (normalized.text.length < 40) return null;
-
-  return {
-    style,
-    title: normalized.title,
-    paragraphs: normalized.paragraphs,
-    highlights: normalized.highlights,
-    text: normalized.text,
-  };
-}
-
-/**
- * Run About Pipeline: 3 styles → QA picks winner.
- */
+/** Single-pass About — one OpenAI call for style + copy. */
 export async function runAboutPipeline(params: {
   businessName: string;
   location: string;
@@ -238,130 +172,105 @@ export async function runAboutPipeline(params: {
   industryBrief?: string;
   userEmail?: string | null;
   regenerate?: boolean;
+  promptCache?: PromptContextCache;
   onProgress?: (p: AboutPipelineProgress) => void;
 }): Promise<AboutPipelineResult> {
   const ctx = contextBlock(params);
+  const styleHint = suggestStyleHint(params.dna);
 
-  // ── Step 1: three style variants ───────────────────────────────────
   params.onProgress?.({
-    stage: "about_variants",
-    label: "About · 3 Styles",
+    stage: "about_single",
+    label: "About",
   });
-  const generated = await completeJsonObject<{ variants?: unknown[] }>({
-    stage: "about_variants",
+
+  const raw = await completeJsonObject<{
+    selectedStyle?: string;
+    reason?: string;
+    title?: string;
+    paragraphs?: string[];
+    highlights?: string[];
+    text?: string;
+  }>({
+    stage: "about_single",
     userEmail: params.userEmail,
-    maxCompletionTokens: 3072,
-    system: VARIANTS_SYSTEM,
+    maxCompletionTokens: 1536,
+    system: SINGLE_PASS_SYSTEM,
     user: [
-      "Write THREE About variants for THIS business — story, professional, customer_first.",
-      "Make them meaningfully different.",
+      "Write ONE About section for THIS business.",
+      "Pick the best style for this brand and write the full About.",
       "Never invent history, years, awards, or stats.",
       "",
       ctx,
       params.regenerate
-        ? "Regeneration — change angles clearly from prior outputs."
+        ? "Regeneration — change angle clearly from prior outputs."
         : "",
     ]
       .filter(Boolean)
       .join("\n"),
   });
 
-  const variants = (Array.isArray(generated.variants) ? generated.variants : [])
-    .map(toVariant)
-    .filter((v): v is AboutVariant => Boolean(v));
+  const selectedStyle = parseStyle(
+    String(raw.selectedStyle ?? ""),
+    styleHint,
+  );
 
-  // Ensure we have one of each style if possible; fill gaps with DNA-based fallbacks
-  const byStyle = new Map<AboutStyle, AboutVariant>();
-  for (const v of variants) {
-    if (!byStyle.has(v.style)) byStyle.set(v.style, v);
-  }
+  const normalized = normalizeAboutFromAi(
+    {
+      title: raw.title,
+      paragraphs: raw.paragraphs,
+      highlights: raw.highlights,
+      text: raw.text,
+    },
+    selectedStyle === "story"
+      ? "Our Story"
+      : selectedStyle === "professional"
+        ? "Our Approach"
+        : "Why Customers Choose Us",
+    { location: params.location },
+  );
 
-  const styles: AboutStyle[] = ["story", "professional", "customer_first"];
-  for (const style of styles) {
-    if (byStyle.has(style)) continue;
-    const fallback = normalizeAboutFromAi(
-      {
-        title:
-          style === "story"
-            ? "Our Story"
-            : style === "professional"
-              ? "Our Approach"
-              : "Why Customers Choose Us",
-        paragraphs: [
-          `${params.businessName} helps ${params.dna.targetAudience[0] || "local customers"} in ${params.location} with ${params.dna.subcategory || params.dna.industry}. The focus is clear answers and work that matches what was discussed.`,
-          `People come back for straightforward communication and a process that respects their time — from first contact to finished work.`,
-        ],
-        highlights: params.dna.trustSignals.slice(0, 3),
-      },
-      "About Us",
-    );
-    byStyle.set(style, {
-      style,
-      title: fallback.title,
-      paragraphs: fallback.paragraphs,
-      highlights: fallback.highlights,
-      text: fallback.text,
-    });
-  }
-
-  const ordered = styles.map((s) => byStyle.get(s)!);
-
-  // ── Step 2: QA selects best ────────────────────────────────────────
-  params.onProgress?.({
-    stage: "about_select",
-    label: "About · QA Select",
-  });
-  const pick = await completeJsonObject<{
-    selectedStyle?: string;
-    reason?: string;
-  }>({
-    stage: "about_select",
-    userEmail: params.userEmail,
-    maxCompletionTokens: 512,
-    system: SELECT_SYSTEM,
-    user: [
-      "Pick the best About variant for THIS business.",
-      "",
-      ...ordered.map(
-        (v, i) =>
-          `--- Variant ${i + 1}: ${v.style} ---\nTitle: ${v.title}\n${v.text}\nHighlights: ${v.highlights.join(", ")}`,
-      ),
-      "",
-      ctx,
-    ].join("\n"),
-  });
-
-  const rawStyle = String(pick.selectedStyle ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/-/g, "_");
-  let selectedStyle: AboutStyle = suggestStyleHint(params.dna);
-  if (rawStyle === "story" || rawStyle === "professional") {
-    selectedStyle = rawStyle;
-  } else if (
-    rawStyle === "customer_first" ||
-    rawStyle === "customerfirst" ||
-    rawStyle === "customer first"
-  ) {
-    selectedStyle = "customer_first";
-  }
-
-  const winner =
-    ordered.find((v) => v.style === selectedStyle) || ordered[2]!;
+  const about =
+    normalized.text.length >= 40
+      ? normalized
+      : normalizeAboutFromAi(
+          {
+            title:
+              selectedStyle === "story"
+                ? "Our Story"
+                : selectedStyle === "professional"
+                  ? "Our Approach"
+                  : "Why Customers Choose Us",
+            paragraphs: [
+              `${params.businessName} helps ${params.dna.targetAudience[0] || "local customers"} in ${params.location} with ${params.dna.subcategory || params.dna.industry}. The focus is clear answers and work that matches what was discussed.`,
+              `People come back for straightforward communication and a process that respects their time — from first contact to finished work.`,
+            ],
+            highlights: params.dna.trustSignals.slice(0, 3),
+          },
+          "About Us",
+          { location: params.location },
+        );
 
   const reason =
-    String(pick.reason ?? "").trim() ||
-    `Best fit: ${winner.style} for this Brand Profile.`;
+    String(raw.reason ?? "").trim() ||
+    `Best fit: ${selectedStyle} for this Brand Profile.`;
+
+  const variant: AboutVariant = {
+    style: selectedStyle,
+    title: about.title,
+    paragraphs: about.paragraphs,
+    highlights: about.highlights,
+    text: about.text,
+  };
 
   return {
-    variants: ordered,
-    selectedStyle: winner.style,
+    variants: [variant],
+    selectedStyle,
     reason,
     about: {
-      title: winner.title,
-      text: winner.text,
-      paragraphs: winner.paragraphs,
-      highlights: winner.highlights,
+      title: about.title,
+      text: about.text,
+      paragraphs: about.paragraphs,
+      highlights: about.highlights,
     },
   };
 }

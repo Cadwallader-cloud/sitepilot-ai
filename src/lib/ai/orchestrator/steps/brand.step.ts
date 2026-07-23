@@ -5,6 +5,7 @@
 import { runBrandPersonalityEngine } from "../../../ai-engine/brand-personality-engine";
 import {
   briefFromDna,
+  ensurePromptCache,
   syncBranding,
   syncBusiness,
   type PipelineContext,
@@ -58,23 +59,25 @@ export class BrandStep implements PipelineStep<PipelineContext> {
       personality,
     };
 
-    return syncBusiness(
-      syncBranding({
-        ...ctx,
-        business,
-        branding,
-        meta: {
-          ...meta,
-          liveDna,
-          personality,
-          personalityBrief: personalityResult.brief,
-          brief: {
-            ...briefFromDna(meta.input, liveDna, meta.tradeHint, meta.industryId),
+    return ensurePromptCache(
+      syncBusiness(
+        syncBranding({
+          ...ctx,
+          business,
+          branding,
+          meta: {
+            ...meta,
+            liveDna,
             personality,
-            seoPlan: meta.brief.seoPlan,
+            personalityBrief: personalityResult.brief,
+            brief: {
+              ...briefFromDna(meta.input, liveDna, meta.tradeHint, meta.industryId),
+              personality,
+              seoPlan: meta.brief.seoPlan,
+            },
           },
-        },
-      }),
+        }),
+      ),
     );
   }
 }

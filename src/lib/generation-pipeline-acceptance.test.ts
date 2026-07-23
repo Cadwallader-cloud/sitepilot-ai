@@ -77,7 +77,7 @@ describe("Sprint 1 — AI Generation Pipeline Acceptance Gate", () => {
     assert.equal(steps.renderer, "active");
 
     assert.equal(
-      resolveProgressStep({ stage: "theme_selector_ai", label: "Theme Selector" }),
+      resolveProgressStep({ stage: "theme_selector", label: "Theme Engine" }),
       "theme",
     );
   });

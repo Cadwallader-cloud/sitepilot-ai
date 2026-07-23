@@ -70,10 +70,19 @@ export async function POST(request: Request) {
         ? (body.input as { services: string }).services
         : "";
 
+  const category =
+    (typeof body.category === "string" && body.category.trim()) ||
+    (typeof body.input === "object" &&
+    body.input &&
+    typeof (body.input as { category?: string }).category === "string"
+      ? (body.input as { category: string }).category.trim()
+      : "");
+
   try {
     const result = await runQualityAudit({
       site: websiteToGeneratedSite(body.site),
       location,
+      category: category || undefined,
       services,
       userEmail: session.user.email,
     });

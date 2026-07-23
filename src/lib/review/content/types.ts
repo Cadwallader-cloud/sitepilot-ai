@@ -83,6 +83,7 @@ export type ContentReviewReport = ContentReviewReportBody & {
 export type ContentReviewInput = {
   location: string;
   category?: string;
+  businessName?: string;
   hero: {
     headline: string;
     subheadline: string;
@@ -229,7 +230,21 @@ export function ctaStrength(label: string): CtaStrength {
 }
 
 const FAQ_NICHE_KEYWORDS: Record<string, string[]> = {
-  roofing: ["roof", "shingle", "leak", "storm", "hail", "tarp", "insurance", "replacement"],
+  roofing: [
+    "roof",
+    "roofing",
+    "roofer",
+    "shingle",
+    "leak",
+    "storm",
+    "hail",
+    "tarp",
+    "insurance",
+    "replacement",
+    "repair",
+    "inspect",
+    "inspection",
+  ],
   plumber: ["plumb", "pipe", "drain", "leak", "water", "sewer", "faucet"],
   hvac: ["hvac", "heat", "cool", "furnace", "air", "ac", "vent"],
   electrician: ["electric", "wiring", "panel", "outlet", "breaker"],
@@ -384,6 +399,132 @@ export function detectAiCliches(text: string): Array<{ id: string; label: string
     }
   }
   return hits;
+}
+
+const REPETITION_STOP_WORDS = new Set([
+  "about",
+  "after",
+  "also",
+  "been",
+  "before",
+  "being",
+  "between",
+  "both",
+  "could",
+  "each",
+  "from",
+  "have",
+  "help",
+  "here",
+  "home",
+  "into",
+  "just",
+  "like",
+  "make",
+  "more",
+  "most",
+  "much",
+  "need",
+  "only",
+  "other",
+  "our",
+  "over",
+  "same",
+  "some",
+  "such",
+  "team",
+  "than",
+  "that",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "very",
+  "want",
+  "well",
+  "were",
+  "what",
+  "when",
+  "where",
+  "which",
+  "while",
+  "will",
+  "with",
+  "work",
+  "would",
+  "your",
+  "service",
+  "services",
+  "business",
+  "local",
+  "quality",
+  "professional",
+]);
+
+/** Words repeated too often across body copy (excluding common stop words). */
+export function detectOverusedWords(
+  text: string,
+  options?: { minLength?: number; minCount?: number; ratio?: number },
+): string[] {
+  const minLength = options?.minLength ?? 4;
+  const minCount = options?.minCount ?? 4;
+  const ratio = options?.ratio ?? 0.035;
+  const words = normalizeText(text)
+    .split(" ")
+    .filter((word) => word.length >= minLength && !REPETITION_STOP_WORDS.has(word));
+  if (words.length < 24) return [];
+
+  const counts = new Map<string, number>();
+  for (const word of words) counts.set(word, (counts.get(word) ?? 0) + 1);
+
+  return [...counts.entries()]
+    .filter(([, count]) => count >= minCount && count / words.length >= ratio)
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word);
+}
+
+/** Terms exempt from word-repetition penalties (SEO/niche vocabulary). */
+export function buildWordRepetitionAllowlist(input: ContentReviewInput): Set<string> {
+  const allowed = new Set<string>();
+  const addPhrase = (phrase: string) => {
+    for (const word of normalizeText(phrase).split(" ")) {
+      if (word.length >= 3) allowed.add(word);
+    }
+  };
+
+  addPhrase(input.location);
+  const parts = parseLocationParts(input.location);
+  addPhrase(parts.city);
+  addPhrase(parts.district);
+  addPhrase(parts.region);
+  addPhrase(parts.country);
+
+  addPhrase(input.category ?? "");
+  for (const keyword of faqNicheKeywords(input.category)) {
+    addPhrase(keyword);
+  }
+
+  if (input.businessName) addPhrase(input.businessName);
+
+  for (const service of input.services) {
+    addPhrase(service.title);
+  }
+
+  return allowed;
+}
+
+export function isAllowedRepetitionWord(word: string, allowed: ReadonlySet<string>): boolean {
+  if (allowed.has(word)) return true;
+  for (const term of allowed) {
+    if (term.length < 4 || word.length < 4) continue;
+    if (word.startsWith(term) || term.startsWith(word)) return true;
+  }
+  return false;
 }
 
 export function normalizeText(value: string): string {

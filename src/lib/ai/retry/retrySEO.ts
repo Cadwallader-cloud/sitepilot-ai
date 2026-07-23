@@ -8,6 +8,7 @@ import type { SEO } from "../../website";
 import { validateSEO } from "../../validation/validate";
 import type { SeoInput } from "../../validation/seo";
 import type { PipelineContext } from "../orchestrator/context";
+import { getGenerationProfile } from "../orchestrator/context";
 import { prepareSEORun, type SEOSectionRun } from "../context";
 import {
   DEFAULT_SECTION_MAX_ATTEMPTS,
@@ -52,13 +53,13 @@ export async function retrySEO(
 
 export async function retrySEO(
   arg: (() => Promise<unknown>) | SEOSectionRun | PipelineContext,
-  maxAttempts = DEFAULT_SECTION_MAX_ATTEMPTS,
+  maxAttemptsArg = DEFAULT_SECTION_MAX_ATTEMPTS,
 ): Promise<RetryResult<SeoInput> | RetrySEOFromContext> {
   if (typeof arg === "function") {
     return retry<SeoInput>(
       async () => seoForValidation(await arg()),
       validateSEO,
-      { module: "SEO", maxAttempts },
+      { module: "SEO", maxAttempts: maxAttemptsArg },
     );
   }
 
@@ -66,6 +67,7 @@ export async function retrySEO(
   const ctx = run.pipeline;
   void run.seo;
   const { meta } = ctx;
+  const maxAttempts = getGenerationProfile(ctx).maxSectionAttempts;
   if (!meta.engineCtx || !meta.plan || !meta.content) {
     throw new Error("ORCHESTRATOR:seo requires content + plan");
   }
@@ -97,6 +99,8 @@ export async function retrySEO(
       meta.content!,
       meta.plan!,
       meta.seoPlan,
+      undefined,
+      { forceLlm: true },
     );
     return seoForValidation(seoDraft);
   };

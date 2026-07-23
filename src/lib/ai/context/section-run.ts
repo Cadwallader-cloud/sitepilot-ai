@@ -5,6 +5,7 @@
  */
 
 import type { PipelineContext } from "../orchestrator/context";
+import { ensurePromptCache } from "../orchestrator/context";
 import { createContextCache, type ContextCache } from "./context-cache";
 import { logSectionTokenEstimate } from "./estimate-tokens";
 import type { AboutContext } from "./selectors/about.selector";
@@ -51,43 +52,49 @@ export type QASectionRun = {
 };
 
 export function prepareHeroRun(ctx: PipelineContext): HeroSectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const hero = cache.hero;
   logSectionTokenEstimate("Hero Context", hero);
-  return { pipeline: ctx, cache, hero };
+  return { pipeline, cache, hero };
 }
 
 export function prepareAboutRun(ctx: PipelineContext): AboutSectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const about = cache.about;
   logSectionTokenEstimate("About Context", about);
-  return { pipeline: ctx, cache, about };
+  return { pipeline, cache, about };
 }
 
 export function prepareServicesRun(ctx: PipelineContext): ServicesSectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const services = cache.services;
   logSectionTokenEstimate("Services Context", services);
-  return { pipeline: ctx, cache, services };
+  return { pipeline, cache, services };
 }
 
 export function prepareFAQRun(ctx: PipelineContext): FAQSectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const faq = cache.faq;
   logSectionTokenEstimate("FAQ Context", faq);
-  return { pipeline: ctx, cache, faq };
+  return { pipeline, cache, faq };
 }
 
 export function prepareSEORun(ctx: PipelineContext): SEOSectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const seo = cache.seo;
   logSectionTokenEstimate("SEO Context", seo);
-  return { pipeline: ctx, cache, seo };
+  return { pipeline, cache, seo };
 }
 
 export function prepareQARun(ctx: PipelineContext): QASectionRun {
-  const cache = createContextCache(ctx);
+  const pipeline = ensurePromptCache(ctx);
+  const cache = createContextCache(pipeline);
   const qa = cache.qa;
   logSectionTokenEstimate("QA Context", qa);
-  return { pipeline: ctx, cache, qa };
+  return { pipeline, cache, qa };
 }

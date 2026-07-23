@@ -39,7 +39,9 @@ export function reviewQuality(
     },
   };
 
-  const audit = auditWebsiteWithRules(draftSite, ctx.input.location);
+  const audit = auditWebsiteWithRules(draftSite, ctx.input.location, {
+    category: ctx.input.category,
+  });
   const notes = audit.checks
     .filter((c) => c.status !== "pass")
     .map((c) => c.message || `${c.label}: ${c.status}`);

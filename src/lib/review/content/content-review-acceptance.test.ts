@@ -531,7 +531,7 @@ describe("Content Review Engine Acceptance", () => {
         ...strongInput().about,
         paragraphs: [
           "Our comprehensive methodology is subsequently leveraged to facilitate multifaceted stakeholder deliverables that were handled by our team.",
-          "Line two of a very dense block.\nLine three.\nLine four.\nLine five.",
+          "Line two.\nLine three.\nLine four.\nLine five.\nLine six.\nLine seven.",
         ],
       },
     });

@@ -21,6 +21,8 @@ export type RetryAttemptLog = {
 
 type AttemptUsageBucket = {
   tokens: number;
+  promptTokens: number;
+  completionTokens: number;
   cost: number;
   parent?: AttemptUsageBucket;
 };
@@ -28,24 +30,48 @@ type AttemptUsageBucket = {
 const attemptUsage = new AsyncLocalStorage<AttemptUsageBucket>();
 
 /** Accumulate OpenAI tokens/cost while a retry attempt / pipeline step is running */
-export function recordAttemptUsage(tokens: number, costUsd: number): void {
+export function recordAttemptUsage(
+  tokens: number,
+  costUsd: number,
+  breakdown?: { promptTokens?: number; completionTokens?: number },
+): void {
   let bucket = attemptUsage.getStore();
   while (bucket) {
     if (Number.isFinite(tokens) && tokens > 0) bucket.tokens += tokens;
     if (Number.isFinite(costUsd) && costUsd > 0) bucket.cost += costUsd;
+    const prompt = breakdown?.promptTokens ?? 0;
+    const completion = breakdown?.completionTokens ?? 0;
+    if (Number.isFinite(prompt) && prompt > 0) bucket.promptTokens += prompt;
+    if (Number.isFinite(completion) && completion > 0) {
+      bucket.completionTokens += completion;
+    }
     bucket = bucket.parent;
   }
 }
 
 export async function runWithAttemptUsage<T>(
   fn: () => Promise<T>,
-): Promise<{ value: T; tokens: number; cost: number }> {
+): Promise<{
+  value: T;
+  tokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  cost: number;
+}> {
   const parent = attemptUsage.getStore();
-  const bucket: AttemptUsageBucket = { tokens: 0, cost: 0, parent };
+  const bucket: AttemptUsageBucket = {
+    tokens: 0,
+    promptTokens: 0,
+    completionTokens: 0,
+    cost: 0,
+    parent,
+  };
   const value = await attemptUsage.run(bucket, fn);
   return {
     value,
     tokens: bucket.tokens,
+    promptTokens: bucket.promptTokens,
+    completionTokens: bucket.completionTokens,
     cost: Math.round(bucket.cost * 1_000_000) / 1_000_000,
   };
 }

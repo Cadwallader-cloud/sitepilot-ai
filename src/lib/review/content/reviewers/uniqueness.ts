@@ -1,14 +1,17 @@
-import { check } from "../score";
 import {
   AI_CLICHE_DEDUCTION,
+  buildWordRepetitionAllowlist,
   clampReviewScore,
   collectTextBlob,
   detectAiCliches,
+  detectOverusedWords,
+  isAllowedRepetitionWord,
   jaccardSimilarity,
   normalizeText,
   type ContentReviewInput,
   type SectionReview,
 } from "../types";
+import { check } from "../score";
 
 function uniquenessBlob(input: ContentReviewInput): string {
   return collectTextBlob([
@@ -67,9 +70,33 @@ export function reviewUniqueness(input: ContentReviewInput): SectionReview {
     );
   }
 
+  const overused = detectOverusedWords(blob).filter(
+    (word) => !isAllowedRepetitionWord(word, buildWordRepetitionAllowlist(input)),
+  );
+  if (overused.length >= 3) {
+    checks.push(
+      check(
+        "word_repetition",
+        "fail",
+        `Overused words: ${overused.slice(0, 4).join(", ")} — vary vocabulary across sections`,
+      ),
+    );
+  } else if (overused.length > 0) {
+    checks.push(
+      check(
+        "word_repetition",
+        "warn",
+        `Repeated words: ${overused.join(", ")} — mix phrasing so copy does not feel templated`,
+      ),
+    );
+  } else {
+    checks.push(check("word_repetition", "pass", "Vocabulary stays varied"));
+  }
+
   let score = 100 - cliches.length * AI_CLICHE_DEDUCTION;
   for (const entry of checks) {
     if (entry.status === "warn") score -= 8;
+    if (entry.status === "fail" && entry.id === "word_repetition") score -= 12;
   }
 
   const fails = checks.filter((entry) => entry.status === "fail").length;

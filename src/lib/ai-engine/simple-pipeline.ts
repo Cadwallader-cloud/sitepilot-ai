@@ -1,7 +1,7 @@
 /**
- * Crestis Simple Engine — thin entry over the orchestrator
+ * Crestis Simple Engine — thin entry over the orchestrator (Pipeline V2)
  *
- *   User → Business → Brand → Planner → Hero → About → Services → FAQ → SEO → QA → Website JSON
+ *   User → Business → Brand → Planner → [Hero ∥ About ∥ Services ∥ FAQ] → SEO → QA → Website JSON
  *
  * All AI modules run only through `runPipeline` (single Orchestrator).
  */

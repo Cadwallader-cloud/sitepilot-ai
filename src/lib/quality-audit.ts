@@ -1,5 +1,12 @@
 import type { GeneratedSite } from "./site-types";
 import { getHero } from "./site-types";
+import { contentReviewInputFromGeneratedSite } from "./review/content/adapter";
+import { reviewCta } from "./review/content/reviewers/cta";
+import { reviewHero } from "./review/content/reviewers/hero";
+import { reviewReadability, maxParagraphLines, paragraphLineQaPenalty } from "./review/content/reviewers/readability";
+import { reviewUniqueness } from "./review/content/reviewers/uniqueness";
+import { ctaStrength, mentionsCity as mentionsCityTerm } from "./review/content/types";
+import type { ReviewCheck } from "./review/types";
 
 export type QualityCheckStatus = "pass" | "warn" | "fail";
 
@@ -39,6 +46,227 @@ const GENERIC_CTAS = [
   "contact us",
   "learn more",
 ];
+
+const CONTENT_PENALTIES = {
+  readability: { fail: 12, warn: 5 },
+  long_sentences: { fail: 8, warn: 4 },
+  word_repetition: { fail: 10, warn: 4 },
+  generic_phrases: { fail: 14, warn: 6 },
+  local_specificity: { fail: 10, warn: 5 },
+  hero: { fail: 8, warn: 4 },
+  cta: { fail: 8, warn: 5 },
+} as const;
+
+const STATUS_RANK: Record<QualityCheckStatus, number> = {
+  pass: 0,
+  warn: 1,
+  fail: 2,
+};
+
+function worstCheckStatus(checks: ReviewCheck[]): QualityCheckStatus {
+  if (checks.some((c) => c.status === "fail")) return "fail";
+  if (checks.some((c) => c.status === "warn")) return "warn";
+  return "pass";
+}
+
+function messageForStatus(
+  checks: ReviewCheck[],
+  status: QualityCheckStatus,
+): string | undefined {
+  return checks.find((c) => c.status === status)?.message;
+}
+
+function upgradeQualityCheck(
+  checks: QualityCheck[],
+  penalize: (pts: number) => void,
+  id: string,
+  label: string,
+  status: QualityCheckStatus,
+  message: string | undefined,
+  penalties: { fail: number; warn: number },
+): void {
+  const existingIdx = checks.findIndex((c) => c.id === id);
+  const existing = existingIdx >= 0 ? checks[existingIdx] : undefined;
+  const oldRank = existing ? STATUS_RANK[existing.status] : -1;
+  const newRank = STATUS_RANK[status];
+
+  if (newRank < oldRank) return;
+  if (newRank === oldRank) {
+    if (message && existing && existing.status !== "pass") {
+      checks[existingIdx] = { ...existing, message };
+    }
+    return;
+  }
+
+  if (status !== "pass") {
+    const pts = status === "fail" ? penalties.fail : penalties.warn;
+    if (existing?.status === "warn" && status === "fail") {
+      penalize(Math.max(0, penalties.fail - penalties.warn));
+    } else if (!existing || existing.status === "pass") {
+      penalize(pts);
+    }
+  }
+
+  const next: QualityCheck = {
+    id,
+    label: existing?.label ?? label,
+    status,
+    message: message ?? existing?.message,
+  };
+  if (existingIdx >= 0) checks[existingIdx] = next;
+  else checks.push(next);
+}
+
+function setQualityCheck(
+  checks: QualityCheck[],
+  id: string,
+  label: string,
+  status: QualityCheckStatus,
+  message?: string,
+): void {
+  const existingIdx = checks.findIndex((c) => c.id === id);
+  const next: QualityCheck = { id, label, status, message };
+  if (existingIdx >= 0) checks[existingIdx] = next;
+  else checks.push(next);
+}
+
+function enrichAuditWithContentReview(
+  checks: QualityCheck[],
+  penalize: (pts: number) => void,
+  site: GeneratedSite,
+  location: string,
+  category?: string,
+): void {
+  const input = contentReviewInputFromGeneratedSite(site, location, category);
+  const readability = reviewReadability(input);
+  const uniqueness = reviewUniqueness(input);
+  const ctaReview = reviewCta(input);
+  const heroReview = reviewHero(input);
+
+  const maxLines = maxParagraphLines(input);
+  const paragraphPenalty = paragraphLineQaPenalty(maxLines);
+  const paragraphCheck = readability.checks.find((c) => c.id === "paragraph_lines");
+  const otherReadabilityChecks = readability.checks.filter(
+    (c) => c.id !== "short_sentences" && c.id !== "paragraph_lines",
+  );
+  const otherStatus = worstCheckStatus(otherReadabilityChecks);
+  const combinedReadabilityStatus = worstCheckStatus([
+    ...(paragraphCheck ? [paragraphCheck] : []),
+    ...otherReadabilityChecks,
+  ]);
+
+  if (paragraphPenalty > 0) penalize(paragraphPenalty);
+  if (otherStatus !== "pass") {
+    penalize(
+      otherStatus === "fail"
+        ? CONTENT_PENALTIES.readability.fail
+        : CONTENT_PENALTIES.readability.warn,
+    );
+  }
+
+  setQualityCheck(
+    checks,
+    "readability",
+    "Readability",
+    combinedReadabilityStatus,
+    combinedReadabilityStatus === "pass"
+      ? "Copy is scannable with plain English"
+      : messageForStatus(
+          [
+            ...(paragraphCheck && paragraphCheck.status !== "pass" ? [paragraphCheck] : []),
+            ...otherReadabilityChecks.filter((c) => c.status !== "pass"),
+          ],
+          combinedReadabilityStatus,
+        ),
+  );
+
+  const longSentenceCheck = readability.checks.find((c) => c.id === "short_sentences");
+  if (longSentenceCheck && longSentenceCheck.status !== "pass") {
+    upgradeQualityCheck(
+      checks,
+      penalize,
+      "long_sentences",
+      "Sentences",
+      longSentenceCheck.status,
+      longSentenceCheck.message,
+      CONTENT_PENALTIES.long_sentences,
+    );
+  }
+
+  const wordRepCheck = uniqueness.checks.find((c) => c.id === "word_repetition");
+  if (wordRepCheck && wordRepCheck.status !== "pass") {
+    upgradeQualityCheck(
+      checks,
+      penalize,
+      "word_repetition",
+      "Word repetition",
+      wordRepCheck.status,
+      wordRepCheck.message,
+      CONTENT_PENALTIES.word_repetition,
+    );
+  }
+
+  const clicheChecks = uniqueness.checks.filter((c) => c.id.startsWith("ai_phrase_"));
+  const clicheStatus = worstCheckStatus(clicheChecks);
+  if (clicheStatus !== "pass") {
+    const messages = clicheChecks
+      .filter((c) => c.status !== "pass")
+      .map((c) => c.message);
+    upgradeQualityCheck(
+      checks,
+      penalize,
+      "generic_phrases",
+      "Generic phrases",
+      clicheStatus,
+      messages.slice(0, 2).join("; "),
+      CONTENT_PENALTIES.generic_phrases,
+    );
+  }
+
+  const localChecks = heroReview.checks.filter((c) =>
+    ["geo_city", "geo_district", "headline_specificity"].includes(c.id),
+  );
+  const localStatus = worstCheckStatus(localChecks);
+  upgradeQualityCheck(
+    checks,
+    penalize,
+    "local_specificity",
+    "Local specificity",
+    localStatus,
+    localStatus === "pass"
+      ? "Hero and copy signal the target market"
+      : messageForStatus(localChecks, localStatus),
+    CONTENT_PENALTIES.local_specificity,
+  );
+
+  const heroContentChecks = heroReview.checks.filter((c) =>
+    ["headline_specificity", "headline_words", "value_proposition"].includes(c.id),
+  );
+  const heroContentStatus = worstCheckStatus(heroContentChecks);
+  upgradeQualityCheck(
+    checks,
+    penalize,
+    "hero",
+    "Hero",
+    heroContentStatus,
+    messageForStatus(heroContentChecks, heroContentStatus),
+    CONTENT_PENALTIES.hero,
+  );
+
+  const ctaContentChecks = ctaReview.checks.filter(
+    (c) => c.id === "cta_strength" || c.id === "cta_present",
+  );
+  const ctaContentStatus = worstCheckStatus(ctaContentChecks);
+  upgradeQualityCheck(
+    checks,
+    penalize,
+    "cta",
+    "CTA",
+    ctaContentStatus,
+    messageForStatus(ctaContentChecks, ctaContentStatus),
+    CONTENT_PENALTIES.cta,
+  );
+}
 
 function normalize(s: string): string {
   return s
@@ -83,9 +311,7 @@ function isGenericHero(title: string): boolean {
 }
 
 function mentionsCity(text: string, location: string): boolean {
-  const city = normalize(location).split(" ")[0] ?? "";
-  if (!city || city.length < 3) return false;
-  return normalize(text).includes(city);
+  return mentionsCityTerm(text, location);
 }
 
 function lookLikeUrl(url: string): boolean {
@@ -96,6 +322,7 @@ function lookLikeUrl(url: string): boolean {
 export function auditWebsiteWithRules(
   site: GeneratedSite,
   location: string,
+  options?: { category?: string },
 ): QualityAuditResult {
   const checks: QualityCheck[] = [];
   let score = 100;
@@ -156,6 +383,7 @@ export function auditWebsiteWithRules(
 
   // CTA
   const cta = hero.primaryCTA.trim();
+  const ctaPower = ctaStrength(cta);
   if (!cta) {
     checks.push({
       id: "cta",
@@ -164,14 +392,22 @@ export function auditWebsiteWithRules(
       message: "Missing primary CTA",
     });
     penalize(12);
-  } else if (GENERIC_CTAS.includes(normalize(cta))) {
+  } else if (ctaPower === "invalid") {
+    checks.push({
+      id: "cta",
+      label: "CTA",
+      status: "fail",
+      message: `"${cta}" is not a clear CTA — start with a verb and name the offer`,
+    });
+    penalize(12);
+  } else if (ctaPower === "weak" || GENERIC_CTAS.includes(normalize(cta))) {
     checks.push({
       id: "cta",
       label: "CTA",
       status: "warn",
-      message: `"${cta}" is generic — try a more action-specific CTA`,
+      message: `"${cta}" is a weak CTA — prefer Book Free Estimate, Get Free Quote, or Schedule Inspection`,
     });
-    penalize(5);
+    penalize(8);
   } else if (!hero.secondaryCTA.trim()) {
     checks.push({
       id: "cta",
@@ -385,6 +621,8 @@ export function auditWebsiteWithRules(
     });
   }
 
+  enrichAuditWithContentReview(checks, penalize, site, city, options?.category);
+
   const fails = checks.filter((c) => c.status === "fail").length;
   const warns = checks.filter((c) => c.status === "warn").length;
   const summary =
@@ -401,12 +639,6 @@ export function auditWebsiteWithRules(
     source: "rules",
   };
 }
-
-const STATUS_RANK: Record<QualityCheckStatus, number> = {
-  pass: 0,
-  warn: 1,
-  fail: 2,
-};
 
 /** Merge rule audit with AI self-critique; rules win on hard fails. */
 export function mergeQualityAudits(
@@ -484,6 +716,11 @@ function preferredCheckOrder(checks: QualityCheck[]): QualityCheck[] {
   const order = [
     "seo",
     "cta",
+    "readability",
+    "long_sentences",
+    "word_repetition",
+    "generic_phrases",
+    "local_specificity",
     "images",
     "mobile",
     "faq",

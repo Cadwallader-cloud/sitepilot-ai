@@ -56,7 +56,7 @@ const SUGGESTIONS: Partial<Record<string, string>> = {
   service_benefits: "List three scannable benefits per service.",
   service_cta: "Add a verb-led CTA such as Book Inspection or Get Free Quote.",
   short_sentences: "Break long sentences into shorter mobile-friendly lines.",
-  paragraph_lines: "Keep paragraphs to three lines or fewer.",
+  paragraph_lines: "Keep paragraphs to four lines or fewer.",
   passive_voice: "Rewrite passive lines in active voice.",
   simple_english: "Swap jargon for plain English customers understand quickly.",
 };

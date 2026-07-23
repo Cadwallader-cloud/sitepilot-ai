@@ -10,6 +10,7 @@ import { reviewContent } from "@/lib/review/content/engine";
 import {
   formatHealingFeedback,
   planContentReviewHealingTasks,
+  shouldRunContentReviewSelfHealing,
   type ContentReviewHealingTask,
   type ContentReviewSelfHealing,
 } from "@/lib/review/content/self-healing";
@@ -87,15 +88,16 @@ export async function runContentReviewSelfHealing(
 ): Promise<RunContentReviewSelfHealingResult> {
   const { agentCtx, input, maxTasks = 2, onProgress } = params;
   let content = params.content;
-  const pendingTasks = planContentReviewHealingTasks(params.report, maxTasks);
 
-  if (!pendingTasks.length) {
+  if (!shouldRunContentReviewSelfHealing(params.report)) {
     return {
       content,
       report: params.report,
       selfHealing: { tasks: [], regeneratedSections: [] },
     };
   }
+
+  const pendingTasks = planContentReviewHealingTasks(params.report, maxTasks);
 
   const tasks: ContentReviewHealingTask[] = [];
   const regeneratedSections: string[] = [];

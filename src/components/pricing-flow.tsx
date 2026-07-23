@@ -7,7 +7,7 @@ const PRO_PLAN_FEATURES = PRO_UNLOCK_FEATURES;
 
 export function PricingFlow() {
   return (
-    <section id="pricing" className="border-t border-surface-border px-6 py-20">
+    <section id="pricing" className="scroll-mt-20 border-t border-surface-border px-6 py-20">
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center text-3xl font-bold md:text-4xl">Pricing</h2>
         <p className="mt-3 text-center text-muted">

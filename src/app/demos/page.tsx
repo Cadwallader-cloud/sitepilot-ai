@@ -1,8 +1,9 @@
-import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
 import { DemosGallery } from "@/components/demos-gallery";
+import { Footer } from "@/components/features";
+import { Header } from "@/components/header";
 import { brand } from "@/lib/brand";
 import { showcaseDemoCount } from "@/lib/showcase-demos";
+import Link from "next/link";
 
 export const metadata = {
   title: `Demo Showcase — ${brand.name}`,
@@ -13,17 +14,7 @@ export const metadata = {
 export default function DemosPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-surface-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <BrandLogo />
-          <Link
-            href="/create"
-            className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white hover:bg-brand-light"
-          >
-            {brand.cta}
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="mx-auto max-w-6xl px-6 py-16">
         <div className="text-center">
@@ -56,6 +47,7 @@ export default function DemosPage() {
           </Link>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

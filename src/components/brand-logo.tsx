@@ -15,7 +15,8 @@ export function BrandLogo({
   return (
     <Link
       href={href}
-      className={`group inline-flex flex-col justify-center leading-none ${className}`}
+      aria-label={`${brand.name} home`}
+      className={`group inline-flex flex-col justify-center leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 rounded-sm ${className}`}
     >
       <span className="text-xl font-bold tracking-tight text-foreground transition group-hover:text-brand-light">
         {brand.name}

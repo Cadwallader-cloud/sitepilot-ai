@@ -7,9 +7,11 @@ import Link from "next/link";
 export function AuthButton({
   compact = false,
   callbackUrl = "/dashboard",
+  showAdminLink = true,
 }: {
   compact?: boolean;
   callbackUrl?: string;
+  showAdminLink?: boolean;
 }) {
   const { data: session, status } = useSession();
 
@@ -29,14 +31,14 @@ export function AuthButton({
         )}
         <Link
           href="/dashboard"
-          className="hidden text-sm text-muted transition hover:text-foreground sm:inline"
+          className="hidden text-sm text-muted transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 rounded-sm sm:inline"
         >
           My Websites
         </Link>
-        {session.user.isAdmin && (
+        {showAdminLink && session.user.isAdmin && (
           <Link
             href="/admin"
-            className="text-sm font-medium text-brand-light transition hover:text-foreground"
+            className="text-sm font-medium text-brand-light transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 rounded-sm"
           >
             Admin
           </Link>
@@ -44,7 +46,7 @@ export function AuthButton({
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="rounded-full border border-surface-border px-4 py-2 text-sm text-muted transition hover:border-brand/40 hover:text-foreground"
+          className="rounded-full border border-surface-border px-3 py-1.5 text-xs text-muted transition hover:border-brand/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 sm:px-4 sm:py-2 sm:text-sm"
         >
           Sign out
         </button>
@@ -55,7 +57,7 @@ export function AuthButton({
   return (
     <Link
       href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-      className="inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-medium transition hover:border-brand/40 hover:text-foreground"
+      className="inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface px-3 py-1.5 text-xs font-medium transition hover:border-brand/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 sm:px-4 sm:py-2 sm:text-sm"
     >
       {compact ? "Sign in" : "Sign in"}
     </Link>

@@ -106,7 +106,6 @@ export function assembleContentDraftFromContext(
         title: aboutData.title,
         text:
           aboutData.paragraphs?.join("\n\n") ||
-          aboutData.text ||
           ctx.meta.input.description,
         paragraphs: aboutData.paragraphs,
         highlights: aboutData.highlights,

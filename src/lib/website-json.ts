@@ -232,6 +232,8 @@ export type WebsiteJson = {
     issues: string[];
     strengths: string[];
   };
+  /** OpenAI token usage + cost for this generation */
+  usage?: import("./usage").GenerationUsage;
 };
 
 /** Detect nested Website JSON vs legacy flat GeneratedSite */

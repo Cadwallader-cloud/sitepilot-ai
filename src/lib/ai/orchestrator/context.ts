@@ -46,7 +46,10 @@ import {
 } from "../../website";
 import { DEFAULT_TEMPLATE_BLOCKS } from "../../template-engine";
 import type { PromptContextCache } from "../context/prompt-context-cache";
-import type { GenerationModeProfile } from "../generation-mode";
+import {
+  resolveGenerationProfile,
+  type GenerationModeProfile,
+} from "../generation-mode";
 import type { StageTelemetryRecord } from "../telemetry/stage-telemetry";
 export {
   buildPromptContextCache,

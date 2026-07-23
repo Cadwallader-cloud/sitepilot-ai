@@ -1,7 +1,7 @@
 "use client";
 
+import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { exampleFormInput, type BusinessFormInput } from "@/lib/business-form";
-import Link from "next/link";
 import { useState } from "react";
 
 type BusinessFormProps = {
@@ -11,6 +11,7 @@ type BusinessFormProps = {
 };
 
 export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) {
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [form, setForm] = useState<BusinessFormInput>({
     businessName: initial?.businessName ?? "",
     category: initial?.category ?? "",
@@ -27,10 +28,12 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!consentAccepted) return;
     onSubmit(form);
   }
 
   function fillExample() {
+    if (!consentAccepted) return;
     setForm(exampleFormInput);
     onSubmit(exampleFormInput);
   }
@@ -43,6 +46,8 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
     form.services.trim() &&
     form.phone.trim() &&
     form.email.trim();
+
+  const canSubmit = isValid && consentAccepted;
 
   const fields = [
     {
@@ -112,10 +117,16 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
         </div>
       ))}
 
+      <LegalConsentCheckbox
+        id="legal-consent-create"
+        checked={consentAccepted}
+        onChange={setConsentAccepted}
+      />
+
       <div className="flex flex-col gap-3 pt-2 sm:flex-row">
         <button
           type="submit"
-          disabled={!isValid || loading}
+          disabled={!canSubmit || loading}
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? "Generating website…" : "Generate Website"}
@@ -123,24 +134,12 @@ export function BusinessForm({ onSubmit, initial, loading }: BusinessFormProps) 
         <button
           type="button"
           onClick={fillExample}
-          disabled={loading}
-          className="rounded-xl border border-surface-border px-4 py-3 text-sm text-muted transition hover:border-brand/40 hover:text-foreground disabled:opacity-40"
+          disabled={!consentAccepted || loading}
+          className="rounded-xl border border-surface-border px-4 py-3 text-sm text-muted transition hover:border-brand/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
         >
           Try Apex Roofing
         </button>
       </div>
-      <p className="text-xs text-muted">
-        By generating, you agree to our{" "}
-        <Link href="/privacy" className="text-brand-light hover:underline">
-          Privacy Policy
-        </Link>{" "}
-        and{" "}
-        <Link href="/terms" className="text-brand-light hover:underline">
-          Terms of Service
-        </Link>
-        . Business details you enter may be processed by AI providers to create
-        your website.
-      </p>
     </form>
   );
 }

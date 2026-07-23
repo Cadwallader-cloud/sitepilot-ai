@@ -47,18 +47,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             googleEnabled={providers.google}
           />
         </div>
-
-        <p className="mt-8 text-xs text-muted">
-          By signing in, you agree to our{" "}
-          <Link href="/privacy" className="text-brand-light hover:underline">
-            Privacy Policy
-          </Link>{" "}
-          and{" "}
-          <Link href="/terms" className="text-brand-light hover:underline">
-            Terms of Service
-          </Link>
-          .
-        </p>
       </main>
     </div>
   );

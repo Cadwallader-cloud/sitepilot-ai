@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { useState, type FormEvent } from "react";
 
 type RequestAccessProps = {
@@ -16,6 +16,7 @@ export function RequestAccess({
 }: RequestAccessProps) {
   const [businessName, setBusinessName] = useState(defaultBusinessName);
   const [email, setEmail] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,24 +91,18 @@ export function RequestAccess({
               className="mt-1 w-full rounded-xl border border-surface-border bg-background px-3 py-2.5"
             />
           </label>
+          <LegalConsentCheckbox
+            id="legal-consent-access"
+            checked={consentAccepted}
+            onChange={setConsentAccepted}
+          />
           <button
             type="submit"
-            disabled={busy || !email.trim()}
-            className="flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition hover:bg-brand-light disabled:opacity-50"
+            disabled={busy || !email.trim() || !consentAccepted}
+            className="flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? "Sending…" : "Request Access"}
           </button>
-          <p className="text-center text-xs text-muted">
-            By submitting, you agree to our{" "}
-            <Link href="/privacy" className="text-brand-light hover:underline">
-              Privacy Policy
-            </Link>{" "}
-            and{" "}
-            <Link href="/terms" className="text-brand-light hover:underline">
-              Terms of Service
-            </Link>
-            .
-          </p>
           {error && (
             <p className="text-center text-sm text-red-300" role="alert">
               {error}

@@ -1,5 +1,6 @@
 "use client";
 
+import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { signIn } from "next-auth/react";
 import { useState, type FormEvent } from "react";
 
@@ -16,6 +17,7 @@ export function SignInForm({
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [loading, setLoading] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
 
@@ -67,12 +69,19 @@ export function SignInForm({
 
   return (
     <div className="w-full max-w-sm space-y-6">
+      <LegalConsentCheckbox
+        id="legal-consent-login"
+        checked={consentAccepted}
+        onChange={setConsentAccepted}
+      />
+
       {googleEnabled && (
         <>
           <button
             type="button"
+            disabled={!consentAccepted}
             onClick={() => signIn("google", { callbackUrl })}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-3 text-sm font-medium transition hover:border-brand/40 hover:text-foreground"
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-3 text-sm font-medium transition hover:border-brand/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             <GoogleIcon />
             Continue with Google
@@ -102,8 +111,8 @@ export function SignInForm({
           </label>
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-full bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:opacity-60"
+            disabled={loading || !consentAccepted}
+            className="w-full rounded-full bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Sending…" : "Email me a login code"}
           </button>
@@ -132,8 +141,8 @@ export function SignInForm({
           </label>
           <button
             type="submit"
-            disabled={loading || code.length !== 6}
-            className="w-full rounded-full bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:opacity-60"
+            disabled={loading || code.length !== 6 || !consentAccepted}
+            className="w-full rounded-full bg-brand py-3 text-sm font-semibold text-white transition hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>

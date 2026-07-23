@@ -15,6 +15,7 @@
 /scripts/ai-quality/output/
 /scripts/internal-alpha/output/
 /runs/
+/.lighthouse-tmp/
 
 # next.js
 /.next/

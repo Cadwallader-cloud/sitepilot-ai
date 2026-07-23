@@ -33,7 +33,7 @@ export function LegalConsentCheckbox({
         I have read and agree to the{" "}
         <Link
           href="/privacy"
-          className="text-brand-light hover:underline"
+          className="text-brand-light underline underline-offset-2 hover:text-foreground"
           onClick={(e) => e.stopPropagation()}
         >
           Privacy Policy
@@ -41,7 +41,7 @@ export function LegalConsentCheckbox({
         and{" "}
         <Link
           href="/terms"
-          className="text-brand-light hover:underline"
+          className="text-brand-light underline underline-offset-2 hover:text-foreground"
           onClick={(e) => e.stopPropagation()}
         >
           Terms of Service

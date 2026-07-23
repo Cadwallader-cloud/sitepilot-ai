@@ -54,8 +54,7 @@ export function DemosGallery() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <span
-                  className="rounded-full px-3 py-1 text-xs font-bold text-white"
-                  style={{ backgroundColor: demo.accent }}
+                  className="inline-flex rounded-full border border-white/25 bg-white/95 px-3 py-1 text-xs font-bold text-slate-900 shadow-sm backdrop-blur-sm"
                 >
                   {demo.trade}
                 </span>
@@ -95,7 +94,7 @@ function FilterChip({
       onClick={onClick}
       className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
         active
-          ? "bg-brand text-white"
+          ? "bg-brand text-[#F8FAFC]"
           : "border border-surface-border text-muted hover:border-brand/40 hover:text-foreground"
       }`}
     >
